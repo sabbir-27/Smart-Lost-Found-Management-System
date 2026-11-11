@@ -23,6 +23,23 @@ public class Main {
      * @param args Command-line arguments
      */
     public static void main(String[] args) {
+        // Standalone Web Server mode: java -jar SmartLostFound.jar --server
+        if (args.length > 0 && ("--server".equalsIgnoreCase(args[0]) || "--web".equalsIgnoreCase(args[0]))) {
+            System.out.println("==========================================================");
+            System.out.println("Starting Standalone Web Feed Server on Localhost");
+            System.out.println("==========================================================");
+            LostFoundManager manager = new LostFoundManager();
+            WebFeedServer server = new WebFeedServer(manager);
+            server.start();
+            System.out.printf("Server live at http://localhost:%d/ (Feed-Only Mode). Press Ctrl+C to exit.\n", server.getPort());
+            try {
+                Thread.currentThread().join();
+            } catch (InterruptedException e) {
+                server.stop();
+            }
+            return;
+        }
+
         // Handle headless environments gracefully
         if (GraphicsEnvironment.isHeadless()) {
             System.out.println("==========================================================");
