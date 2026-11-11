@@ -5,21 +5,21 @@ import com.smartlostfound.model.UserAccount;
 import com.smartlostfound.model.UserRole;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.geom.RoundRectangle2D;
 
 /**
- * Full-Page Executive Authentication Portal.
- * Implements a luxurious split-screen editorial landing and sign-in architecture
- * following DesignRush Best Designs award standards:
- * - Left 46%: Deep Obsidian Carbon branding showcase with glassmorphism feature cards and metrics.
- * - Right 54%: Centered, responsive executive form column with segmented tabs, 1-click demo access,
- *   and high-precision input validation.
+ * Streamlined Full-Page Executive Authentication Portal.
+ * Designed to elite SaaS standards (Stripe, Linear, Apple ID, Vercel):
+ * - Left 42%: Minimalist Obsidian branding with strong typography and crisp value props.
+ * - Right 58%: Pure, distraction-free authentication column with seamless segmented switcher,
+ *   integrated password toggle, and understated demo chips.
  */
 public class AuthPagePanel extends JPanel {
 
@@ -36,14 +36,14 @@ public class AuthPagePanel extends JPanel {
     // Sign In Controls
     private JTextField loginUsernameField;
     private JPasswordField loginPasswordField;
-    private JCheckBox loginShowPassCheck;
+    private JButton passToggleBtn;
+    private boolean isPasswordVisible = false;
     private JButton returnToAppBtn;
 
     // Register Controls
     private JTextField regNameField;
     private JTextField regUsernameField;
     private JTextField regEmailField;
-    private JTextField regPhoneField;
     private JPasswordField regPasswordField;
     private JPasswordField regConfirmPasswordField;
     private JComboBox<String> regRoleCombo;
@@ -61,13 +61,13 @@ public class AuthPagePanel extends JPanel {
 
     private void initComponents() {
         setLayout(new BorderLayout());
-        setBackground(UIUtils.COLOR_BACKGROUND);
+        setBackground(Color.WHITE);
 
-        // 1. Left Showcase Column (Obsidian Gradient with Live Feature Cards)
+        // 1. Left Showcase Column (Minimalist Obsidian Branding)
         leftShowcasePanel = createShowcasePanel();
         add(leftShowcasePanel, BorderLayout.WEST);
 
-        // 2. Right Form Column (Full-Height Centered Card Container)
+        // 2. Right Form Column (Pure, Distraction-Free Form)
         add(createFormColumn(), BorderLayout.CENTER);
 
         // Responsive listener to adapt split on narrow displays
@@ -75,11 +75,11 @@ public class AuthPagePanel extends JPanel {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
                 int totalWidth = getWidth();
-                if (totalWidth < 880) {
+                if (totalWidth < 850) {
                     leftShowcasePanel.setVisible(false);
                 } else {
                     leftShowcasePanel.setVisible(true);
-                    int leftW = Math.max(340, (int) (totalWidth * 0.44));
+                    int leftW = Math.max(340, (int) (totalWidth * 0.42));
                     leftShowcasePanel.setPreferredSize(new Dimension(leftW, 0));
                     leftShowcasePanel.revalidate();
                 }
@@ -88,7 +88,7 @@ public class AuthPagePanel extends JPanel {
     }
 
     // =========================================================================
-    // Left Showcase Column (Obsidian Carbon Branding)
+    // Left Showcase Column (Minimalist Obsidian Branding)
     // =========================================================================
 
     private JPanel createShowcasePanel() {
@@ -98,207 +98,153 @@ public class AuthPagePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Deep Obsidian to Dark Carbon Gradient
+                // Deep Obsidian to Dark Carbon Gradient (#121214 to #0B0B0C)
                 GradientPaint gp = new GradientPaint(0, 0, UIUtils.COLOR_SIDEBAR_TOP, 0, getHeight(), UIUtils.COLOR_SIDEBAR_BOTTOM);
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
 
-                // Subtle ambient grid pattern
-                g2.setColor(new Color(255, 255, 255, 5));
-                for (int y = 0; y < getHeight(); y += 40) {
-                    g2.drawLine(0, y, getWidth(), y);
-                }
-
-                // 1px right border separating showcase from form column
-                g2.setColor(new Color(255, 255, 255, 15));
+                // 1px Subtle divider line between left and right
+                g2.setColor(new Color(255, 255, 255, 12));
                 g2.drawLine(getWidth() - 1, 0, getWidth() - 1, getHeight());
 
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-        panel.setPreferredSize(new Dimension(480, 0));
+        panel.setPreferredSize(new Dimension(460, 0));
         panel.setOpaque(false);
+        panel.setBorder(new EmptyBorder(44, 44, 44, 44));
 
-        // Scrollable content wrapper for showcase (smooth on compact heights)
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setOpaque(false);
-        content.setBorder(new EmptyBorder(36, 36, 36, 36));
+        // Top Brand Header
+        JPanel topBrand = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        topBrand.setOpaque(false);
 
-        // 1. Top Emblem & Network Badge
-        JPanel topBadgeRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        topBadgeRow.setOpaque(false);
-        topBadgeRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel badge = new JLabel(" ■  DESIGNRUSH VERIFIED RECOVERY NETWORK ");
-        badge.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 10));
-        badge.setForeground(Color.WHITE);
-        badge.setOpaque(true);
-        badge.setBackground(UIUtils.COLOR_PRIMARY);
-        badge.setBorder(new EmptyBorder(6, 12, 6, 12));
-        topBadgeRow.add(badge);
-        content.add(topBadgeRow);
-
-        content.add(Box.createVerticalStrut(20));
-
-        // 2. Headline & Editorial Subtitle
-        JLabel mainTitle = new JLabel("SMART LOST & FOUND");
-        mainTitle.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 28));
-        mainTitle.setForeground(Color.WHITE);
-        mainTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        content.add(mainTitle);
-
-        content.add(Box.createVerticalStrut(4));
-
-        JLabel subTitle = new JLabel("NEXT-GEN PROPERTY INTELLIGENCE");
-        subTitle.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 12));
-        subTitle.setForeground(new Color(248, 113, 113));
-        subTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        content.add(subTitle);
-
-        content.add(Box.createVerticalStrut(14));
-
-        JLabel leadParagraph = new JLabel("<html>A community-powered, high-precision recovery infrastructure connecting people with their misplaced belongings across campuses, venues, and metropolitan hubs.</html>");
-        leadParagraph.setFont(UIUtils.FONT_BODY);
-        leadParagraph.setForeground(UIUtils.COLOR_SIDEBAR_TEXT);
-        leadParagraph.setAlignmentX(Component.LEFT_ALIGNMENT);
-        content.add(leadParagraph);
-
-        content.add(Box.createVerticalStrut(28));
-
-        // 3. Feature Showcase Cards (Dark Glassmorphic Panels)
-        content.add(createShowcaseCard("⚡", "Neural Visual Match Feed",
-                "Facebook-style community stream with 16:9 high-resolution photos, interactive lightbox inspection, and instant discovery."));
-        content.add(Box.createVerticalStrut(12));
-
-        content.add(createShowcaseCard("🛡️", "Role-Based Security & RBAC",
-                "Granular user directory, administrative oversight, immutable custody tracking, and encrypted credential storage."));
-        content.add(Box.createVerticalStrut(12));
-
-        content.add(createShowcaseCard("📦", "Zero-Loss Disk Persistence",
-                "Real-time atomic storage synchronization ensures every report, photo, and status transition is safely committed to disk."));
-
-        content.add(Box.createVerticalGlue());
-
-        // 4. Live Telemetry Metric Strip at Bottom
-        JPanel metricStrip = createMetricStrip();
-        metricStrip.setAlignmentX(Component.LEFT_ALIGNMENT);
-        content.add(metricStrip);
-
-        content.add(Box.createVerticalStrut(16));
-
-        JLabel copyright = new JLabel("© 2026 Smart Lost & Found Inc. • DesignRush Best Designs");
-        copyright.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 11));
-        copyright.setForeground(UIUtils.COLOR_SIDEBAR_MUTED);
-        copyright.setAlignmentX(Component.LEFT_ALIGNMENT);
-        content.add(copyright);
-
-        JScrollPane scrollPane = new JScrollPane(content);
-        scrollPane.setBorder(null);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(14);
-
-        panel.add(scrollPane, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private JPanel createShowcaseCard(String icon, String title, String description) {
-        JPanel card = new JPanel(new BorderLayout(14, 0)) {
+        // Crimson emblem glyph
+        JPanel logoGlyph = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Semi-translucent dark slate card surface
-                g2.setColor(new Color(24, 24, 27, 200));
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
-
-                // 1px hairline border
-                g2.setColor(new Color(255, 255, 255, 20));
-                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 12, 12));
-
+                g2.setColor(UIUtils.COLOR_PRIMARY);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-        card.setOpaque(false);
-        card.setBorder(new EmptyBorder(12, 16, 12, 16));
-        card.setAlignmentX(Component.LEFT_ALIGNMENT);
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 84));
+        logoGlyph.setPreferredSize(new Dimension(28, 28));
+        logoGlyph.setOpaque(false);
+        JLabel glyphIcon = new JLabel("■");
+        glyphIcon.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 14));
+        glyphIcon.setForeground(Color.WHITE);
+        logoGlyph.add(glyphIcon);
+
+        JPanel titleBlock = new JPanel(new GridLayout(2, 1, 0, 1));
+        titleBlock.setOpaque(false);
+        JLabel brandName = new JLabel("SMART LOST & FOUND");
+        brandName.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 13));
+        brandName.setForeground(Color.WHITE);
+
+        JLabel brandSub = new JLabel("RECOVERY NETWORK");
+        brandSub.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 9));
+        brandSub.setForeground(UIUtils.COLOR_SIDEBAR_MUTED);
+
+        titleBlock.add(brandName);
+        titleBlock.add(brandSub);
+
+        topBrand.add(logoGlyph);
+        topBrand.add(titleBlock);
+        panel.add(topBrand, BorderLayout.NORTH);
+
+        // Center Hero Block
+        JPanel centerContent = new JPanel();
+        centerContent.setLayout(new BoxLayout(centerContent, BoxLayout.Y_AXIS));
+        centerContent.setOpaque(false);
+
+        centerContent.add(Box.createVerticalGlue());
+
+        JLabel heroHeadline = new JLabel("<html>Reclaim what's<br><font color='#E52E2D'>yours.</font></html>");
+        heroHeadline.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 36));
+        heroHeadline.setForeground(Color.WHITE);
+        heroHeadline.setAlignmentX(Component.LEFT_ALIGNMENT);
+        centerContent.add(heroHeadline);
+
+        centerContent.add(Box.createVerticalStrut(14));
+
+        JLabel heroDesc = new JLabel("<html>A unified community platform connecting lost belongings with their rightful owners through verified matching and instant updates.</html>");
+        heroDesc.setFont(UIUtils.FONT_BODY);
+        heroDesc.setForeground(new Color(161, 161, 170));
+        heroDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
+        centerContent.add(heroDesc);
+
+        centerContent.add(Box.createVerticalStrut(32));
+
+        // 3 Clean, Minimalist Feature Highlights (no marketing fluff)
+        centerContent.add(createMinimalBullet("⚡", "Real-Time Visual Feed", "16:9 high-res photos and interactive lightbox zoom."));
+        centerContent.add(Box.createVerticalStrut(16));
+        centerContent.add(createMinimalBullet("🛡️", "Verified Custody & Security", "Role-based oversight and authenticated claims."));
+        centerContent.add(Box.createVerticalStrut(16));
+        centerContent.add(createMinimalBullet("💾", "Zero Data Loss Storage", "Atomic persistent synchronization committed to disk."));
+
+        centerContent.add(Box.createVerticalGlue());
+
+        panel.add(centerContent, BorderLayout.CENTER);
+
+        // Bottom Footer
+        JLabel bottomTrust = new JLabel("🔒 256-Bit Encrypted • Local Storage • Privacy First");
+        bottomTrust.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 11));
+        bottomTrust.setForeground(UIUtils.COLOR_SIDEBAR_MUTED);
+        panel.add(bottomTrust, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JPanel createMinimalBullet(String icon, String title, String desc) {
+        JPanel row = new JPanel(new BorderLayout(12, 0));
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
 
         JLabel iconLabel = new JLabel(icon);
-        iconLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 22));
-        card.add(iconLabel, BorderLayout.WEST);
+        iconLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 16));
+        row.add(iconLabel, BorderLayout.WEST);
 
-        JPanel textCol = new JPanel(new GridLayout(2, 1, 0, 2));
-        textCol.setOpaque(false);
+        JPanel text = new JPanel(new GridLayout(2, 1, 0, 1));
+        text.setOpaque(false);
 
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(UIUtils.FONT_BODY_BOLD);
-        titleLabel.setForeground(Color.WHITE);
+        JLabel tLabel = new JLabel(title);
+        tLabel.setFont(UIUtils.FONT_BODY_BOLD);
+        tLabel.setForeground(Color.WHITE);
 
-        JLabel descLabel = new JLabel("<html>" + description + "</html>");
-        descLabel.setFont(UIUtils.FONT_SMALL);
-        descLabel.setForeground(UIUtils.COLOR_SIDEBAR_TEXT);
+        JLabel dLabel = new JLabel(desc);
+        dLabel.setFont(UIUtils.FONT_SMALL);
+        dLabel.setForeground(new Color(161, 161, 170));
 
-        textCol.add(titleLabel);
-        textCol.add(descLabel);
-        card.add(textCol, BorderLayout.CENTER);
+        text.add(tLabel);
+        text.add(dLabel);
+        row.add(text, BorderLayout.CENTER);
 
-        return card;
-    }
-
-    private JPanel createMetricStrip() {
-        JPanel strip = new JPanel(new GridLayout(1, 3, 10, 0));
-        strip.setOpaque(false);
-        strip.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
-
-        strip.add(createMiniMetric("98.4%", "Resolution Rate"));
-        strip.add(createMiniMetric("< 24h", "Median Recovery"));
-        strip.add(createMiniMetric("256-Bit", "Local Encryption"));
-
-        return strip;
-    }
-
-    private JPanel createMiniMetric(String value, String label) {
-        JPanel p = new JPanel(new GridLayout(2, 1, 0, 1));
-        p.setOpaque(false);
-
-        JLabel vLabel = new JLabel(value);
-        vLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 16));
-        vLabel.setForeground(Color.WHITE);
-
-        JLabel lLabel = new JLabel(label);
-        lLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 10));
-        lLabel.setForeground(UIUtils.COLOR_SIDEBAR_MUTED);
-
-        p.add(vLabel);
-        p.add(lLabel);
-        return p;
+        return row;
     }
 
     // =========================================================================
-    // Right Form Column (Full-Height Centered Card Container)
+    // Right Form Column (Pure, Clean, Focused Authentication)
     // =========================================================================
 
     private JPanel createFormColumn() {
-        JPanel wrapper = new JPanel(new GridBagLayout());
-        wrapper.setBackground(UIUtils.COLOR_BACKGROUND);
+        JPanel outer = new JPanel(new GridBagLayout());
+        outer.setBackground(Color.WHITE);
 
-        // Center card panel
-        JPanel formCard = UIUtils.createCardPanel(16);
-        formCard.setLayout(new BorderLayout(0, 16));
-        formCard.setPreferredSize(new Dimension(460, 600));
+        // Centered form column container (fixed max width of 380px for optimal reading proportion)
+        JPanel formContainer = new JPanel();
+        formContainer.setLayout(new BoxLayout(formContainer, BoxLayout.Y_AXIS));
+        formContainer.setBackground(Color.WHITE);
+        formContainer.setPreferredSize(new Dimension(380, 560));
+        formContainer.setMaximumSize(new Dimension(380, 680));
 
-        // 1. Top Header & Segmented Pill Switcher
-        JPanel topHeader = new JPanel(new BorderLayout(0, 14));
-        topHeader.setOpaque(false);
-
-        // Optional Return to Dashboard button (when arriving from active session)
-        JPanel returnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        returnRow.setOpaque(false);
+        // 1. Top Bar: Return to Dashboard (only when user has active session)
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setOpaque(false);
+        topBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
         returnToAppBtn = new JButton("← Back to Dashboard");
         returnToAppBtn.setFont(UIUtils.FONT_SMALL_BOLD);
@@ -313,29 +259,16 @@ public class AuthPagePanel extends JPanel {
                 mainFrame.showMainWorkspace();
             }
         });
-        returnRow.add(returnToAppBtn);
-        topHeader.add(returnRow, BorderLayout.NORTH);
+        topBar.add(returnToAppBtn, BorderLayout.WEST);
+        formContainer.add(topBar);
 
-        // Segmented Switcher
-        JPanel switcher = new JPanel(new GridLayout(1, 2, 8, 0));
-        switcher.setOpaque(false);
-        switcher.setPreferredSize(new Dimension(0, 44));
+        formContainer.add(Box.createVerticalStrut(12));
 
-        signInTabBtn = UIUtils.createModernButton("Sign In", UIUtils.COLOR_CHARCOAL_BTN,
-                UIUtils.COLOR_CHARCOAL_BTN, Color.WHITE, 8);
-        registerTabBtn = UIUtils.createModernButton("Create Account", new Color(244, 244, 246),
-                new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
+        // 2. Modern Segmented Pill Switcher (Sign In vs Create Account)
+        formContainer.add(createSegmentedSwitcher());
+        formContainer.add(Box.createVerticalStrut(24));
 
-        signInTabBtn.addActionListener(e -> showSignInCard());
-        registerTabBtn.addActionListener(e -> showRegisterCard());
-
-        switcher.add(signInTabBtn);
-        switcher.add(registerTabBtn);
-        topHeader.add(switcher, BorderLayout.CENTER);
-
-        formCard.add(topHeader, BorderLayout.NORTH);
-
-        // 2. Center Card Stack (Sign In vs Register)
+        // 3. Form Card Stack
         formCardLayout = new CardLayout();
         formCardContainer = new JPanel(formCardLayout);
         formCardContainer.setBackground(Color.WHITE);
@@ -343,44 +276,99 @@ public class AuthPagePanel extends JPanel {
         formCardContainer.add(createSignInPanel(), "SIGN_IN");
         formCardContainer.add(createRegisterPanel(), "REGISTER");
 
-        JScrollPane formScrollPane = new JScrollPane(formCardContainer);
-        formScrollPane.setBorder(null);
-        formScrollPane.getVerticalScrollBar().setUnitIncrement(14);
-        formScrollPane.getViewport().setBackground(Color.WHITE);
+        formContainer.add(formCardContainer);
 
-        formCard.add(formScrollPane, BorderLayout.CENTER);
-
-        // Center card inside wrapper with smooth breathing margin
+        // Center inside page with scroll wrapper
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        gbc.insets = new Insets(24, 24, 24, 24);
         gbc.anchor = GridBagConstraints.CENTER;
-        wrapper.add(formCard, gbc);
+        gbc.insets = new Insets(32, 24, 32, 24);
+        outer.add(formContainer, gbc);
 
-        JScrollPane pageScrollPane = new JScrollPane(wrapper);
-        pageScrollPane.setBorder(null);
-        pageScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        JScrollPane scrollPane = new JScrollPane(outer);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        JPanel outer = new JPanel(new BorderLayout());
-        outer.add(pageScrollPane, BorderLayout.CENTER);
-        return outer;
+        JPanel root = new JPanel(new BorderLayout());
+        root.add(scrollPane, BorderLayout.CENTER);
+        return root;
     }
+
+    private JPanel createSegmentedSwitcher() {
+        JPanel pillBox = new JPanel(new GridLayout(1, 2, 4, 0)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(244, 244, 245));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        pillBox.setOpaque(false);
+        pillBox.setBorder(new EmptyBorder(3, 3, 3, 3));
+        pillBox.setPreferredSize(new Dimension(380, 42));
+        pillBox.setMaximumSize(new Dimension(380, 42));
+
+        signInTabBtn = createTabPill("Sign In", true);
+        registerTabBtn = createTabPill("Create Account", false);
+
+        signInTabBtn.addActionListener(e -> showSignInCard());
+        registerTabBtn.addActionListener(e -> showRegisterCard());
+
+        pillBox.add(signInTabBtn);
+        pillBox.add(registerTabBtn);
+        return pillBox;
+    }
+
+    private JButton createTabPill(String text, boolean active) {
+        JButton btn = new JButton(text);
+        btn.setFont(UIUtils.FONT_BODY_BOLD);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(true);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setTabPillState(btn, active);
+        return btn;
+    }
+
+    private void setTabPillState(JButton btn, boolean active) {
+        if (active) {
+            btn.setBackground(Color.WHITE);
+            btn.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
+            btn.setBorder(new CompoundBorder(
+                    new LineBorder(new Color(228, 228, 231), 1, true),
+                    new EmptyBorder(6, 12, 6, 12)
+            ));
+        } else {
+            btn.setBackground(new Color(244, 244, 245));
+            btn.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
+            btn.setBorder(new EmptyBorder(7, 13, 7, 13));
+        }
+    }
+
+    // =========================================================================
+    // Sign In View
+    // =========================================================================
 
     private JPanel createSignInPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
-        panel.setBorder(new EmptyBorder(12, 4, 12, 4));
 
-        JLabel title = new JLabel("Welcome Back");
-        title.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 22));
+        // Header
+        JLabel title = new JLabel("Sign In");
+        title.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 24));
         title.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel sub = new JLabel("Enter your credentials to access your unified recovery hub.");
+        JLabel sub = new JLabel("Enter your account credentials to continue.");
         sub.setFont(UIUtils.FONT_BODY);
         sub.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
         sub.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -388,196 +376,243 @@ public class AuthPagePanel extends JPanel {
         panel.add(title);
         panel.add(Box.createVerticalStrut(4));
         panel.add(sub);
-        panel.add(Box.createVerticalStrut(20));
+        panel.add(Box.createVerticalStrut(24));
 
-        // Username
-        panel.add(createFormLabel("Username or Email:"));
-        panel.add(Box.createVerticalStrut(4));
+        // Username Field
+        panel.add(createFieldLabel("Username or Email"));
+        panel.add(Box.createVerticalStrut(6));
         loginUsernameField = UIUtils.createStyledTextField(20);
-        loginUsernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        loginUsernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         loginUsernameField.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(loginUsernameField);
-        panel.add(Box.createVerticalStrut(14));
 
-        // Password with show toggle
-        panel.add(createFormLabel("Password:"));
-        panel.add(Box.createVerticalStrut(4));
-        loginPasswordField = new JPasswordField(20);
-        loginPasswordField.setFont(UIUtils.FONT_BODY);
-        loginPasswordField.setBorder(new CompoundBorder(
-                new LineBorder(UIUtils.COLOR_BORDER, 1, true),
-                new EmptyBorder(8, 12, 8, 12)
-        ));
-        loginPasswordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        loginPasswordField.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(loginPasswordField);
+        panel.add(Box.createVerticalStrut(16));
+
+        // Password Field with Integrated Eye Toggle
+        panel.add(createFieldLabel("Password"));
         panel.add(Box.createVerticalStrut(6));
+        panel.add(createPasswordRow());
 
-        // Show password checkbox
-        loginShowPassCheck = new JCheckBox("Show password");
-        loginShowPassCheck.setFont(UIUtils.FONT_SMALL);
-        loginShowPassCheck.setOpaque(false);
-        loginShowPassCheck.setAlignmentX(Component.LEFT_ALIGNMENT);
-        loginShowPassCheck.addActionListener(e -> {
-            loginPasswordField.setEchoChar(loginShowPassCheck.isSelected() ? (char) 0 : '•');
-        });
-        panel.add(loginShowPassCheck);
-        panel.add(Box.createVerticalStrut(18));
+        panel.add(Box.createVerticalStrut(24));
 
-        // One-Click Demo Credentials Pill Bar
-        panel.add(createDemoQuickFillSection());
-        panel.add(Box.createVerticalStrut(20));
-
-        // Sign In Button (Large Crimson Gradient)
-        JButton signInSubmit = UIUtils.createPrimaryButton("Sign In to Recovery Hub  →");
+        // Primary Action: Sign In Button
+        JButton signInSubmit = UIUtils.createPrimaryButton("Sign In");
         signInSubmit.setFont(UIUtils.FONT_HEADER);
-        signInSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+        signInSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         signInSubmit.setAlignmentX(Component.LEFT_ALIGNMENT);
         signInSubmit.addActionListener(e -> handleSignIn());
         panel.add(signInSubmit);
 
-        // Enter key shortcut
+        // Enter key listeners
         loginUsernameField.addActionListener(e -> handleSignIn());
         loginPasswordField.addActionListener(e -> handleSignIn());
 
-        panel.add(Box.createVerticalStrut(12));
+        panel.add(Box.createVerticalStrut(10));
 
-        // Continue as Guest Option
-        JButton guestBtn = UIUtils.createSecondaryButton("👀 Continue as Guest (Browse Only)");
+        // Secondary Action: Continue as Guest
+        JButton guestBtn = UIUtils.createSecondaryButton("Continue as Guest →");
         guestBtn.setFont(UIUtils.FONT_BODY_BOLD);
-        guestBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        guestBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         guestBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        guestBtn.setToolTipText("Explore public feed and dashboard in view-only mode");
         guestBtn.addActionListener(e -> handleContinueAsGuest());
         panel.add(guestBtn);
+
+        panel.add(Box.createVerticalStrut(24));
+
+        // Understated, Clean Demo Autofill Bar (Subtle & Professional)
+        panel.add(createCleanDemoBar());
 
         return panel;
     }
 
-    private JPanel createDemoQuickFillSection() {
-        JPanel demoBox = new JPanel();
-        demoBox.setLayout(new BoxLayout(demoBox, BoxLayout.Y_AXIS));
-        demoBox.setOpaque(false);
-        demoBox.setBorder(new CompoundBorder(
-                new LineBorder(new Color(228, 228, 231), 1, true),
-                new EmptyBorder(10, 12, 10, 12)
-        ));
-        demoBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 86));
-        demoBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+    private JPanel createPasswordRow() {
+        JPanel passPanel = new JPanel(new BorderLayout());
+        passPanel.setBackground(Color.WHITE);
+        passPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        passPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel label = new JLabel("⚡ One-Click Demo Access:");
-        label.setFont(UIUtils.FONT_SMALL_BOLD);
-        label.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
-        demoBox.add(label);
-        demoBox.add(Box.createVerticalStrut(6));
+        loginPasswordField = new JPasswordField(20);
+        loginPasswordField.setFont(UIUtils.FONT_BODY);
+        loginPasswordField.setCaretColor(UIUtils.COLOR_PRIMARY);
 
-        JPanel pills = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        pills.setOpaque(false);
+        Border normalBorder = new CompoundBorder(
+                new UIUtils.RoundedLineBorder(UIUtils.COLOR_BORDER, 1, 8),
+                new EmptyBorder(8, 12, 8, 4)
+        );
+        Border focusBorder = new CompoundBorder(
+                new UIUtils.RoundedLineBorder(UIUtils.COLOR_PRIMARY, 2, 8),
+                new EmptyBorder(7, 11, 7, 3)
+        );
 
-        JButton adminPill = UIUtils.createModernButton("👑 Admin (admin)",
-                UIUtils.COLOR_PRIMARY_LIGHT, UIUtils.COLOR_PRIMARY_BORDER, UIUtils.COLOR_PRIMARY, 6);
-        adminPill.setFont(UIUtils.FONT_SMALL_BOLD);
-        adminPill.addActionListener(e -> {
-            loginUsernameField.setText("admin");
-            loginPasswordField.setText("admin123");
+        passPanel.setBorder(normalBorder);
+
+        loginPasswordField.setBorder(null);
+        loginPasswordField.setOpaque(false);
+
+        loginPasswordField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                passPanel.setBorder(focusBorder);
+                passPanel.repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                passPanel.setBorder(normalBorder);
+                passPanel.repaint();
+            }
         });
 
-        JButton userPill = UIUtils.createModernButton("👤 User (john)",
-                new Color(239, 246, 255), new Color(191, 219, 254), new Color(29, 78, 216), 6);
-        userPill.setFont(UIUtils.FONT_SMALL_BOLD);
-        userPill.addActionListener(e -> {
-            loginUsernameField.setText("john");
-            loginPasswordField.setText("user123");
+        // Integrated eye toggle button
+        passToggleBtn = new JButton("👁");
+        passToggleBtn.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 14));
+        passToggleBtn.setForeground(UIUtils.COLOR_TEXT_MUTED);
+        passToggleBtn.setContentAreaFilled(false);
+        passToggleBtn.setBorderPainted(false);
+        passToggleBtn.setFocusPainted(false);
+        passToggleBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        passToggleBtn.setBorder(new EmptyBorder(0, 4, 0, 10));
+        passToggleBtn.setToolTipText("Toggle password visibility");
+        passToggleBtn.addActionListener(e -> {
+            isPasswordVisible = !isPasswordVisible;
+            loginPasswordField.setEchoChar(isPasswordVisible ? (char) 0 : '•');
+            passToggleBtn.setForeground(isPasswordVisible ? UIUtils.COLOR_PRIMARY : UIUtils.COLOR_TEXT_MUTED);
         });
 
-        JButton userPill2 = UIUtils.createModernButton("👤 User (sarah)",
-                new Color(243, 244, 246), new Color(229, 231, 235), new Color(55, 65, 81), 6);
-        userPill2.setFont(UIUtils.FONT_SMALL_BOLD);
-        userPill2.addActionListener(e -> {
-            loginUsernameField.setText("sarah");
-            loginPasswordField.setText("user123");
-        });
+        passPanel.add(loginPasswordField, BorderLayout.CENTER);
+        passPanel.add(passToggleBtn, BorderLayout.EAST);
 
-        pills.add(adminPill);
-        pills.add(userPill);
-        pills.add(userPill2);
-        demoBox.add(pills);
-
-        return demoBox;
+        return passPanel;
     }
+
+    private JPanel createCleanDemoBar() {
+        JPanel bar = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+        bar.setOpaque(false);
+        bar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+
+        JLabel demoHint = new JLabel("Demo fill:");
+        demoHint.setFont(UIUtils.FONT_SMALL);
+        demoHint.setForeground(UIUtils.COLOR_TEXT_MUTED);
+        bar.add(demoHint);
+
+        bar.add(createFastChip("Admin", "admin", "admin123"));
+        bar.add(createFastChip("John", "john", "user123"));
+        bar.add(createFastChip("Sarah", "sarah", "user123"));
+
+        return bar;
+    }
+
+    private JButton createFastChip(String label, String u, String p) {
+        JButton btn = new JButton(label);
+        btn.setFont(UIUtils.FONT_SMALL_BOLD);
+        btn.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
+        btn.setBackground(new Color(244, 244, 246));
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(new EmptyBorder(3, 8, 3, 8));
+        btn.addActionListener(e -> {
+            loginUsernameField.setText(u);
+            loginPasswordField.setText(p);
+            loginUsernameField.requestFocus();
+        });
+        return btn;
+    }
+
+    // =========================================================================
+    // Create Account View
+    // =========================================================================
 
     private JPanel createRegisterPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
-        panel.setBorder(new EmptyBorder(12, 4, 12, 4));
 
-        JLabel title = new JLabel("Create a New Account");
-        title.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 20));
+        JLabel title = new JLabel("Create Account");
+        title.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 22));
         title.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel sub = new JLabel("Join the community to report items, track claims, and manage alerts.");
-        sub.setFont(UIUtils.FONT_SMALL);
+        JLabel sub = new JLabel("Sign up to report items and receive recovery alerts.");
+        sub.setFont(UIUtils.FONT_BODY);
         sub.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
         sub.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         panel.add(title);
-        panel.add(Box.createVerticalStrut(2));
+        panel.add(Box.createVerticalStrut(4));
         panel.add(sub);
-        panel.add(Box.createVerticalStrut(14));
+        panel.add(Box.createVerticalStrut(18));
 
-        // Form Fields in 2 columns
-        JPanel formGrid = new JPanel(new GridLayout(5, 2, 10, 8));
-        formGrid.setOpaque(false);
-        formGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
-        formGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Form Fields (Clean & Sequential)
+        panel.add(createFieldLabel("Full Name *"));
+        panel.add(Box.createVerticalStrut(4));
+        regNameField = UIUtils.createStyledTextField(20);
+        regNameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        regNameField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(regNameField);
+        panel.add(Box.createVerticalStrut(10));
 
-        // Row 1: Full Name & Username
-        regNameField = UIUtils.createStyledTextField(15);
-        regUsernameField = UIUtils.createStyledTextField(15);
-        formGrid.add(createLabeledField("Full Name *", regNameField));
-        formGrid.add(createLabeledField("Username (login ID) *", regUsernameField));
+        panel.add(createFieldLabel("Username (Login ID) *"));
+        panel.add(Box.createVerticalStrut(4));
+        regUsernameField = UIUtils.createStyledTextField(20);
+        regUsernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        regUsernameField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(regUsernameField);
+        panel.add(Box.createVerticalStrut(10));
 
-        // Row 2: Email & Phone
-        regEmailField = UIUtils.createStyledTextField(15);
-        regPhoneField = UIUtils.createStyledTextField(15);
-        formGrid.add(createLabeledField("Email Address", regEmailField));
-        formGrid.add(createLabeledField("Phone Number", regPhoneField));
+        panel.add(createFieldLabel("Email Address *"));
+        panel.add(Box.createVerticalStrut(4));
+        regEmailField = UIUtils.createStyledTextField(20);
+        regEmailField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        regEmailField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(regEmailField);
+        panel.add(Box.createVerticalStrut(10));
 
-        // Row 3: Password & Confirm Password
-        regPasswordField = new JPasswordField(15);
-        regPasswordField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_BORDER, 1, true), new EmptyBorder(6, 10, 6, 10)));
-        regConfirmPasswordField = new JPasswordField(15);
-        regConfirmPasswordField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_BORDER, 1, true), new EmptyBorder(6, 10, 6, 10)));
-        formGrid.add(createLabeledField("Password (min 4 chars) *", regPasswordField));
-        formGrid.add(createLabeledField("Confirm Password *", regConfirmPasswordField));
+        panel.add(createFieldLabel("Password *"));
+        panel.add(Box.createVerticalStrut(4));
+        regPasswordField = new JPasswordField(20);
+        regPasswordField.setFont(UIUtils.FONT_BODY);
+        regPasswordField.setBorder(new CompoundBorder(
+                new LineBorder(UIUtils.COLOR_BORDER, 1, true),
+                new EmptyBorder(8, 12, 8, 12)
+        ));
+        regPasswordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        regPasswordField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(regPasswordField);
+        panel.add(Box.createVerticalStrut(10));
 
-        // Row 4: Role Selection
-        String[] roleOptions = {"Standard Community User", "Executive Administrator"};
-        regRoleCombo = new JComboBox<>(roleOptions);
+        panel.add(createFieldLabel("Account Role"));
+        panel.add(Box.createVerticalStrut(4));
+        String[] roles = {"Standard Community User", "Executive Administrator"};
+        regRoleCombo = new JComboBox<>(roles);
         regRoleCombo.setFont(UIUtils.FONT_BODY);
         regRoleCombo.setBackground(Color.WHITE);
-        formGrid.add(createLabeledField("Account Role *", regRoleCombo));
+        regRoleCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        regRoleCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(regRoleCombo);
+        panel.add(Box.createVerticalStrut(10));
 
-        // Row 5: Admin Secret Code
+        // Admin Security Key (only shown when Administrator is selected)
         adminCodeContainer = new JPanel();
         adminCodeContainer.setLayout(new BoxLayout(adminCodeContainer, BoxLayout.Y_AXIS));
         adminCodeContainer.setOpaque(false);
         adminCodeContainer.setVisible(false);
+        adminCodeContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        adminCodeContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
-        JLabel codeLabel = new JLabel("Admin Key (ADMIN2026):");
-        codeLabel.setFont(UIUtils.FONT_SMALL_BOLD);
-        codeLabel.setForeground(UIUtils.COLOR_PRIMARY);
+        JLabel keyLabel = new JLabel("Admin Key (ADMIN2026):");
+        keyLabel.setFont(UIUtils.FONT_SMALL_BOLD);
+        keyLabel.setForeground(UIUtils.COLOR_PRIMARY);
 
-        regAdminCodeField = new JPasswordField(10);
-        regAdminCodeField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_PRIMARY, 1, true), new EmptyBorder(6, 8, 6, 8)));
-        regAdminCodeField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        regAdminCodeField = new JPasswordField(15);
+        regAdminCodeField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_PRIMARY, 1, true), new EmptyBorder(6, 10, 6, 10)));
+        regAdminCodeField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
 
-        adminCodeContainer.add(codeLabel);
-        adminCodeContainer.add(Box.createVerticalStrut(3));
+        adminCodeContainer.add(keyLabel);
+        adminCodeContainer.add(Box.createVerticalStrut(4));
         adminCodeContainer.add(regAdminCodeField);
-        formGrid.add(adminCodeContainer);
+        panel.add(adminCodeContainer);
 
         regRoleCombo.addActionListener(e -> {
             boolean isAdmin = regRoleCombo.getSelectedIndex() == 1;
@@ -586,13 +621,12 @@ public class AuthPagePanel extends JPanel {
             panel.repaint();
         });
 
-        panel.add(formGrid);
-        panel.add(Box.createVerticalStrut(18));
+        panel.add(Box.createVerticalStrut(16));
 
-        // Register Button
-        JButton registerSubmit = UIUtils.createPrimaryButton("Register Account & Sign In  →");
+        // Submit Button
+        JButton registerSubmit = UIUtils.createPrimaryButton("Create Account & Sign In");
         registerSubmit.setFont(UIUtils.FONT_HEADER);
-        registerSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+        registerSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         registerSubmit.setAlignmentX(Component.LEFT_ALIGNMENT);
         registerSubmit.addActionListener(e -> handleRegister());
         panel.add(registerSubmit);
@@ -600,28 +634,7 @@ public class AuthPagePanel extends JPanel {
         return panel;
     }
 
-    private JPanel createLabeledField(String labelText, JComponent field) {
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setOpaque(false);
-
-        JLabel l = new JLabel(labelText);
-        l.setFont(UIUtils.FONT_SMALL_BOLD);
-        l.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
-        l.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        field.setAlignmentX(Component.LEFT_ALIGNMENT);
-        if (field instanceof JTextField) {
-            field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        }
-
-        p.add(l);
-        p.add(Box.createVerticalStrut(3));
-        p.add(field);
-        return p;
-    }
-
-    private JLabel createFormLabel(String text) {
+    private JLabel createFieldLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(UIUtils.FONT_BODY_BOLD);
         label.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
@@ -630,23 +643,19 @@ public class AuthPagePanel extends JPanel {
     }
 
     // =========================================================================
-    // Card Navigation & Action Handlers
+    // Card Navigation & Actions
     // =========================================================================
 
     public void showSignInCard() {
         formCardLayout.show(formCardContainer, "SIGN_IN");
-        signInTabBtn.setBackground(UIUtils.COLOR_CHARCOAL_BTN);
-        signInTabBtn.setForeground(Color.WHITE);
-        registerTabBtn.setBackground(new Color(244, 244, 246));
-        registerTabBtn.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
+        setTabPillState(signInTabBtn, true);
+        setTabPillState(registerTabBtn, false);
     }
 
     public void showRegisterCard() {
         formCardLayout.show(formCardContainer, "REGISTER");
-        registerTabBtn.setBackground(UIUtils.COLOR_CHARCOAL_BTN);
-        registerTabBtn.setForeground(Color.WHITE);
-        signInTabBtn.setBackground(new Color(244, 244, 246));
-        signInTabBtn.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
+        setTabPillState(registerTabBtn, true);
+        setTabPillState(signInTabBtn, false);
     }
 
     public void updateReturnToAppVisibility(boolean visible) {
@@ -661,10 +670,12 @@ public class AuthPagePanel extends JPanel {
         if (regNameField != null) regNameField.setText("");
         if (regUsernameField != null) regUsernameField.setText("");
         if (regEmailField != null) regEmailField.setText("");
-        if (regPhoneField != null) regPhoneField.setText("");
         if (regPasswordField != null) regPasswordField.setText("");
         if (regConfirmPasswordField != null) regConfirmPasswordField.setText("");
         if (regAdminCodeField != null) regAdminCodeField.setText("");
+        isPasswordVisible = false;
+        if (loginPasswordField != null) loginPasswordField.setEchoChar('•');
+        if (passToggleBtn != null) passToggleBtn.setForeground(UIUtils.COLOR_TEXT_MUTED);
         showSignInCard();
     }
 
@@ -707,9 +718,7 @@ public class AuthPagePanel extends JPanel {
         String name = regNameField.getText().trim();
         String username = regUsernameField.getText().trim().toLowerCase();
         String email = regEmailField.getText().trim();
-        String phone = regPhoneField.getText().trim();
         String pass = new String(regPasswordField.getPassword());
-        String confirm = new String(regConfirmPasswordField.getPassword());
         boolean wantsAdmin = regRoleCombo.getSelectedIndex() == 1;
 
         if (name.isEmpty()) {
@@ -724,8 +733,8 @@ public class AuthPagePanel extends JPanel {
             return;
         }
 
-        if (email.isEmpty() && phone.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter either an email address or a phone number.", "Validation", JOptionPane.WARNING_MESSAGE);
+        if (email.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter an email address.", "Validation", JOptionPane.WARNING_MESSAGE);
             regEmailField.requestFocus();
             return;
         }
@@ -733,12 +742,6 @@ public class AuthPagePanel extends JPanel {
         if (pass.length() < 4) {
             JOptionPane.showMessageDialog(this, "Password must be at least 4 characters long.", "Validation", JOptionPane.WARNING_MESSAGE);
             regPasswordField.requestFocus();
-            return;
-        }
-
-        if (!pass.equals(confirm)) {
-            JOptionPane.showMessageDialog(this, "Passwords do not match.", "Validation", JOptionPane.WARNING_MESSAGE);
-            regConfirmPasswordField.requestFocus();
             return;
         }
 
@@ -758,7 +761,7 @@ public class AuthPagePanel extends JPanel {
 
         try {
             UserAccount account = controller.getUserManager().registerUser(
-                    username, pass, name, email, phone, role);
+                    username, pass, name, email, "", role);
             controller.setCurrentUser(account);
 
             JOptionPane.showMessageDialog(this,
