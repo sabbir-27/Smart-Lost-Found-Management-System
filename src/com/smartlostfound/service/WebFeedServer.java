@@ -99,7 +99,8 @@ public class WebFeedServer {
                 return;
             }
 
-            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            String method = exchange.getRequestMethod();
+            if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) {
                 exchange.sendResponseHeaders(405, -1);
                 return;
             }
@@ -109,6 +110,10 @@ public class WebFeedServer {
 
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
             exchange.getResponseHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate");
+            if ("HEAD".equalsIgnoreCase(method)) {
+                exchange.sendResponseHeaders(200, -1);
+                return;
+            }
             exchange.sendResponseHeaders(200, responseBytes.length);
 
             try (OutputStream os = exchange.getResponseBody()) {
@@ -242,13 +247,31 @@ public class WebFeedServer {
 
         // Footer
         sb.append(".card-footer { padding: 12px 18px; background: #FAFAFA; border-top: 1px solid #F4F4F5; font-size: 12px; color: #71717A; display: flex; justify-content: space-between; }");
+
+        // Modal and Interactive Elements
+        sb.append(".modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 999; animation: fadeIn 0.2s ease; }");
+        sb.append(".modal-box { background: #FFFFFF; border-radius: 16px; width: 92%; max-width: 420px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); position: relative; }");
+        sb.append(".google-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid #DADCE0; background: #FFFFFF; padding: 11px 16px; border-radius: 8px; font-weight: 700; font-size: 14px; color: #3C4043; cursor: pointer; transition: background 0.15s; }");
+        sb.append(".google-btn:hover { background: #F8F9FA; border-color: #C6C9CE; }");
+        sb.append(".or-sep { text-align: center; position: relative; margin: 18px 0 16px 0; }");
+        sb.append(".or-sep::before { content: ''; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: #E4E4E7; }");
+        sb.append(".or-sep span { position: relative; background: #FFF; padding: 0 10px; font-size: 10px; font-weight: 700; color: #A1A1AA; letter-spacing: 0.5px; }");
+        sb.append(".styled-input { width: 100%; padding: 10px 14px; border: 1px solid #E4E4E7; border-radius: 8px; font-size: 13px; outline: none; transition: border-color 0.15s; }");
+        sb.append(".styled-input:focus { border-color: #E52E2D; }");
+        sb.append(".submit-btn { width: 100%; background: #E52E2D; color: #FFF; border: none; padding: 11px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }");
+        sb.append(".submit-btn:hover { background: #C8201F; }");
+        sb.append(".toast-pill { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #18181B; color: #FFF; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 1000; animation: popUp 0.3s ease; }");
+        sb.append("@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }");
+        sb.append("@keyframes popUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }");
         sb.append("</style></head><body>");
 
         // Header
         sb.append("<header><div class='header-inner'>");
         sb.append("<div class='brand'><div class='brand-badge'>■</div> SMART LOST &amp; FOUND</div>");
-        sb.append("<div class='pill-banner'>BROWSER MODE: FEED ONLY</div>");
-        sb.append("</div></header>");
+        sb.append("<div style='display:flex; align-items:center; gap:10px;'>");
+        sb.append("<div class='pill-banner' id='navBadge'>BROWSER MODE: FEED ONLY</div>");
+        sb.append("<button onclick=\"openSignUpModal('Account')\" id='authBtn' style='background:#18181B; color:#FFF; border:1px solid #27272A; padding:6px 14px; border-radius:20px; font-weight:700; font-size:12px; cursor:pointer;'>Sign In</button>");
+        sb.append("</div></div></header>");
 
         // Notice Bar
         sb.append("<div class='notice-bar'>");
@@ -257,6 +280,17 @@ public class WebFeedServer {
 
         // Feed Container
         sb.append("<div class='feed-container'>");
+
+        // Facebook-style Composer Card (Top of feed)
+        sb.append("<div class='feed-card' style='padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px;'>");
+        sb.append("<div style='display: flex; align-items: center; gap: 12px; flex: 1;'>");
+        sb.append("<div class='avatar' id='composerAvatar' style='background: #52525B;'>GV</div>");
+        sb.append("<span style='color: #71717A; font-size: 13px;' id='composerText'>Lost an item or discovered property? Broadcast it to the community...</span>");
+        sb.append("</div>");
+        sb.append("<div style='display: flex; gap: 8px;'>");
+        sb.append("<button onclick=\"openSignUpModal('Lost')\" style='background:#E52E2D; color:#FFF; border:none; padding:8px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:5px;'>▲ Report Lost</button>");
+        sb.append("<button onclick=\"openSignUpModal('Found')\" style='background:#18181B; color:#FFF; border:none; padding:8px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:5px;'>▼ Report Found</button>");
+        sb.append("</div></div>");
 
         if (items.isEmpty()) {
             sb.append("<div class='feed-card' style='padding: 40px; text-align: center; color: #71717A;'>");
@@ -268,6 +302,92 @@ public class WebFeedServer {
                 renderItemCard(sb, item);
             }
         }
+
+        // Auth Modal for Guest Users clicking Report or Sign In
+        sb.append("<div id='authModal' class='modal-overlay' style='display:none;'>");
+        sb.append("<div class='modal-box'>");
+        sb.append("<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;'>");
+        sb.append("<div class='brand-badge' style='width:32px; height:32px; font-size:16px;' id='modalBadge'>▲</div>");
+        sb.append("<button onclick='closeAuthModal()' style='background:none; border:none; font-size:20px; cursor:pointer; color:#71717A;'>✕</button>");
+        sb.append("</div>");
+        sb.append("<h2 id='modalTitle' style='font-size:19px; font-weight:800; color:#0F0F11;'>Sign Up Required to Report Item</h2>");
+        sb.append("<p id='modalSub' style='color:#71717A; font-size:13px; margin:6px 0 20px 0;'>Guest users must sign up before reporting items to track recovery progress and verify claims.</p>");
+
+        // Google Sign-In button with 4-color Google G SVG
+        sb.append("<button class='google-btn' onclick='continueWithGoogle()'>");
+        sb.append("<svg width='18' height='18' viewBox='0 0 18 18'>");
+        sb.append("<path fill='#4285F4' d='M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z'/>");
+        sb.append("<path fill='#34A853' d='M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z'/>");
+        sb.append("<path fill='#FBBC05' d='M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z'/>");
+        sb.append("<path fill='#EA4335' d='M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z'/>");
+        sb.append("</svg>");
+        sb.append("<span>Sign up with Google</span>");
+        sb.append("</button>");
+
+        sb.append("<div class='or-sep'><span>OR SIGN UP WITH EMAIL</span></div>");
+
+        sb.append("<div id='authForm' style='display:flex; flex-direction:column; gap:10px;'>");
+        sb.append("<input type='text' id='formName' placeholder='Full Name' class='styled-input'>");
+        sb.append("<input type='email' id='formEmail' placeholder='Email Address' class='styled-input'>");
+        sb.append("<input type='password' id='formPass' placeholder='Password (minimum 4 characters)' class='styled-input'>");
+        sb.append("<button onclick='handleEmailSubmit()' class='submit-btn' id='submitBtn'>Create Account & Sign In</button>");
+        sb.append("</div>");
+
+        sb.append("<div style='margin-top:16px; text-align:center; font-size:12px; color:#71717A;'>");
+        sb.append("<span id='switchPrompt'>Already have an account?</span> ");
+        sb.append("<a href='javascript:void(0)' onclick='toggleAuthMode()' id='switchLink' style='color:#E52E2D; font-weight:700; text-decoration:none;'>Sign In</a>");
+        sb.append("</div>");
+
+        sb.append("</div></div>"); // .modal-box, #authModal
+
+        // Client Javascript
+        sb.append("<script>");
+        sb.append("var isSignUpMode = true; var currentReportType = 'Lost';");
+        sb.append("function openSignUpModal(type) {");
+        sb.append("  currentReportType = type;");
+        sb.append("  document.getElementById('authModal').style.display = 'flex';");
+        sb.append("  if(type === 'Account') { setMode(false); } else {");
+        sb.append("    setMode(true);");
+        sb.append("    document.getElementById('modalTitle').innerText = 'Sign Up Required to Report ' + type;");
+        sb.append("    document.getElementById('modalBadge').innerText = (type==='Lost'?'▲':'▼');");
+        sb.append("  }");
+        sb.append("}");
+        sb.append("function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }");
+        sb.append("function setMode(signUp) {");
+        sb.append("  isSignUpMode = signUp;");
+        sb.append("  document.getElementById('formName').style.display = signUp ? 'block' : 'none';");
+        sb.append("  document.getElementById('submitBtn').innerText = signUp ? 'Create Account & Sign In' : 'Sign In';");
+        sb.append("  document.getElementById('switchPrompt').innerText = signUp ? 'Already have an account?' : 'Need an account?';");
+        sb.append("  document.getElementById('switchLink').innerText = signUp ? 'Sign In' : 'Create Account';");
+        sb.append("  if(!signUp) { document.getElementById('modalTitle').innerText = 'Sign In to Your Account'; }");
+        sb.append("}");
+        sb.append("function toggleAuthMode() { setMode(!isSignUpMode); }");
+        sb.append("function continueWithGoogle() {");
+        sb.append("  closeAuthModal();");
+        sb.append("  setUser('Alex Rivera', 'AR', 'alex.rivera.dev@gmail.com');");
+        sb.append("  showToast('Signed in with Google as Alex Rivera! (Browser mode is Community Feed only)');");
+        sb.append("}");
+        sb.append("function handleEmailSubmit() {");
+        sb.append("  var email = document.getElementById('formEmail').value.trim();");
+        sb.append("  var name = isSignUpMode ? document.getElementById('formName').value.trim() : (email.split('@')[0]);");
+        sb.append("  if(!email || !email.includes('@')) { alert('Please enter a valid email address.'); return; }");
+        sb.append("  closeAuthModal();");
+        sb.append("  setUser(name || 'Community Member', (name||'CM').substring(0,2).toUpperCase(), email);");
+        sb.append("  showToast('Authenticated as ' + (name || email) + '! (Browser mode is Community Feed only)');");
+        sb.append("}");
+        sb.append("function setUser(name, initials, email) {");
+        sb.append("  document.getElementById('composerAvatar').innerText = initials;");
+        sb.append("  document.getElementById('composerAvatar').style.background = '#E52E2D';");
+        sb.append("  document.getElementById('composerText').innerText = 'Logged in as ' + name + ' (' + email + ')';");
+        sb.append("  document.getElementById('authBtn').innerText = 'Signed in: ' + initials;");
+        sb.append("  document.getElementById('authBtn').style.background = '#E52E2D';");
+        sb.append("}");
+        sb.append("function showToast(msg) {");
+        sb.append("  var t = document.createElement('div'); t.className = 'toast-pill'; t.innerText = msg;");
+        sb.append("  document.body.appendChild(t);");
+        sb.append("  setTimeout(function() { t.remove(); }, 4000);");
+        sb.append("}");
+        sb.append("</script>");
 
         sb.append("</div></body></html>");
         return sb.toString();
