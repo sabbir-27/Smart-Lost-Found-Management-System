@@ -4,58 +4,81 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.geom.RoundRectangle2D;
 
 /**
- * UI Utilities class providing standard modern design tokens, color schemes,
- * typography, component factories, and consistent spacing across the application.
+ * Enterprise UI Utilities class implementing the DesignRush signature color concept:
+ * high-contrast carbon black (#0B0B0C), vivid crimson brand red (#E52E2D),
+ * pure white elevated surfaces (#FFFFFF), and crisp editorial typography.
  */
 public final class UIUtils {
 
-    // Primary Colors
-    public static final Color COLOR_PRIMARY = new Color(37, 99, 235);        // #2563EB - Royal Blue
-    public static final Color COLOR_PRIMARY_HOVER = new Color(29, 78, 216);  // #1D4ED8
-    public static final Color COLOR_SECONDARY = new Color(100, 116, 139);    // #64748B - Slate
-    public static final Color COLOR_SECONDARY_HOVER = new Color(71, 85, 105);
-    public static final Color COLOR_SUCCESS = new Color(22, 163, 74);        // #16A34A - Green
-    public static final Color COLOR_SUCCESS_HOVER = new Color(21, 128, 61);
-    public static final Color COLOR_DANGER = new Color(220, 38, 38);         // #DC2626 - Red
-    public static final Color COLOR_DANGER_HOVER = new Color(185, 28, 28);
-    public static final Color COLOR_WARNING = new Color(217, 119, 6);        // #D97706 - Amber
+    // DesignRush Brand Colors
+    public static final Color COLOR_PRIMARY = new Color(229, 46, 45);         // #E52E2D - DesignRush Signature Red
+    public static final Color COLOR_PRIMARY_HOVER = new Color(200, 32, 31);   // #C8201F - Darker crimson on hover
+    public static final Color COLOR_PRIMARY_LIGHT = new Color(254, 242, 242); // #FEF2F2 - Soft red surface
+    public static final Color COLOR_PRIMARY_BORDER = new Color(254, 202, 202);// #FECACA - Subtle red accent border
 
-    // Neutral Surfaces & Borders
-    public static final Color COLOR_BACKGROUND = new Color(248, 250, 252);   // #F8FAFC - Off white
-    public static final Color COLOR_SURFACE = new Color(255, 255, 255);      // #FFFFFF - Pure white
-    public static final Color COLOR_BORDER = new Color(226, 232, 240);       // #E2E8F0 - Soft gray
-    public static final Color COLOR_HEADER_BG = new Color(15, 23, 42);       // #0F172A - Deep slate
-    public static final Color COLOR_TEXT_PRIMARY = new Color(15, 23, 42);    // #0F172A - Deep slate
-    public static final Color COLOR_TEXT_MUTED = new Color(100, 116, 139);   // #64748B - Cool gray
-    public static final Color COLOR_TABLE_HEADER = new Color(241, 245, 249); // #F1F5F9 - Table header
-    public static final Color COLOR_TABLE_ROW_ALT = new Color(248, 250, 252);// #F8FAFC
-    public static final Color COLOR_TABLE_SELECTION = new Color(219, 234, 254);// #DBEAFE
+    // Carbon Black & Editorial Zinc
+    public static final Color COLOR_SIDEBAR_BG = new Color(11, 11, 12);       // #0B0B0C - Deep Carbon Black
+    public static final Color COLOR_SIDEBAR_CARD = new Color(24, 24, 27);     // #18181B - Zinc 900
+    public static final Color COLOR_SIDEBAR_HOVER = new Color(39, 39, 42);    // #27272A - Zinc 800
+    public static final Color COLOR_SIDEBAR_ACTIVE = new Color(229, 46, 45);   // #E52E2D - Active Red Indicator
+    public static final Color COLOR_SIDEBAR_TEXT = new Color(161, 161, 170);  // #A1A1AA - Zinc 400
+
+    // Surfaces & Borders
+    public static final Color COLOR_BACKGROUND = new Color(249, 250, 251);    // #F9FAFB - Clean Light Backdrop
+    public static final Color COLOR_SURFACE = new Color(255, 255, 255);       // #FFFFFF - Pure White
+    public static final Color COLOR_BORDER = new Color(228, 228, 231);        // #E4E4E7 - Clean Hairline Border
+    public static final Color COLOR_BORDER_FOCUS = new Color(229, 46, 45);    // #E52E2D - Red Input Focus
+    public static final Color COLOR_CHARCOAL_BTN = new Color(24, 24, 27);     // #18181B - Solid Dark Button
+
+    // Typography Hierarchy
+    public static final Color COLOR_TEXT_PRIMARY = new Color(15, 15, 17);     // #0F0F11 - Pitch Black
+    public static final Color COLOR_TEXT_SECONDARY = new Color(82, 82, 91);   // #52525B - Zinc 600
+    public static final Color COLOR_TEXT_MUTED = new Color(161, 161, 170);   // #A1A1AA - Zinc 400
+
+    // Supporting Editorial Accents
+    public static final Color COLOR_SUCCESS = new Color(16, 185, 129);        // #10B981 - Emerald Green
+    public static final Color COLOR_SUCCESS_HOVER = new Color(5, 150, 105);
+    public static final Color COLOR_DANGER = new Color(229, 46, 45);          // #E52E2D - Red
+    public static final Color COLOR_DANGER_HOVER = new Color(185, 28, 28);
+    public static final Color COLOR_WARNING = new Color(245, 158, 11);        // #F59E0B - Gold/Amber
+    public static final Color COLOR_BLUE = new Color(2, 132, 199);            // #0284C7 - Sky Blue
+    public static final Color COLOR_TEAL = new Color(13, 148, 136);           // #0D9488 - Teal
+
+    // Table Theme
+    public static final Color COLOR_TABLE_HEADER = new Color(244, 244, 245);  // #F4F4F5 - High contrast header
+    public static final Color COLOR_TABLE_ROW_ALT = new Color(250, 250, 251); // Clean alternating row
+    public static final Color COLOR_TABLE_HOVER = new Color(244, 244, 245);   // Hover highlight
+    public static final Color COLOR_TABLE_SELECTION = new Color(254, 226, 226);// Soft Red Tint Selection
 
     // Typography
-    public static final Font FONT_HEADER = new Font("SansSerif", Font.BOLD, 20);
-    public static final Font FONT_TITLE = new Font("SansSerif", Font.BOLD, 15);
-    public static final Font FONT_SUBTITLE = new Font("SansSerif", Font.PLAIN, 12);
-    public static final Font FONT_BODY = new Font("SansSerif", Font.PLAIN, 13);
-    public static final Font FONT_BODY_BOLD = new Font("SansSerif", Font.BOLD, 13);
-    public static final Font FONT_SMALL = new Font("SansSerif", Font.PLAIN, 11);
-    public static final Font FONT_KPI_NUMBER = new Font("SansSerif", Font.BOLD, 24);
+    public static final Font FONT_LOGO = new Font("Segoe UI", Font.BOLD, 17);
+    public static final Font FONT_HEADER = new Font("Segoe UI", Font.BOLD, 22);
+    public static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 16);
+    public static final Font FONT_SUBTITLE = new Font("Segoe UI", Font.PLAIN, 13);
+    public static final Font FONT_BODY = new Font("Segoe UI", Font.PLAIN, 13);
+    public static final Font FONT_BODY_BOLD = new Font("Segoe UI", Font.BOLD, 13);
+    public static final Font FONT_SMALL = new Font("Segoe UI", Font.PLAIN, 11);
+    public static final Font FONT_SMALL_BOLD = new Font("Segoe UI", Font.BOLD, 11);
+    public static final Font FONT_KPI_NUMBER = new Font("Segoe UI", Font.BOLD, 26);
+    public static final Font FONT_MONO = new Font("Monospaced", Font.BOLD, 12);
 
     private UIUtils() {
-        // Utility class private constructor
     }
 
     /**
      * Initializes global Swing Look &amp; Feel with modern anti-aliasing and native decorations.
      */
     public static void applyModernLookAndFeel() {
+        System.setProperty("awt.useSystemAAFontSettings", "on");
+        System.setProperty("swing.aatext", "true");
+
         try {
-            // Prefer Nimbus or System L&F
             boolean nimbusSet = false;
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equalsIgnoreCase(info.getName())) {
@@ -68,155 +91,177 @@ public final class UIUtils {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             }
 
-            // Global UI properties
             UIManager.put("Button.font", FONT_BODY_BOLD);
             UIManager.put("Label.font", FONT_BODY);
             UIManager.put("TextField.font", FONT_BODY);
             UIManager.put("ComboBox.font", FONT_BODY);
             UIManager.put("Table.font", FONT_BODY);
             UIManager.put("TableHeader.font", FONT_BODY_BOLD);
-            UIManager.put("TabbedPane.font", FONT_BODY_BOLD);
 
         } catch (Exception ignored) {
-            // Fallback to default Swing look and feel
         }
     }
 
     /**
-     * Creates a styled modern card panel with subtle border and crisp white background.
-     *
-     * @return JPanel configured as a card
+     * Creates an elevated modern card panel with smooth rounded corners and subtle drop shadow.
      */
     public static JPanel createCardPanel() {
-        JPanel card = new JPanel();
-        card.setBackground(COLOR_SURFACE);
-        card.setBorder(new CompoundBorder(
-                new LineBorder(COLOR_BORDER, 1, true),
-                new EmptyBorder(16, 16, 16, 16)
-        ));
-        return card;
+        return new ElevatedCardPanel(10);
     }
 
     /**
-     * Creates a primary filled action button with hover animation and rounded borders.
-     *
-     * @param text Button label
-     * @return Styled JButton
+     * Creates an elevated modern card panel with a specific corner radius.
+     */
+    public static JPanel createCardPanel(int cornerRadius) {
+        return new ElevatedCardPanel(cornerRadius);
+    }
+
+    /**
+     * Creates a primary filled action button using DesignRush signature red.
      */
     public static JButton createPrimaryButton(String text) {
-        return createStyledButton(text, COLOR_PRIMARY, COLOR_PRIMARY_HOVER, Color.WHITE);
+        return createModernButton(text, COLOR_PRIMARY, COLOR_PRIMARY_HOVER, Color.WHITE, 8);
     }
 
     /**
-     * Creates a secondary/neutral action button.
-     *
-     * @param text Button label
-     * @return Styled JButton
+     * Creates a secondary/neutral button with clean editorial outline.
      */
     public static JButton createSecondaryButton(String text) {
-        return createStyledButton(text, COLOR_SECONDARY, COLOR_SECONDARY_HOVER, Color.WHITE);
+        return createModernButton(text, new Color(244, 244, 245), new Color(228, 228, 231), COLOR_TEXT_PRIMARY, 8);
     }
 
     /**
-     * Creates a success colored action button.
-     *
-     * @param text Button label
-     * @return Styled JButton
+     * Creates a solid dark charcoal action button.
+     */
+    public static JButton createDarkButton(String text) {
+        return createModernButton(text, COLOR_CHARCOAL_BTN, new Color(39, 39, 42), Color.WHITE, 8);
+    }
+
+    /**
+     * Creates a success green action button.
      */
     public static JButton createSuccessButton(String text) {
-        return createStyledButton(text, COLOR_SUCCESS, COLOR_SUCCESS_HOVER, Color.WHITE);
+        return createModernButton(text, COLOR_SUCCESS, COLOR_SUCCESS_HOVER, Color.WHITE, 8);
     }
 
     /**
      * Creates a danger/delete action button.
-     *
-     * @param text Button label
-     * @return Styled JButton
      */
     public static JButton createDangerButton(String text) {
-        return createStyledButton(text, COLOR_DANGER, COLOR_DANGER_HOVER, Color.WHITE);
+        return createModernButton(text, new Color(254, 242, 242), new Color(254, 226, 226), COLOR_DANGER, 8);
     }
 
     /**
-     * Factory to create styled custom buttons.
+     * Factory for creating modern rounded buttons with custom hover and click feedback.
      */
-    public static JButton createStyledButton(String text, Color bg, Color hoverBg, Color fg) {
-        JButton button = new JButton(text);
+    public static JButton createModernButton(String text, Color bg, Color hoverBg, Color fg, int radius) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                Color currentBg = getBackground();
+                if (!isEnabled()) {
+                    currentBg = new Color(228, 228, 231);
+                } else if (getModel().isPressed()) {
+                    currentBg = hoverBg.darker();
+                } else if (getModel().isRollover()) {
+                    currentBg = hoverBg;
+                }
+
+                g2.setColor(currentBg);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius * 2, radius * 2));
+
+                // Hairline border for light buttons
+                if (bg.equals(new Color(244, 244, 245)) || bg.equals(new Color(254, 242, 242))) {
+                    g2.setColor(COLOR_BORDER);
+                    g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, radius * 2, radius * 2));
+                }
+
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+
         button.setFont(FONT_BODY_BOLD);
-        button.setBackground(bg);
         button.setForeground(fg);
+        button.setBackground(bg);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
-        button.setContentAreaFilled(true);
-        button.setOpaque(true);
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(new EmptyBorder(8, 16, 8, 16));
-
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(hoverBg);
-                }
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(bg);
-            }
-        });
+        button.setBorder(new EmptyBorder(9, 18, 9, 18));
 
         return button;
     }
 
     /**
-     * Creates an aesthetically styled JTextField with inner padding.
-     *
-     * @param columns Visible column width
-     * @return Styled JTextField
+     * Creates a focus-aware text field with DesignRush red focus ring.
      */
     public static JTextField createStyledTextField(int columns) {
         JTextField field = new JTextField(columns);
         field.setFont(FONT_BODY);
-        field.setBorder(createInputFieldBorder());
         field.setBackground(COLOR_SURFACE);
+        field.setForeground(COLOR_TEXT_PRIMARY);
+        field.setCaretColor(COLOR_PRIMARY);
+
+        Border normalBorder = new CompoundBorder(
+                new RoundedLineBorder(COLOR_BORDER, 1, 8),
+                new EmptyBorder(7, 12, 7, 12)
+        );
+        Border focusBorder = new CompoundBorder(
+                new RoundedLineBorder(COLOR_PRIMARY, 2, 8),
+                new EmptyBorder(6, 11, 6, 11)
+        );
+
+        field.setBorder(normalBorder);
+        field.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                field.setBorder(focusBorder);
+                field.repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                field.setBorder(normalBorder);
+                field.repaint();
+            }
+        });
+
         return field;
     }
 
     /**
-     * Creates an aesthetically styled JTextArea with word wrap and inner padding.
-     *
-     * @param rows Visible rows
-     * @param cols Visible columns
-     * @return Styled JTextArea
+     * Creates a focus-aware text area with clean inner padding and rounded border.
      */
     public static JTextArea createStyledTextArea(int rows, int cols) {
         JTextArea area = new JTextArea(rows, cols);
         area.setFont(FONT_BODY);
         area.setLineWrap(true);
         area.setWrapStyleWord(true);
-        area.setBorder(new EmptyBorder(6, 8, 6, 8));
         area.setBackground(COLOR_SURFACE);
+        area.setForeground(COLOR_TEXT_PRIMARY);
+        area.setCaretColor(COLOR_PRIMARY);
+        area.setBorder(new EmptyBorder(8, 10, 8, 10));
         return area;
     }
 
     /**
-     * Standard border for text fields and inputs.
-     *
-     * @return Compound border
+     * Creates an editorial section title with DesignRush red badge numbering.
      */
-    public static Border createInputFieldBorder() {
-        return new CompoundBorder(
-                new LineBorder(COLOR_BORDER, 1),
-                new EmptyBorder(6, 10, 6, 10)
-        );
+    public static JLabel createSectionTitle(String badgeNumber, String title) {
+        JLabel label = new JLabel(String.format("<html><b><font color='#E52E2D'>[%s]</font></b> &nbsp;%s</html>",
+                badgeNumber, title));
+        label.setFont(FONT_TITLE);
+        label.setForeground(COLOR_TEXT_PRIMARY);
+        return label;
     }
 
     /**
-     * Creates a form label with title font styling.
-     *
-     * @param text Label text
-     * @return Styled JLabel
+     * Creates a standard form label.
      */
     public static JLabel createFormLabel(String text) {
         JLabel label = new JLabel(text);
@@ -226,53 +271,130 @@ public final class UIUtils {
     }
 
     /**
-     * Creates a form label marked with an asterisk to denote required inputs.
-     *
-     * @param text Label text
-     * @return Styled JLabel with red asterisk
+     * Creates a required form label with red asterisk.
      */
     public static JLabel createRequiredFormLabel(String text) {
-        JLabel label = new JLabel("<html>" + text + " <font color='#DC2626'>*</font></html>");
+        JLabel label = new JLabel("<html>" + text + " <font color='#E52E2D'>*</font></html>");
         label.setFont(FONT_BODY_BOLD);
         label.setForeground(COLOR_TEXT_PRIMARY);
         return label;
     }
 
     /**
-     * Creates a KPI metric summary card for the dashboard header.
-     *
-     * @param title Title of the metric
-     * @param valueNumberLabel Reference to updateable label for metric value
-     * @param accentColor Accent color for the top border / highlight
-     * @param subtitle Subtitle description
-     * @return Formatted metric card JPanel
+     * Creates an elevated KPI metric card in the DesignRush Best Designs format.
      */
-    public static JPanel createKpiCard(String title, JLabel valueNumberLabel, Color accentColor, String subtitle) {
-        JPanel card = new JPanel(new BorderLayout(5, 5));
-        card.setBackground(COLOR_SURFACE);
-        card.setBorder(new CompoundBorder(
-                new CompoundBorder(
-                        BorderFactory.createMatteBorder(3, 0, 0, 0, accentColor),
-                        new LineBorder(COLOR_BORDER, 1)
-                ),
-                new EmptyBorder(12, 16, 12, 16)
-        ));
+    public static JPanel createKpiCard(String iconSymbol, String title, JLabel valueNumberLabel, Color accentColor, String subtitle) {
+        JPanel card = new ElevatedCardPanel(10);
+        card.setLayout(new BorderLayout(10, 8));
+
+        // Top bar with Icon and Title
+        JPanel topRow = new JPanel(new BorderLayout(8, 0));
+        topRow.setOpaque(false);
+
+        JLabel iconLabel = new JLabel(iconSymbol);
+        iconLabel.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        iconLabel.setForeground(accentColor);
 
         JLabel titleLabel = new JLabel(title.toUpperCase());
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 11));
+        titleLabel.setFont(FONT_SMALL_BOLD);
         titleLabel.setForeground(COLOR_TEXT_MUTED);
 
+        topRow.add(iconLabel, BorderLayout.WEST);
+        topRow.add(titleLabel, BorderLayout.CENTER);
+
+        // Center Metric value
         valueNumberLabel.setFont(FONT_KPI_NUMBER);
         valueNumberLabel.setForeground(COLOR_TEXT_PRIMARY);
 
-        JLabel subtitleLabel = new JLabel(subtitle);
-        subtitleLabel.setFont(FONT_SMALL);
-        subtitleLabel.setForeground(COLOR_TEXT_MUTED);
+        // Bottom subtitle
+        JLabel subLabel = new JLabel(subtitle);
+        subLabel.setFont(FONT_SMALL);
+        subLabel.setForeground(COLOR_TEXT_SECONDARY);
 
-        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(topRow, BorderLayout.NORTH);
         card.add(valueNumberLabel, BorderLayout.CENTER);
-        card.add(subtitleLabel, BorderLayout.SOUTH);
+        card.add(subLabel, BorderLayout.SOUTH);
 
         return card;
+    }
+
+    // =========================================================================
+    // Custom Graphics Painting Helpers
+    // =========================================================================
+
+    /**
+     * Custom panel painting rounded background and soft elevation shadow.
+     */
+    public static class ElevatedCardPanel extends JPanel {
+        private final int radius;
+
+        public ElevatedCardPanel(int radius) {
+            this.radius = radius;
+            setOpaque(false);
+            setBorder(new EmptyBorder(16, 18, 16, 18));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int width = getWidth();
+            int height = getHeight();
+
+            // Soft drop shadow
+            g2.setColor(new Color(15, 15, 17, 8));
+            g2.fill(new RoundRectangle2D.Float(1, 2, width - 2, height - 2, radius * 2, radius * 2));
+            g2.setColor(new Color(15, 15, 17, 12));
+            g2.fill(new RoundRectangle2D.Float(1, 1, width - 2, height - 2, radius * 2, radius * 2));
+
+            // Card background
+            g2.setColor(COLOR_SURFACE);
+            g2.fill(new RoundRectangle2D.Float(0, 0, width - 1, height - 1, radius * 2, radius * 2));
+
+            // Hairline border
+            g2.setColor(COLOR_BORDER);
+            g2.setStroke(new BasicStroke(1.0f));
+            g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, width - 2, height - 2, radius * 2, radius * 2));
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    /**
+     * Custom rounded border for input fields.
+     */
+    public static class RoundedLineBorder implements Border {
+        private final Color color;
+        private final int thickness;
+        private final int radius;
+
+        public RoundedLineBorder(Color color, int thickness, int radius) {
+            this.color = color;
+            this.thickness = thickness;
+            this.radius = radius;
+        }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.setStroke(new BasicStroke(thickness));
+            g2.draw(new RoundRectangle2D.Float(x + thickness / 2.0f, y + thickness / 2.0f,
+                    width - thickness, height - thickness, radius * 2, radius * 2));
+            g2.dispose();
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+            return new Insets(thickness, thickness, thickness, thickness);
+        }
+
+        @Override
+        public boolean isBorderOpaque() {
+            return false;
+        }
     }
 }

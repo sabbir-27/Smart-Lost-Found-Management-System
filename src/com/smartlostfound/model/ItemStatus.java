@@ -3,15 +3,15 @@ package com.smartlostfound.model;
 import java.awt.Color;
 
 /**
- * Enumeration representing the current lifecycle status of an item in the system.
- * Includes color definitions for UI badge rendering.
+ * Enumeration representing the lifecycle status of an item,
+ * styled with DesignRush high-contrast editorial color tokens.
  */
 public enum ItemStatus {
-    LOST("Lost", new Color(185, 28, 28), new Color(254, 226, 226)),
-    FOUND("Found", new Color(29, 78, 216), new Color(219, 234, 254)),
-    RECOVERED("Recovered", new Color(21, 128, 61), new Color(220, 252, 231)),
-    CLAIMED("Claimed", new Color(15, 118, 110), new Color(204, 251, 241)),
-    ARCHIVED("Archived", new Color(71, 85, 105), new Color(241, 245, 249));
+    LOST("Lost", new Color(220, 38, 38), new Color(254, 242, 242)),
+    FOUND("Found", new Color(2, 132, 199), new Color(240, 249, 255)),
+    RECOVERED("Recovered", new Color(5, 150, 105), new Color(236, 253, 245)),
+    CLAIMED("Claimed", new Color(124, 58, 237), new Color(245, 243, 255)),
+    ARCHIVED("Archived", new Color(113, 113, 122), new Color(244, 244, 245));
 
     private final String displayName;
     private final Color foregroundColor;

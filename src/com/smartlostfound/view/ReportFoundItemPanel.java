@@ -13,8 +13,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
 /**
- * Intuitive form view for logging a newly discovered (Found) item.
- * Captures discovery location, custody/storage location, and finder details with full validation.
+ * Enterprise form view for logging property discovered on premises.
+ * Includes custody/holding location specifications and finder verification contact channels.
  */
 public class ReportFoundItemPanel extends JPanel {
 
@@ -41,47 +41,30 @@ public class ReportFoundItemPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(UIUtils.COLOR_BACKGROUND);
 
-        // Header Banner
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(UIUtils.COLOR_HEADER_BG);
-        headerPanel.setBorder(new EmptyBorder(18, 28, 18, 28));
-
-        JLabel titleLabel = new JLabel("Report a Found Item");
-        titleLabel.setFont(UIUtils.FONT_HEADER);
-        titleLabel.setForeground(Color.WHITE);
-
-        JLabel subtitleLabel = new JLabel("Log an item turned in or discovered on premises to maintain custody and enable owner claims.");
-        subtitleLabel.setFont(UIUtils.FONT_SUBTITLE);
-        subtitleLabel.setForeground(new Color(203, 213, 225));
-
-        headerPanel.add(titleLabel, BorderLayout.NORTH);
-        headerPanel.add(subtitleLabel, BorderLayout.SOUTH);
-        add(headerPanel, BorderLayout.NORTH);
-
-        // Form Container inside ScrollPane
+        // Center Form inside ScrollPane
         JPanel centerWrapper = new JPanel(new GridBagLayout());
         centerWrapper.setBackground(UIUtils.COLOR_BACKGROUND);
+        centerWrapper.setBorder(new EmptyBorder(24, 20, 24, 20));
 
-        JPanel formCard = UIUtils.createCardPanel();
+        JPanel formCard = UIUtils.createCardPanel(14);
         formCard.setLayout(new GridBagLayout());
-        formCard.setPreferredSize(new Dimension(720, 660));
+        formCard.setPreferredSize(new Dimension(740, 680));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.insets = new Insets(6, 10, 6, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         int row = 0;
 
-        // Section 1 Header: Found Item Details
+        // Section 1 Header
         gbc.gridx = 0;
         gbc.gridy = row++;
         gbc.gridwidth = 2;
-        JLabel itemSectionTitle = new JLabel("1. Discovered Item Information");
-        itemSectionTitle.setFont(UIUtils.FONT_TITLE);
-        itemSectionTitle.setForeground(new Color(13, 148, 136)); // Teal accent
-        formCard.add(itemSectionTitle, gbc);
+        gbc.insets = new Insets(4, 10, 10, 10);
+        formCard.add(UIUtils.createSectionTitle("1", "Discovered Property & Custody Location"), gbc);
 
         // Item Name
+        gbc.insets = new Insets(5, 10, 5, 10);
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = row;
@@ -104,6 +87,7 @@ public class ReportFoundItemPanel extends JPanel {
         gbc.weightx = 0.7;
         categoryComboBox = new JComboBox<>(ItemCategory.values());
         categoryComboBox.setFont(UIUtils.FONT_BODY);
+        categoryComboBox.setBackground(Color.WHITE);
         formCard.add(categoryComboBox, gbc);
         row++;
 
@@ -132,7 +116,7 @@ public class ReportFoundItemPanel extends JPanel {
         formCard.add(locationFoundField, gbc);
         row++;
 
-        // Custody / Storage Location
+        // Storage / Custody Location
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0.3;
@@ -141,7 +125,7 @@ public class ReportFoundItemPanel extends JPanel {
         gbc.gridx = 1;
         gbc.weightx = 0.7;
         storageLocationField = UIUtils.createStyledTextField(25);
-        storageLocationField.setToolTipText("e.g. Front Office Locker 3, Security Safe, Desk Drawer");
+        storageLocationField.setToolTipText("e.g. Front Office Locker 3, Security Safe, Vault Drawer #2");
         formCard.add(storageLocationField, gbc);
         row++;
 
@@ -161,18 +145,15 @@ public class ReportFoundItemPanel extends JPanel {
         formCard.add(descScroll, gbc);
         row++;
 
-        // Section 2 Header: Finder Information
+        // Section 2 Header
         gbc.gridx = 0;
         gbc.gridy = row++;
         gbc.gridwidth = 2;
-        gbc.insets = new Insets(16, 8, 6, 8);
-        JLabel finderSectionTitle = new JLabel("2. Finder / Custodian Information");
-        finderSectionTitle.setFont(UIUtils.FONT_TITLE);
-        finderSectionTitle.setForeground(new Color(13, 148, 136));
-        formCard.add(finderSectionTitle, gbc);
+        gbc.insets = new Insets(16, 10, 10, 10);
+        formCard.add(UIUtils.createSectionTitle("2", "Finder / Custodian Contact Details"), gbc);
 
         // Finder Name
-        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.insets = new Insets(5, 10, 5, 10);
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = row;
@@ -209,16 +190,16 @@ public class ReportFoundItemPanel extends JPanel {
         formCard.add(finderPhoneField, gbc);
         row++;
 
-        // Additional Custody Notes
+        // Custody Notes
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0.3;
-        formCard.add(UIUtils.createFormLabel("Custody / Claim Notes:"), gbc);
+        formCard.add(UIUtils.createFormLabel("Custody Notes / Conditions:"), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.7;
         finderNotesField = UIUtils.createStyledTextField(25);
-        finderNotesField.setToolTipText("e.g. Turned in by cleaning staff, requires ID proof");
+        finderNotesField.setToolTipText("e.g. Turned in by janitorial staff, requires ID proof");
         formCard.add(finderNotesField, gbc);
         row++;
 
@@ -226,16 +207,16 @@ public class ReportFoundItemPanel extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.gridwidth = 2;
-        gbc.insets = new Insets(18, 8, 8, 8);
+        gbc.insets = new Insets(20, 10, 8, 10);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         buttonPanel.setOpaque(false);
 
-        JButton resetBtn = UIUtils.createSecondaryButton("Reset Form");
+        JButton resetBtn = UIUtils.createSecondaryButton("Clear Form");
         resetBtn.addActionListener(e -> resetForm());
 
-        JButton submitBtn = UIUtils.createStyledButton("Submit Found Item Report",
-                new Color(13, 148, 136), new Color(15, 118, 110), Color.WHITE);
+        JButton submitBtn = UIUtils.createModernButton("Submit Found Item Report",
+                UIUtils.COLOR_TEAL, new Color(15, 118, 110), Color.WHITE, 8);
         submitBtn.addActionListener(e -> submitForm());
 
         buttonPanel.add(resetBtn);

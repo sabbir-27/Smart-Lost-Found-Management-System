@@ -6,7 +6,6 @@ import com.smartlostfound.model.ItemCategory;
 import com.smartlostfound.model.User;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -14,8 +13,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
 /**
- * Intuitive form view for submitting a new Lost Item report.
- * Features comprehensive validation, clear sectioning, and helpful inline guides.
+ * Enterprise form view for registering a newly lost item.
+ * Incorporates focused input styling, clean field grouping, and robust validation.
  */
 public class ReportLostItemPanel extends JPanel {
 
@@ -41,47 +40,30 @@ public class ReportLostItemPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(UIUtils.COLOR_BACKGROUND);
 
-        // Header Banner
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(UIUtils.COLOR_HEADER_BG);
-        headerPanel.setBorder(new EmptyBorder(18, 28, 18, 28));
-
-        JLabel titleLabel = new JLabel("Report a Lost Item");
-        titleLabel.setFont(UIUtils.FONT_HEADER);
-        titleLabel.setForeground(Color.WHITE);
-
-        JLabel subtitleLabel = new JLabel("Log details of an item you have lost to assist custodians in identifying and returning it to you.");
-        subtitleLabel.setFont(UIUtils.FONT_SUBTITLE);
-        subtitleLabel.setForeground(new Color(203, 213, 225));
-
-        headerPanel.add(titleLabel, BorderLayout.NORTH);
-        headerPanel.add(subtitleLabel, BorderLayout.SOUTH);
-        add(headerPanel, BorderLayout.NORTH);
-
-        // Form Container inside ScrollPane
+        // Center Form inside ScrollPane
         JPanel centerWrapper = new JPanel(new GridBagLayout());
         centerWrapper.setBackground(UIUtils.COLOR_BACKGROUND);
+        centerWrapper.setBorder(new EmptyBorder(24, 20, 24, 20));
 
-        JPanel formCard = UIUtils.createCardPanel();
+        JPanel formCard = UIUtils.createCardPanel(14);
         formCard.setLayout(new GridBagLayout());
-        formCard.setPreferredSize(new Dimension(720, 620));
+        formCard.setPreferredSize(new Dimension(740, 640));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.insets = new Insets(6, 10, 6, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         int row = 0;
 
-        // Section 1 Header: Item Details
+        // Section 1 Header
         gbc.gridx = 0;
         gbc.gridy = row++;
         gbc.gridwidth = 2;
-        JLabel itemSectionTitle = new JLabel("1. Lost Item Details");
-        itemSectionTitle.setFont(UIUtils.FONT_TITLE);
-        itemSectionTitle.setForeground(UIUtils.COLOR_PRIMARY);
-        formCard.add(itemSectionTitle, gbc);
+        gbc.insets = new Insets(4, 10, 10, 10);
+        formCard.add(UIUtils.createSectionTitle("1", "Lost Item Specifications"), gbc);
 
         // Item Name
+        gbc.insets = new Insets(5, 10, 5, 10);
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = row;
@@ -104,6 +86,7 @@ public class ReportLostItemPanel extends JPanel {
         gbc.weightx = 0.7;
         categoryComboBox = new JComboBox<>(ItemCategory.values());
         categoryComboBox.setFont(UIUtils.FONT_BODY);
+        categoryComboBox.setBackground(Color.WHITE);
         formCard.add(categoryComboBox, gbc);
         row++;
 
@@ -136,7 +119,7 @@ public class ReportLostItemPanel extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0.3;
-        formCard.add(UIUtils.createFormLabel("Reward Amount ($ optional):"), gbc);
+        formCard.add(UIUtils.createFormLabel("Reward Offered ($ optional):"), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.7;
@@ -150,7 +133,7 @@ public class ReportLostItemPanel extends JPanel {
         gbc.gridy = row;
         gbc.weightx = 0.3;
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        formCard.add(UIUtils.createRequiredFormLabel("Description & Features:"), gbc);
+        formCard.add(UIUtils.createRequiredFormLabel("Description & Identifiers:"), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.7;
@@ -161,18 +144,15 @@ public class ReportLostItemPanel extends JPanel {
         formCard.add(descScroll, gbc);
         row++;
 
-        // Section 2 Header: Reporter Contact
+        // Section 2 Header
         gbc.gridx = 0;
         gbc.gridy = row++;
         gbc.gridwidth = 2;
-        gbc.insets = new Insets(16, 8, 6, 8);
-        JLabel reporterSectionTitle = new JLabel("2. Owner / Contact Information");
-        reporterSectionTitle.setFont(UIUtils.FONT_TITLE);
-        reporterSectionTitle.setForeground(UIUtils.COLOR_PRIMARY);
-        formCard.add(reporterSectionTitle, gbc);
+        gbc.insets = new Insets(16, 10, 10, 10);
+        formCard.add(UIUtils.createSectionTitle("2", "Owner & Verification Contact"), gbc);
 
         // Reporter Name
-        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.insets = new Insets(5, 10, 5, 10);
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = row;
@@ -213,12 +193,12 @@ public class ReportLostItemPanel extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.gridwidth = 2;
-        gbc.insets = new Insets(18, 8, 8, 8);
+        gbc.insets = new Insets(20, 10, 8, 10);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         buttonPanel.setOpaque(false);
 
-        JButton resetBtn = UIUtils.createSecondaryButton("Reset Form");
+        JButton resetBtn = UIUtils.createSecondaryButton("Clear Form");
         resetBtn.addActionListener(e -> resetForm());
 
         JButton submitBtn = UIUtils.createPrimaryButton("Submit Lost Item Report");
@@ -237,7 +217,6 @@ public class ReportLostItemPanel extends JPanel {
     }
 
     private void submitForm() {
-        // Validation
         String name = nameField.getText().trim();
         if (name.length() < 2) {
             showValidationError("Please enter a valid item name (at least 2 characters).", nameField);
@@ -305,7 +284,6 @@ public class ReportLostItemPanel extends JPanel {
 
         User reporter = new User(reporterName, email, phone);
 
-        // Forward to controller
         controller.handleReportLostItem(
                 name, category, date, description, reporter, location, reward,
                 SwingUtilities.getWindowAncestor(this),

@@ -6,10 +6,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 
 /**
- * Custom table cell renderer that displays lifecycle statuses as modern
- * rounded color badges (pills) matching modern web/desktop styling.
+ * Modern table cell renderer displaying lifecycle statuses as refined,
+ * anti-aliased pill badges with proportional typography and distinct color tokens.
  */
 public class ItemStatusCellRenderer extends DefaultTableCellRenderer {
 
@@ -26,27 +27,29 @@ public class ItemStatusCellRenderer extends DefaultTableCellRenderer {
 
         if (value instanceof ItemStatus) {
             ItemStatus status = (ItemStatus) value;
-            return new BadgePanel(status, isSelected);
+            return new BadgePanel(status, isSelected, table.getSelectionBackground());
         }
 
         return label;
     }
 
     /**
-     * Inner custom component to paint the status badge with rounded corners.
+     * Inner custom component painting the status badge with anti-aliasing.
      */
     private static class BadgePanel extends JPanel {
         private final ItemStatus status;
         private final boolean isSelected;
+        private final Color selectionBg;
 
-        public BadgePanel(ItemStatus status, boolean isSelected) {
+        public BadgePanel(ItemStatus status, boolean isSelected, Color selectionBg) {
             this.status = status;
             this.isSelected = isSelected;
+            this.selectionBg = selectionBg;
             setLayout(new GridBagLayout());
             setOpaque(true);
 
-            JLabel label = new JLabel(status.getDisplayName());
-            label.setFont(new Font("SansSerif", Font.BOLD, 11));
+            JLabel label = new JLabel(status.getDisplayName().toUpperCase());
+            label.setFont(new Font("Segoe UI", Font.BOLD, 10));
             label.setForeground(status.getForegroundColor());
             label.setBorder(new EmptyBorder(3, 10, 3, 10));
 
@@ -54,30 +57,32 @@ public class ItemStatusCellRenderer extends DefaultTableCellRenderer {
         }
 
         @Override
-        public void setBackground(Color bg) {
-            super.setBackground(bg);
-        }
-
-        @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            // Fill table cell background
-            g2.setColor(isSelected ? UIUtils.COLOR_TABLE_SELECTION : Color.WHITE);
+            // Cell Background
+            if (isSelected) {
+                g2.setColor(UIUtils.COLOR_TABLE_SELECTION);
+            } else {
+                g2.setColor(Color.WHITE);
+            }
             g2.fillRect(0, 0, getWidth(), getHeight());
 
-            // Paint rounded pill badge
-            int badgeWidth = Math.min(getWidth() - 16, 95);
-            int badgeHeight = getHeight() - 10;
+            // Rounded Pill Badge
+            int badgeWidth = Math.min(getWidth() - 16, 92);
+            int badgeHeight = 24;
             int x = (getWidth() - badgeWidth) / 2;
-            int y = 5;
+            int y = (getHeight() - badgeHeight) / 2;
 
             g2.setColor(status.getBackgroundColor());
-            g2.fillRoundRect(x, y, badgeWidth, badgeHeight, 12, 12);
+            g2.fill(new RoundRectangle2D.Float(x, y, badgeWidth, badgeHeight, 12, 12));
 
-            g2.setColor(status.getForegroundColor());
-            g2.drawRoundRect(x, y, badgeWidth, badgeHeight, 12, 12);
+            g2.setColor(new Color(status.getForegroundColor().getRed(),
+                                  status.getForegroundColor().getGreen(),
+                                  status.getForegroundColor().getBlue(), 120));
+            g2.setStroke(new BasicStroke(1.0f));
+            g2.draw(new RoundRectangle2D.Float(x + 0.5f, y + 0.5f, badgeWidth - 1, badgeHeight - 1, 12, 12));
 
             g2.dispose();
             super.paintChildren(g);

@@ -6,29 +6,41 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Main application window for the Smart Lost &amp; Found Management System.
- * Hosts the top navigation tabs, header bar, dashboard, reporting panels,
- * and operational status bar.
+ * Enterprise application frame styled with DesignRush Best Designs aesthetics:
+ * Carbon-black sidebar, vibrant signature red accents, editorial typography,
+ * and card-based modular layout.
  */
 public class MainFrame extends JFrame {
 
     private final LostFoundController controller;
 
-    private JTabbedPane tabbedPane;
+    private CardLayout contentCardLayout;
+    private JPanel mainContentCardPanel;
+
     private DashboardPanel dashboardPanel;
     private ReportLostItemPanel reportLostPanel;
     private ReportFoundItemPanel reportFoundPanel;
+
+    private JLabel breadcrumbTitleLabel;
+    private JLabel breadcrumbSubtitleLabel;
     private JLabel statusMessageLabel;
-    private JLabel storagePathLabel;
+
+    private final Map<String, SidebarNavButton> navButtons = new HashMap<>();
+    private String currentNavKey = "DASHBOARD";
 
     public MainFrame(LostFoundController controller) {
-        super("Smart Lost & Found Management System");
+        super("Smart Lost & Found Management System - DesignRush Edition");
         this.controller = controller;
 
         initComponents();
@@ -39,72 +51,168 @@ public class MainFrame extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(UIUtils.COLOR_BACKGROUND);
 
-        // Header Panel
-        add(createHeaderPanel(), BorderLayout.NORTH);
+        // 1. Left Sidebar Navigation (Carbon Black)
+        add(createSidebarPanel(), BorderLayout.WEST);
 
-        // Tabbed View
-        tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        tabbedPane.setFont(UIUtils.FONT_TITLE);
-        tabbedPane.setBackground(UIUtils.COLOR_BACKGROUND);
+        // 2. Right Workspace Container
+        JPanel workspace = new JPanel(new BorderLayout());
+        workspace.setBackground(UIUtils.COLOR_BACKGROUND);
+
+        // Top Editorial Breadcrumb & Action Bar
+        workspace.add(createTopBar(), BorderLayout.NORTH);
+
+        // Center Views (CardLayout)
+        contentCardLayout = new CardLayout();
+        mainContentCardPanel = new JPanel(contentCardLayout);
+        mainContentCardPanel.setBackground(UIUtils.COLOR_BACKGROUND);
 
         dashboardPanel = new DashboardPanel(controller);
         reportLostPanel = new ReportLostItemPanel(controller);
         reportFoundPanel = new ReportFoundItemPanel(controller);
 
-        tabbedPane.addTab("  Dashboard & Records  ", dashboardPanel);
-        tabbedPane.addTab("  Report Lost Item  ", reportLostPanel);
-        tabbedPane.addTab("  Report Found Item  ", reportFoundPanel);
+        mainContentCardPanel.add(dashboardPanel, "DASHBOARD");
+        mainContentCardPanel.add(reportLostPanel, "REPORT_LOST");
+        mainContentCardPanel.add(reportFoundPanel, "REPORT_FOUND");
 
-        // When switching tabs, if switching to dashboard, refresh filter
-        tabbedPane.addChangeListener(e -> {
-            if (tabbedPane.getSelectedIndex() == 0) {
-                controller.refreshView();
-            }
-        });
+        workspace.add(mainContentCardPanel, BorderLayout.CENTER);
 
-        add(tabbedPane, BorderLayout.CENTER);
+        // Bottom Telemetry Status Bar
+        workspace.add(createStatusBar(), BorderLayout.SOUTH);
 
-        // Bottom Status Bar
-        add(createStatusBar(), BorderLayout.SOUTH);
+        add(workspace, BorderLayout.CENTER);
+
+        // Default navigation
+        setActiveNav("DASHBOARD");
     }
 
-    private JPanel createHeaderPanel() {
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(UIUtils.COLOR_HEADER_BG);
-        header.setBorder(new EmptyBorder(14, 24, 14, 24));
+    private JPanel createSidebarPanel() {
+        JPanel sidebar = new JPanel(new BorderLayout());
+        sidebar.setPreferredSize(new Dimension(260, 0));
+        sidebar.setBackground(UIUtils.COLOR_SIDEBAR_BG);
+        sidebar.setBorder(new EmptyBorder(22, 16, 22, 16));
 
-        // Brand & Title
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        left.setOpaque(false);
+        // Brand Header (DesignRush style)
+        JPanel brandPanel = new JPanel(new BorderLayout(10, 6));
+        brandPanel.setOpaque(false);
 
-        JLabel logoText = new JLabel("Smart Lost & Found");
-        logoText.setFont(UIUtils.FONT_HEADER);
-        logoText.setForeground(Color.WHITE);
+        // Red Accent Icon
+        JLabel logoIcon = new JLabel("■");
+        logoIcon.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        logoIcon.setForeground(UIUtils.COLOR_PRIMARY);
 
-        JLabel badge = new JLabel(" ENTERPRISE EDITION ");
-        badge.setFont(new Font("SansSerif", Font.BOLD, 10));
-        badge.setOpaque(true);
-        badge.setBackground(UIUtils.COLOR_PRIMARY);
-        badge.setForeground(Color.WHITE);
-        badge.setBorder(new EmptyBorder(3, 6, 3, 6));
+        JPanel brandTextPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        brandTextPanel.setOpaque(false);
 
-        left.add(logoText);
-        left.add(badge);
+        JLabel brandTitle = new JLabel("LOST & FOUND");
+        brandTitle.setFont(UIUtils.FONT_LOGO);
+        brandTitle.setForeground(Color.WHITE);
 
-        // Right details
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 0));
-        right.setOpaque(false);
+        JLabel brandSubtitle = new JLabel("DESIGNRUSH RECOVERY HUB");
+        brandSubtitle.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        brandSubtitle.setForeground(UIUtils.COLOR_PRIMARY);
 
-        storagePathLabel = new JLabel("Storage: " + controller.getStoragePathDescription());
-        storagePathLabel.setFont(UIUtils.FONT_SMALL);
-        storagePathLabel.setForeground(new Color(148, 163, 184));
+        brandTextPanel.add(brandTitle);
+        brandTextPanel.add(brandSubtitle);
 
-        right.add(storagePathLabel);
+        brandPanel.add(logoIcon, BorderLayout.WEST);
+        brandPanel.add(brandTextPanel, BorderLayout.CENTER);
 
-        header.add(left, BorderLayout.WEST);
-        header.add(right, BorderLayout.EAST);
+        sidebar.add(brandPanel, BorderLayout.NORTH);
 
-        return header;
+        // Navigation Items
+        JPanel navContainer = new JPanel();
+        navContainer.setLayout(new BoxLayout(navContainer, BoxLayout.Y_AXIS));
+        navContainer.setOpaque(false);
+        navContainer.setBorder(new EmptyBorder(32, 0, 0, 0));
+
+        SidebarNavButton dashBtn = new SidebarNavButton("●  Dashboard & Records", () -> switchToDashboard());
+        SidebarNavButton lostBtn = new SidebarNavButton("▲  Report Lost Property", () -> switchToReportLost());
+        SidebarNavButton foundBtn = new SidebarNavButton("▼  Report Found Property", () -> switchToReportFound());
+
+        navButtons.put("DASHBOARD", dashBtn);
+        navButtons.put("REPORT_LOST", lostBtn);
+        navButtons.put("REPORT_FOUND", foundBtn);
+
+        navContainer.add(dashBtn);
+        navContainer.add(Box.createVerticalStrut(8));
+        navContainer.add(lostBtn);
+        navContainer.add(Box.createVerticalStrut(8));
+        navContainer.add(foundBtn);
+
+        sidebar.add(navContainer, BorderLayout.CENTER);
+
+        // Bottom System Status Card
+        JPanel footerCard = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(UIUtils.COLOR_SIDEBAR_CARD);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        footerCard.setOpaque(false);
+        footerCard.setLayout(new GridLayout(2, 1, 2, 4));
+        footerCard.setBorder(new EmptyBorder(12, 14, 12, 14));
+
+        JLabel onlineStatus = new JLabel("● Storage Synced");
+        onlineStatus.setFont(UIUtils.FONT_SMALL_BOLD);
+        onlineStatus.setForeground(UIUtils.COLOR_SUCCESS);
+
+        JLabel versionLabel = new JLabel("Best Designs Theme v2.2");
+        versionLabel.setFont(UIUtils.FONT_SMALL);
+        versionLabel.setForeground(UIUtils.COLOR_SIDEBAR_TEXT);
+
+        footerCard.add(onlineStatus);
+        footerCard.add(versionLabel);
+
+        sidebar.add(footerCard, BorderLayout.SOUTH);
+
+        return sidebar;
+    }
+
+    private JPanel createTopBar() {
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(Color.WHITE);
+        topBar.setBorder(new CompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, UIUtils.COLOR_BORDER),
+                new EmptyBorder(14, 24, 14, 24)
+        ));
+
+        // Breadcrumb
+        JPanel breadcrumbPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        breadcrumbPanel.setOpaque(false);
+
+        breadcrumbTitleLabel = new JLabel("Inventory Dashboard");
+        breadcrumbTitleLabel.setFont(UIUtils.FONT_HEADER);
+        breadcrumbTitleLabel.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
+
+        breadcrumbSubtitleLabel = new JLabel("Real-time property registry, status intelligence, and custody verification");
+        breadcrumbSubtitleLabel.setFont(UIUtils.FONT_SUBTITLE);
+        breadcrumbSubtitleLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
+
+        breadcrumbPanel.add(breadcrumbTitleLabel);
+        breadcrumbPanel.add(breadcrumbSubtitleLabel);
+        topBar.add(breadcrumbPanel, BorderLayout.WEST);
+
+        // Action Buttons
+        JPanel quickActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        quickActions.setOpaque(false);
+
+        JButton newLostBtn = UIUtils.createModernButton("+ Report Lost", UIUtils.COLOR_PRIMARY_LIGHT,
+                UIUtils.COLOR_PRIMARY_BORDER, UIUtils.COLOR_PRIMARY, 8);
+        newLostBtn.addActionListener(e -> switchToReportLost());
+
+        JButton newFoundBtn = UIUtils.createDarkButton("+ Report Found");
+        newFoundBtn.addActionListener(e -> switchToReportFound());
+
+        quickActions.add(newLostBtn);
+        quickActions.add(newFoundBtn);
+
+        topBar.add(quickActions, BorderLayout.EAST);
+        return topBar;
     }
 
     private JPanel createStatusBar() {
@@ -112,14 +220,14 @@ public class MainFrame extends JFrame {
         statusBar.setBackground(Color.WHITE);
         statusBar.setBorder(new CompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtils.COLOR_BORDER),
-                new EmptyBorder(6, 16, 6, 16)
+                new EmptyBorder(8, 20, 8, 20)
         ));
 
         statusMessageLabel = new JLabel("System Ready. All records synchronized.");
         statusMessageLabel.setFont(UIUtils.FONT_SMALL);
-        statusMessageLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
+        statusMessageLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
 
-        JLabel timestampLabel = new JLabel("Session started: " + 
+        JLabel timestampLabel = new JLabel("DesignRush Hub • " +
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
         timestampLabel.setFont(UIUtils.FONT_SMALL);
         timestampLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
@@ -139,9 +247,35 @@ public class MainFrame extends JFrame {
             }
         });
 
-        setSize(1150, 780);
-        setMinimumSize(new Dimension(960, 640));
+        setSize(1220, 820);
+        setMinimumSize(new Dimension(1020, 680));
         setLocationRelativeTo(null);
+    }
+
+    private void setActiveNav(String key) {
+        this.currentNavKey = key;
+        for (Map.Entry<String, SidebarNavButton> entry : navButtons.entrySet()) {
+            entry.getValue().setSelected(entry.getKey().equals(key));
+        }
+
+        switch (key) {
+            case "DASHBOARD":
+                breadcrumbTitleLabel.setText("Inventory Dashboard");
+                breadcrumbSubtitleLabel.setText("Real-time property registry, status intelligence, and custody verification");
+                contentCardLayout.show(mainContentCardPanel, "DASHBOARD");
+                controller.refreshView();
+                break;
+            case "REPORT_LOST":
+                breadcrumbTitleLabel.setText("Report a Lost Item");
+                breadcrumbSubtitleLabel.setText("Submit owner claims and item specifications to enable matching by custodians");
+                contentCardLayout.show(mainContentCardPanel, "REPORT_LOST");
+                break;
+            case "REPORT_FOUND":
+                breadcrumbTitleLabel.setText("Report a Found Item");
+                breadcrumbSubtitleLabel.setText("Log discovered property into inventory and establish safe custody tracking");
+                contentCardLayout.show(mainContentCardPanel, "REPORT_FOUND");
+                break;
+        }
     }
 
     public void setStatusMessage(String message) {
@@ -151,21 +285,15 @@ public class MainFrame extends JFrame {
     }
 
     public void switchToDashboard() {
-        if (tabbedPane != null) {
-            tabbedPane.setSelectedIndex(0);
-        }
+        setActiveNav("DASHBOARD");
     }
 
     public void switchToReportLost() {
-        if (tabbedPane != null) {
-            tabbedPane.setSelectedIndex(1);
-        }
+        setActiveNav("REPORT_LOST");
     }
 
     public void switchToReportFound() {
-        if (tabbedPane != null) {
-            tabbedPane.setSelectedIndex(2);
-        }
+        setActiveNav("REPORT_FOUND");
     }
 
     public DashboardPanel getDashboardPanel() {
@@ -178,5 +306,74 @@ public class MainFrame extends JFrame {
 
     public ReportFoundItemPanel getReportFoundPanel() {
         return reportFoundPanel;
+    }
+
+    /**
+     * Modern sidebar navigation button styled with DesignRush red active bar.
+     */
+    private static class SidebarNavButton extends JPanel {
+        private boolean selected = false;
+        private boolean hovered = false;
+        private final JLabel label;
+
+        public SidebarNavButton(String title, Runnable onClick) {
+            setLayout(new BorderLayout());
+            setOpaque(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+            setPreferredSize(new Dimension(228, 44));
+
+            label = new JLabel(title);
+            label.setFont(UIUtils.FONT_BODY_BOLD);
+            label.setForeground(UIUtils.COLOR_SIDEBAR_TEXT);
+            label.setBorder(new EmptyBorder(0, 16, 0, 16));
+            add(label, BorderLayout.CENTER);
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    hovered = true;
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    hovered = false;
+                    repaint();
+                }
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    onClick.run();
+                }
+            });
+        }
+
+        public void setSelected(boolean sel) {
+            this.selected = sel;
+            label.setForeground(selected ? Color.WHITE : UIUtils.COLOR_SIDEBAR_TEXT);
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            if (selected) {
+                g2.setColor(UIUtils.COLOR_SIDEBAR_CARD);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+
+                // Left active accent bar (DesignRush Signature Red)
+                g2.setColor(UIUtils.COLOR_PRIMARY);
+                g2.fill(new RoundRectangle2D.Float(2, 6, 4, getHeight() - 12, 4, 4));
+            } else if (hovered) {
+                g2.setColor(UIUtils.COLOR_SIDEBAR_HOVER);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+            }
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
     }
 }

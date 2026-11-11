@@ -13,9 +13,8 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 
 /**
- * Modal dialog presenting comprehensive details for a selected item,
- * including classification, location, specific attributes, reporter contact details,
- * and lifecycle resolution history.
+ * Enterprise inspection modal dialog providing comprehensive record intelligence,
+ * custody status, and reporter verification channels.
  */
 public class ItemDetailDialog extends JDialog {
 
@@ -23,12 +22,12 @@ public class ItemDetailDialog extends JDialog {
     private final LostFoundController controller;
 
     public ItemDetailDialog(Window owner, Item item, LostFoundController controller) {
-        super(owner, "Item Details - " + item.getId(), ModalityType.APPLICATION_MODAL);
+        super(owner, "Record Intelligence - " + item.getId(), ModalityType.APPLICATION_MODAL);
         this.item = item;
         this.controller = controller;
 
         initComponents();
-        setSize(650, 560);
+        setSize(680, 590);
         setLocationRelativeTo(owner);
     }
 
@@ -38,14 +37,14 @@ public class ItemDetailDialog extends JDialog {
 
         // Header Panel
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(UIUtils.COLOR_HEADER_BG);
-        headerPanel.setBorder(new EmptyBorder(16, 20, 16, 20));
+        headerPanel.setBackground(UIUtils.COLOR_SIDEBAR_BG);
+        headerPanel.setBorder(new EmptyBorder(18, 24, 18, 24));
 
-        JPanel headerLeft = new JPanel(new GridLayout(2, 1, 2, 2));
+        JPanel headerLeft = new JPanel(new GridLayout(2, 1, 2, 4));
         headerLeft.setOpaque(false);
 
-        JLabel typeAndIdLabel = new JLabel(item.getItemType().toUpperCase() + " ITEM  •  " + item.getId());
-        typeAndIdLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        JLabel typeAndIdLabel = new JLabel(item.getItemType().toUpperCase() + " PROPERTY  •  " + item.getId());
+        typeAndIdLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         typeAndIdLabel.setForeground(item instanceof LostItem ? new Color(248, 113, 113) : new Color(147, 197, 253));
 
         JLabel titleLabel = new JLabel(item.getName());
@@ -62,10 +61,10 @@ public class ItemDetailDialog extends JDialog {
         statusLabel.setOpaque(true);
         statusLabel.setBackground(item.getStatus().getBackgroundColor());
         statusLabel.setForeground(item.getStatus().getForegroundColor());
-        statusLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         statusLabel.setBorder(new CompoundBorder(
                 new LineBorder(item.getStatus().getForegroundColor(), 1, true),
-                new EmptyBorder(4, 10, 4, 10)
+                new EmptyBorder(4, 12, 4, 12)
         ));
         statusBadge.add(statusLabel);
 
@@ -80,11 +79,11 @@ public class ItemDetailDialog extends JDialog {
         contentPanel.setBorder(new EmptyBorder(16, 20, 16, 20));
 
         // Section 1: Item Attributes Card
-        JPanel infoCard = UIUtils.createCardPanel();
+        JPanel infoCard = UIUtils.createCardPanel(10);
         infoCard.setLayout(new GridLayout(0, 2, 14, 10));
 
         addDetailRow(infoCard, "Category:", item.getCategory().getDisplayName());
-        addDetailRow(infoCard, "Date " + (item instanceof LostItem ? "Lost" : "Found") + ":", item.getFormattedDate());
+        addDetailRow(infoCard, "Date " + (item instanceof LostItem ? "Lost" : "Discovered") + ":", item.getFormattedDate());
         addDetailRow(infoCard, "Location " + (item instanceof LostItem ? "Lost" : "Found") + ":", item.getSpecificLocation());
 
         if (item instanceof LostItem) {
@@ -92,21 +91,21 @@ public class ItemDetailDialog extends JDialog {
             addDetailRow(infoCard, "Reward Offered:", lost.getFormattedReward());
         } else if (item instanceof FoundItem) {
             FoundItem found = (FoundItem) item;
-            addDetailRow(infoCard, "Storage Location:", found.getStorageLocation());
+            addDetailRow(infoCard, "Custody Storage:", found.getStorageLocation());
             if (!found.getFinderContactInfo().isEmpty()) {
                 addDetailRow(infoCard, "Finder Notes:", found.getFinderContactInfo());
             }
         }
 
-        addDetailRow(infoCard, "Reported At:", item.getFormattedCreatedAt());
+        addDetailRow(infoCard, "System Registered:", item.getFormattedCreatedAt());
 
         contentPanel.add(infoCard);
         contentPanel.add(Box.createVerticalStrut(14));
 
         // Section 2: Narrative Description Card
-        JPanel descCard = UIUtils.createCardPanel();
+        JPanel descCard = UIUtils.createCardPanel(10);
         descCard.setLayout(new BorderLayout(5, 8));
-        JLabel descTitle = UIUtils.createFormLabel("Detailed Description");
+        JLabel descTitle = UIUtils.createFormLabel("Detailed Narrative & Distinct Identifiers");
         JTextArea descArea = new JTextArea(item.getDescription());
         descArea.setFont(UIUtils.FONT_BODY);
         descArea.setLineWrap(true);
@@ -126,17 +125,17 @@ public class ItemDetailDialog extends JDialog {
         contentPanel.add(Box.createVerticalStrut(14));
 
         // Section 3: Contact Details Card
-        JPanel contactCard = UIUtils.createCardPanel();
+        JPanel contactCard = UIUtils.createCardPanel(10);
         contactCard.setLayout(new GridLayout(0, 2, 14, 8));
         JLabel contactTitle = UIUtils.createFormLabel(
-                item instanceof LostItem ? "Reporter / Owner Information" : "Finder / Custodian Information");
+                item instanceof LostItem ? "Owner Verification & Contact" : "Finder / Officer Contact");
 
         User user = item.getReporter();
         addDetailRow(contactCard, "Full Name:", (user != null && !user.getName().isEmpty()) ? user.getName() : "Anonymous");
         addDetailRow(contactCard, "Email:", (user != null && !user.getEmail().isEmpty()) ? user.getEmail() : "None provided");
         addDetailRow(contactCard, "Phone:", (user != null && !user.getPhone().isEmpty()) ? user.getPhone() : "None provided");
 
-        JPanel contactWrapper = UIUtils.createCardPanel();
+        JPanel contactWrapper = UIUtils.createCardPanel(10);
         contactWrapper.setLayout(new BorderLayout(5, 8));
         contactWrapper.add(contactTitle, BorderLayout.NORTH);
         contactWrapper.add(contactCard, BorderLayout.CENTER);
@@ -146,9 +145,9 @@ public class ItemDetailDialog extends JDialog {
         // Section 4: Resolution Notes (if any)
         if (item.getResolutionNotes() != null && !item.getResolutionNotes().isEmpty()) {
             contentPanel.add(Box.createVerticalStrut(14));
-            JPanel notesCard = UIUtils.createCardPanel();
+            JPanel notesCard = UIUtils.createCardPanel(10);
             notesCard.setLayout(new BorderLayout(5, 6));
-            JLabel notesTitle = UIUtils.createFormLabel("Resolution / Claim History");
+            JLabel notesTitle = UIUtils.createFormLabel("Lifecycle & Resolution Audit History");
             JTextArea notesArea = new JTextArea(item.getResolutionNotes());
             notesArea.setFont(UIUtils.FONT_BODY);
             notesArea.setEditable(false);
@@ -169,7 +168,7 @@ public class ItemDetailDialog extends JDialog {
         footerPanel.setBackground(Color.WHITE);
         footerPanel.setBorder(new CompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtils.COLOR_BORDER),
-                new EmptyBorder(6, 16, 6, 16)
+                new EmptyBorder(8, 20, 8, 20)
         ));
 
         JButton updateStatusBtn = UIUtils.createPrimaryButton("Update Status");
@@ -179,7 +178,7 @@ public class ItemDetailDialog extends JDialog {
             controller.openUpdateStatusDialog(item, parentWindow);
         });
 
-        JButton closeBtn = UIUtils.createSecondaryButton("Close");
+        JButton closeBtn = UIUtils.createSecondaryButton("Close Window");
         closeBtn.addActionListener(e -> dispose());
 
         footerPanel.add(updateStatusBtn);
@@ -190,7 +189,7 @@ public class ItemDetailDialog extends JDialog {
     private void addDetailRow(JPanel panel, String labelText, String valueText) {
         JLabel label = new JLabel(labelText);
         label.setFont(UIUtils.FONT_BODY_BOLD);
-        label.setForeground(UIUtils.COLOR_TEXT_MUTED);
+        label.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
 
         JLabel val = new JLabel((valueText != null && !valueText.isEmpty()) ? valueText : "—");
         val.setFont(UIUtils.FONT_BODY);

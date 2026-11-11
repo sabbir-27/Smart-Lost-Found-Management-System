@@ -9,18 +9,22 @@ import com.smartlostfound.service.LostFoundManager;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableRowSorter;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.util.List;
 
 /**
- * Centralized dashboard view housing the search engine, filtering controls,
- * KPI analytical metric cards, and the interactive items {@link JTable}.
+ * Enterprise dashboard view styled with the DesignRush Best Designs concept:
+ * High-contrast KPI metric cards, an elevated search and filter toolbar,
+ * a clean data table with soft red selection states, and centralized record actions.
  */
 public class DashboardPanel extends JPanel {
 
@@ -41,8 +45,8 @@ public class DashboardPanel extends JPanel {
     // Table and model
     private JTable itemTable;
     private ItemTableModel tableModel;
-    private TableRowSorter<ItemTableModel> rowSorter;
     private JLabel countStatusLabel;
+    private int hoveredRow = -1;
 
     // Action buttons
     private JButton viewDetailsBtn;
@@ -55,30 +59,30 @@ public class DashboardPanel extends JPanel {
     }
 
     private void initComponents() {
-        setLayout(new BorderLayout(0, 10));
+        setLayout(new BorderLayout(0, 14));
         setBackground(UIUtils.COLOR_BACKGROUND);
-        setBorder(new EmptyBorder(12, 16, 12, 16));
+        setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        // Top Section: KPI Metric Cards
+        // Top Header: KPIs and Search Controls
         JPanel topContainer = new JPanel();
         topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
         topContainer.setOpaque(false);
 
         topContainer.add(createKpiSection());
-        topContainer.add(Box.createVerticalStrut(12));
+        topContainer.add(Box.createVerticalStrut(14));
         topContainer.add(createSearchFilterSection());
 
         add(topContainer, BorderLayout.NORTH);
 
-        // Center Section: Table
+        // Center Table Section
         add(createTableSection(), BorderLayout.CENTER);
 
-        // Bottom Section: Actions & Count Status
+        // Bottom Action Bar
         add(createBottomActionSection(), BorderLayout.SOUTH);
     }
 
     private JPanel createKpiSection() {
-        JPanel kpiPanel = new JPanel(new GridLayout(1, 4, 12, 0));
+        JPanel kpiPanel = new JPanel(new GridLayout(1, 4, 14, 0));
         kpiPanel.setOpaque(false);
 
         totalKpiLabel = new JLabel("0");
@@ -86,33 +90,35 @@ public class DashboardPanel extends JPanel {
         foundKpiLabel = new JLabel("0");
         resolvedKpiLabel = new JLabel("0");
 
-        kpiPanel.add(UIUtils.createKpiCard("Total Records", totalKpiLabel, UIUtils.COLOR_PRIMARY, "Logged items in system"));
-        kpiPanel.add(UIUtils.createKpiCard("Active Lost Items", lostKpiLabel, UIUtils.COLOR_DANGER, "Awaiting recovery"));
-        kpiPanel.add(UIUtils.createKpiCard("Active Found Items", foundKpiLabel, new Color(13, 148, 136), "Secured in custody"));
-        kpiPanel.add(UIUtils.createKpiCard("Resolved Items", resolvedKpiLabel, UIUtils.COLOR_SUCCESS, "Claimed or recovered"));
+        kpiPanel.add(UIUtils.createKpiCard("■", "Total Inventory", totalKpiLabel, UIUtils.COLOR_TEXT_PRIMARY, "All registered property"));
+        kpiPanel.add(UIUtils.createKpiCard("▲", "Active Lost", lostKpiLabel, UIUtils.COLOR_PRIMARY, "Awaiting discovery & match"));
+        kpiPanel.add(UIUtils.createKpiCard("▼", "In Custody", foundKpiLabel, UIUtils.COLOR_BLUE, "Secured on premises"));
+        kpiPanel.add(UIUtils.createKpiCard("●", "Resolved", resolvedKpiLabel, UIUtils.COLOR_SUCCESS, "Recovered & claimed items"));
 
         return kpiPanel;
     }
 
     private JPanel createSearchFilterSection() {
-        JPanel filterCard = UIUtils.createCardPanel();
+        JPanel filterCard = UIUtils.createCardPanel(10);
         filterCard.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4, 6, 4, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Search Field
+        // Keyword Search Label and Input
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.0;
-        filterCard.add(new JLabel("Keyword:"), gbc);
+        JLabel searchLabel = new JLabel("Search:");
+        searchLabel.setFont(UIUtils.FONT_BODY_BOLD);
+        searchLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
+        filterCard.add(searchLabel, gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.35;
         searchField = UIUtils.createStyledTextField(18);
-        searchField.setToolTipText("Search by name, ID, description, location, or reporter");
-        // Real-time search listener
+        searchField.setToolTipText("Filter by item name, ID, location, description, or reporter");
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { triggerSearch(); }
             @Override public void removeUpdate(DocumentEvent e) { triggerSearch(); }
@@ -123,19 +129,26 @@ public class DashboardPanel extends JPanel {
         // Type Filter
         gbc.gridx = 2;
         gbc.weightx = 0.0;
-        filterCard.add(new JLabel("Type:"), gbc);
+        JLabel typeLabel = new JLabel("Type:");
+        typeLabel.setFont(UIUtils.FONT_BODY_BOLD);
+        typeLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
+        filterCard.add(typeLabel, gbc);
 
         gbc.gridx = 3;
         gbc.weightx = 0.15;
         typeFilterCombo = new JComboBox<>(new String[]{"ALL", "LOST", "FOUND"});
         typeFilterCombo.setFont(UIUtils.FONT_BODY);
+        typeFilterCombo.setBackground(Color.WHITE);
         typeFilterCombo.addActionListener(e -> triggerSearch());
         filterCard.add(typeFilterCombo, gbc);
 
         // Category Filter
         gbc.gridx = 4;
         gbc.weightx = 0.0;
-        filterCard.add(new JLabel("Category:"), gbc);
+        JLabel catLabel = new JLabel("Category:");
+        catLabel.setFont(UIUtils.FONT_BODY_BOLD);
+        catLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
+        filterCard.add(catLabel, gbc);
 
         gbc.gridx = 5;
         gbc.weightx = 0.25;
@@ -146,13 +159,17 @@ public class DashboardPanel extends JPanel {
         }
         categoryFilterCombo = new JComboBox<>(categoryModel);
         categoryFilterCombo.setFont(UIUtils.FONT_BODY);
+        categoryFilterCombo.setBackground(Color.WHITE);
         categoryFilterCombo.addActionListener(e -> triggerSearch());
         filterCard.add(categoryFilterCombo, gbc);
 
         // Status Filter
         gbc.gridx = 6;
         gbc.weightx = 0.0;
-        filterCard.add(new JLabel("Status:"), gbc);
+        JLabel statusLabel = new JLabel("Status:");
+        statusLabel.setFont(UIUtils.FONT_BODY_BOLD);
+        statusLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
+        filterCard.add(statusLabel, gbc);
 
         gbc.gridx = 7;
         gbc.weightx = 0.15;
@@ -163,13 +180,14 @@ public class DashboardPanel extends JPanel {
         }
         statusFilterCombo = new JComboBox<>(statusModel);
         statusFilterCombo.setFont(UIUtils.FONT_BODY);
+        statusFilterCombo.setBackground(Color.WHITE);
         statusFilterCombo.addActionListener(e -> triggerSearch());
         filterCard.add(statusFilterCombo, gbc);
 
-        // Reset Button
+        // Reset Filters Button
         gbc.gridx = 8;
         gbc.weightx = 0.0;
-        JButton resetBtn = UIUtils.createSecondaryButton("Reset");
+        JButton resetBtn = UIUtils.createSecondaryButton("Reset Filters");
         resetBtn.addActionListener(e -> resetFilters());
         filterCard.add(resetBtn, gbc);
 
@@ -177,33 +195,107 @@ public class DashboardPanel extends JPanel {
     }
 
     private JPanel createTableSection() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(UIUtils.COLOR_SURFACE);
-        panel.setBorder(BorderFactory.createLineBorder(UIUtils.COLOR_BORDER, 1));
+        JPanel tableContainer = UIUtils.createCardPanel(10);
+        tableContainer.setLayout(new BorderLayout());
+        tableContainer.setBorder(new CompoundBorder(
+                new LineBorder(UIUtils.COLOR_BORDER, 1, true),
+                new EmptyBorder(0, 0, 0, 0)
+        ));
 
         tableModel = new ItemTableModel();
-        itemTable = new JTable(tableModel);
+        itemTable = new JTable(tableModel) {
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                if (!isRowSelected(row)) {
+                    if (row == hoveredRow) {
+                        c.setBackground(UIUtils.COLOR_TABLE_HOVER);
+                    } else {
+                        c.setBackground((row % 2 == 0) ? Color.WHITE : UIUtils.COLOR_TABLE_ROW_ALT);
+                    }
+                } else {
+                    c.setBackground(UIUtils.COLOR_TABLE_SELECTION);
+                }
+                return c;
+            }
+        };
+
         itemTable.setFont(UIUtils.FONT_BODY);
-        itemTable.setRowHeight(34);
+        itemTable.setRowHeight(40);
         itemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        itemTable.setGridColor(UIUtils.COLOR_BORDER);
-        itemTable.setShowGrid(true);
-        itemTable.setIntercellSpacing(new Dimension(1, 1));
+        itemTable.setShowGrid(false);
+        itemTable.setIntercellSpacing(new Dimension(0, 1));
         itemTable.setSelectionBackground(UIUtils.COLOR_TABLE_SELECTION);
         itemTable.setSelectionForeground(UIUtils.COLOR_TEXT_PRIMARY);
 
-        // Custom status badge renderer
+        // Column 0: Monospace ID with red tint styling
+        itemTable.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                                                           boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                l.setFont(UIUtils.FONT_MONO);
+                l.setForeground(UIUtils.COLOR_PRIMARY);
+                l.setBorder(new EmptyBorder(0, 12, 0, 0));
+                return l;
+            }
+        });
+
+        // Column 1: Type Pill Renderer (DesignRush Red for Lost, Charcoal for Found)
+        itemTable.getColumnModel().getColumn(1).setCellRenderer(new TableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                String typeStr = value != null ? value.toString() : "";
+                boolean isLost = "Lost".equalsIgnoreCase(typeStr);
+
+                JPanel p = new JPanel(new GridBagLayout()) {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        super.paintComponent(g);
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                        g2.setColor(isLost ? new Color(254, 242, 242) : new Color(244, 244, 245));
+                        g2.fill(new RoundRectangle2D.Float(8, 8, getWidth() - 16, getHeight() - 16, 10, 10));
+                        g2.setColor(isLost ? new Color(254, 202, 202) : new Color(228, 228, 231));
+                        g2.draw(new RoundRectangle2D.Float(8.5f, 8.5f, getWidth() - 17, getHeight() - 17, 10, 10));
+                        g2.dispose();
+                    }
+                };
+                p.setOpaque(false);
+
+                JLabel l = new JLabel(isLost ? "LOST" : "FOUND");
+                l.setFont(UIUtils.FONT_SMALL_BOLD);
+                l.setForeground(isLost ? UIUtils.COLOR_PRIMARY : UIUtils.COLOR_CHARCOAL_BTN);
+                p.add(l);
+                return p;
+            }
+        });
+
+        // Column 2: Item Name (Bold Primary)
+        itemTable.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                                                           boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                l.setFont(UIUtils.FONT_BODY_BOLD);
+                l.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
+                l.setBorder(new EmptyBorder(0, 8, 0, 8));
+                return l;
+            }
+        });
+
+        // Column 7: Status Pill Badge Renderer
         itemTable.getColumnModel().getColumn(7).setCellRenderer(new ItemStatusCellRenderer());
 
-        // Column widths
-        itemTable.getColumnModel().getColumn(0).setPreferredWidth(95);  // ID
-        itemTable.getColumnModel().getColumn(1).setPreferredWidth(65);  // Type
-        itemTable.getColumnModel().getColumn(2).setPreferredWidth(170); // Name
+        // Preferred Column Widths
+        itemTable.getColumnModel().getColumn(0).setPreferredWidth(100); // ID
+        itemTable.getColumnModel().getColumn(1).setPreferredWidth(75);  // Type
+        itemTable.getColumnModel().getColumn(2).setPreferredWidth(180); // Name
         itemTable.getColumnModel().getColumn(3).setPreferredWidth(150); // Category
-        itemTable.getColumnModel().getColumn(4).setPreferredWidth(90);  // Date
-        itemTable.getColumnModel().getColumn(5).setPreferredWidth(170); // Location
-        itemTable.getColumnModel().getColumn(6).setPreferredWidth(120); // Specifics
-        itemTable.getColumnModel().getColumn(7).setPreferredWidth(105); // Status
+        itemTable.getColumnModel().getColumn(4).setPreferredWidth(95);  // Date
+        itemTable.getColumnModel().getColumn(5).setPreferredWidth(180); // Location
+        itemTable.getColumnModel().getColumn(6).setPreferredWidth(130); // Specifics
+        itemTable.getColumnModel().getColumn(7).setPreferredWidth(110); // Status
         itemTable.getColumnModel().getColumn(8).setPreferredWidth(140); // Reporter
 
         // Table Header Styling
@@ -211,14 +303,29 @@ public class DashboardPanel extends JPanel {
         header.setFont(UIUtils.FONT_BODY_BOLD);
         header.setBackground(UIUtils.COLOR_TABLE_HEADER);
         header.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
-        header.setPreferredSize(new Dimension(header.getWidth(), 36));
+        header.setPreferredSize(new Dimension(header.getWidth(), 38));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIUtils.COLOR_BORDER));
         header.setReorderingAllowed(false);
 
-        // Selection Listener for button states
-        itemTable.getSelectionModel().addListSelectionListener(e -> updateButtonStates());
+        // Row hover detection
+        itemTable.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int row = itemTable.rowAtPoint(e.getPoint());
+                if (row != hoveredRow) {
+                    hoveredRow = row;
+                    itemTable.repaint();
+                }
+            }
+        });
 
-        // Double click to view details
         itemTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseExited(MouseEvent e) {
+                hoveredRow = -1;
+                itemTable.repaint();
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && itemTable.getSelectedRow() != -1) {
@@ -227,27 +334,30 @@ public class DashboardPanel extends JPanel {
             }
         });
 
+        itemTable.getSelectionModel().addListSelectionListener(e -> updateButtonStates());
+
         JScrollPane scrollPane = new JScrollPane(itemTable);
         scrollPane.setBorder(null);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        tableContainer.add(scrollPane, BorderLayout.CENTER);
 
-        return panel;
+        return tableContainer;
     }
 
     private JPanel createBottomActionSection() {
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
-        footer.setBorder(new EmptyBorder(6, 0, 0, 0));
+        footer.setBorder(new EmptyBorder(6, 4, 0, 4));
 
         countStatusLabel = new JLabel("Showing 0 records");
         countStatusLabel.setFont(UIUtils.FONT_BODY_BOLD);
-        countStatusLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
+        countStatusLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
         footer.add(countStatusLabel, BorderLayout.WEST);
 
         JPanel buttonGroup = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonGroup.setOpaque(false);
 
-        viewDetailsBtn = UIUtils.createSecondaryButton("View Details");
+        viewDetailsBtn = UIUtils.createSecondaryButton("View Full Details");
         viewDetailsBtn.setEnabled(false);
         viewDetailsBtn.addActionListener(e -> onViewDetails());
 
@@ -259,7 +369,7 @@ public class DashboardPanel extends JPanel {
         deleteBtn.setEnabled(false);
         deleteBtn.addActionListener(e -> onDeleteItem());
 
-        JButton reloadBtn = UIUtils.createSecondaryButton("Reload Data");
+        JButton reloadBtn = UIUtils.createDarkButton("Sync Storage");
         reloadBtn.addActionListener(e -> controller.handleReloadData());
 
         buttonGroup.add(viewDetailsBtn);
@@ -328,23 +438,12 @@ public class DashboardPanel extends JPanel {
         triggerSearch();
     }
 
-    /**
-     * Updates the table with newly filtered items and refreshes counter text.
-     *
-     * @param items Filtered list of items
-     * @param totalTotalCount Total records across entire database
-     */
     public void displayItems(List<Item> items, int totalTotalCount) {
         tableModel.setItems(items);
-        countStatusLabel.setText(String.format("Showing %d of %d records", items.size(), totalTotalCount));
+        countStatusLabel.setText(String.format("Showing %d of %d active records", items.size(), totalTotalCount));
         updateButtonStates();
     }
 
-    /**
-     * Updates KPI analytical summary cards.
-     *
-     * @param stats Aggregate statistics
-     */
     public void updateStatistics(LostFoundManager.SystemStats stats) {
         totalKpiLabel.setText(String.valueOf(stats.getTotalCount()));
         lostKpiLabel.setText(String.valueOf(stats.getLostCount()));
