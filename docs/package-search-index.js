@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.smartlostfound"},{"l":"com.smartlostfound.controller"},{"l":"com.smartlostfound.model"},{"l":"com.smartlostfound.service"},{"l":"com.smartlostfound.storage"},{"l":"com.smartlostfound.view"}];updateSearchResults();
