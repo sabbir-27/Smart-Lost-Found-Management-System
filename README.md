@@ -110,6 +110,7 @@ smart-lost-found/
             ├── UIUtils.java                    # Design tokens, color palette, button styling
             ├── MainFrame.java                  # Top-level window with tabs and status bar
             ├── DashboardPanel.java             # Central table, live search, filters, KPI cards
+            ├── CommunityFeedPanel.java         # Facebook-style community social feed
             ├── ItemTableModel.java             # Custom AbstractTableModel
             ├── ItemStatusCellRenderer.java     # Rounded pill badge renderer
             ├── ReportLostItemPanel.java        # Form for reporting lost items
@@ -125,6 +126,12 @@ smart-lost-found/
 - [x] **Language & UI**: Java 11+ and standard Java Swing.
 - [x] **MVC Architecture**: Models, Views, Controllers, and Services decoupled into explicit packages.
 - [x] **Domain Model**: `Item` abstract base class, `LostItem`, `FoundItem`, `User`, and `LostFoundManager`.
+- [x] **Facebook-Style Community Feed**:
+  - Social media timeline stream with author avatar circles, relative date and location metadata, and item headline cards.
+  - Visual badges for `LOST` and `FOUND`, reward banners, and safe custody storage notes.
+  - Interactive reaction buttons: `👍 Looking Out` (with live counter), `💬 Contact Owner/Finder`, `🔄 Update Status`, and `View Full Post ➔`.
+  - Top "What's on your mind?" composer quick actions: `[ ▲ Report Lost ]` and `[ ▼ Report Found ]`.
+  - Quick filter chips: `[ All Posts ]`, `[ ▲ Lost Items ]`, `[ ▼ Found Items ]`, and `[ 💰 With Reward ]`.
 - [x] **Distinct Reporting Forms**:
   - `ReportLostItemPanel`: Title, category, date lost, location lost, optional reward, narrative description, and owner contact details.
   - `ReportFoundItemPanel`: Title, category, date found, location discovered, physical holding/safe location, narrative description, and finder contact notes.
