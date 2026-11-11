@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Enterprise application frame styled with DesignRush Best Designs aesthetics:
  * Carbon-black sidebar, vibrant signature red accents, editorial typography,
- * and card-based modular layout.
+ * social media activity feed, and card-based modular layout.
  */
 public class MainFrame extends JFrame {
 
@@ -29,6 +29,7 @@ public class MainFrame extends JFrame {
     private JPanel mainContentCardPanel;
 
     private DashboardPanel dashboardPanel;
+    private CommunityFeedPanel feedPanel;
     private ReportLostItemPanel reportLostPanel;
     private ReportFoundItemPanel reportFoundPanel;
 
@@ -67,10 +68,12 @@ public class MainFrame extends JFrame {
         mainContentCardPanel.setBackground(UIUtils.COLOR_BACKGROUND);
 
         dashboardPanel = new DashboardPanel(controller);
+        feedPanel = new CommunityFeedPanel(controller);
         reportLostPanel = new ReportLostItemPanel(controller);
         reportFoundPanel = new ReportFoundItemPanel(controller);
 
         mainContentCardPanel.add(dashboardPanel, "DASHBOARD");
+        mainContentCardPanel.add(feedPanel, "FEED");
         mainContentCardPanel.add(reportLostPanel, "REPORT_LOST");
         mainContentCardPanel.add(reportFoundPanel, "REPORT_FOUND");
 
@@ -126,14 +129,18 @@ public class MainFrame extends JFrame {
         navContainer.setBorder(new EmptyBorder(32, 0, 0, 0));
 
         SidebarNavButton dashBtn = new SidebarNavButton("●  Dashboard & Records", () -> switchToDashboard());
+        SidebarNavButton feedBtn = new SidebarNavButton("📰  Community Feed", () -> switchToFeed());
         SidebarNavButton lostBtn = new SidebarNavButton("▲  Report Lost Property", () -> switchToReportLost());
         SidebarNavButton foundBtn = new SidebarNavButton("▼  Report Found Property", () -> switchToReportFound());
 
         navButtons.put("DASHBOARD", dashBtn);
+        navButtons.put("FEED", feedBtn);
         navButtons.put("REPORT_LOST", lostBtn);
         navButtons.put("REPORT_FOUND", foundBtn);
 
         navContainer.add(dashBtn);
+        navContainer.add(Box.createVerticalStrut(8));
+        navContainer.add(feedBtn);
         navContainer.add(Box.createVerticalStrut(8));
         navContainer.add(lostBtn);
         navContainer.add(Box.createVerticalStrut(8));
@@ -201,6 +208,10 @@ public class MainFrame extends JFrame {
         JPanel quickActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         quickActions.setOpaque(false);
 
+        JButton feedToggleBtn = UIUtils.createModernButton("📰 Community Feed", new Color(244, 244, 245),
+                new Color(228, 228, 231), UIUtils.COLOR_TEXT_PRIMARY, 8);
+        feedToggleBtn.addActionListener(e -> switchToFeed());
+
         JButton newLostBtn = UIUtils.createModernButton("+ Report Lost", UIUtils.COLOR_PRIMARY_LIGHT,
                 UIUtils.COLOR_PRIMARY_BORDER, UIUtils.COLOR_PRIMARY, 8);
         newLostBtn.addActionListener(e -> switchToReportLost());
@@ -208,6 +219,7 @@ public class MainFrame extends JFrame {
         JButton newFoundBtn = UIUtils.createDarkButton("+ Report Found");
         newFoundBtn.addActionListener(e -> switchToReportFound());
 
+        quickActions.add(feedToggleBtn);
         quickActions.add(newLostBtn);
         quickActions.add(newFoundBtn);
 
@@ -265,6 +277,12 @@ public class MainFrame extends JFrame {
                 contentCardLayout.show(mainContentCardPanel, "DASHBOARD");
                 controller.refreshView();
                 break;
+            case "FEED":
+                breadcrumbTitleLabel.setText("Community Social Feed");
+                breadcrumbSubtitleLabel.setText("Facebook-style community stream of lost items, reported sightings, and reward notices");
+                contentCardLayout.show(mainContentCardPanel, "FEED");
+                controller.refreshView();
+                break;
             case "REPORT_LOST":
                 breadcrumbTitleLabel.setText("Report a Lost Item");
                 breadcrumbSubtitleLabel.setText("Submit owner claims and item specifications to enable matching by custodians");
@@ -288,6 +306,10 @@ public class MainFrame extends JFrame {
         setActiveNav("DASHBOARD");
     }
 
+    public void switchToFeed() {
+        setActiveNav("FEED");
+    }
+
     public void switchToReportLost() {
         setActiveNav("REPORT_LOST");
     }
@@ -298,6 +320,10 @@ public class MainFrame extends JFrame {
 
     public DashboardPanel getDashboardPanel() {
         return dashboardPanel;
+    }
+
+    public CommunityFeedPanel getFeedPanel() {
+        return feedPanel;
     }
 
     public ReportLostItemPanel getReportLostPanel() {

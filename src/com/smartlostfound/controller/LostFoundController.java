@@ -197,19 +197,25 @@ public class LostFoundController {
     }
 
     /**
-     * Re-executes current filters and updates the Dashboard view and stats.
+     * Re-executes current filters and updates the Dashboard view, Feed, and stats.
      */
     public void refreshView() {
-        if (mainFrame == null || mainFrame.getDashboardPanel() == null) {
+        if (mainFrame == null) {
             return;
         }
 
-        List<Item> filtered = manager.searchAndFilter(
-                currentKeyword, currentCategory, currentStatus, currentType);
-        int totalRecords = manager.getAllItems().size();
+        if (mainFrame.getDashboardPanel() != null) {
+            List<Item> filtered = manager.searchAndFilter(
+                    currentKeyword, currentCategory, currentStatus, currentType);
+            int totalRecords = manager.getAllItems().size();
 
-        mainFrame.getDashboardPanel().displayItems(filtered, totalRecords);
-        mainFrame.getDashboardPanel().updateStatistics(manager.getStatistics());
+            mainFrame.getDashboardPanel().displayItems(filtered, totalRecords);
+            mainFrame.getDashboardPanel().updateStatistics(manager.getStatistics());
+        }
+
+        if (mainFrame.getFeedPanel() != null) {
+            mainFrame.getFeedPanel().displayFeedItems(manager.getAllItems());
+        }
     }
 
     /**
