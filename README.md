@@ -128,10 +128,15 @@ smart-lost-found/
 - [x] **Domain Model**: `Item` abstract base class, `LostItem`, `FoundItem`, `User`, and `LostFoundManager`.
 - [x] **Facebook-Style Community Feed**:
   - Social media timeline stream with author avatar circles, relative date and location metadata, and item headline cards.
+  - High-resolution picture banners for every post card, supporting custom photo uploads (`.jpg`, `.png`, `.webp`, `.gif`) or automatically generated high-contrast editorial product illustrations.
   - Visual badges for `LOST` and `FOUND`, reward banners, and safe custody storage notes.
   - Interactive reaction buttons: `👍 Looking Out` (with live counter), `💬 Contact Owner/Finder`, `🔄 Update Status`, and `View Full Post ➔`.
   - Top "What's on your mind?" composer quick actions: `[ ▲ Report Lost ]` and `[ ▼ Report Found ]`.
   - Quick filter chips: `[ All Posts ]`, `[ ▲ Lost Items ]`, `[ ▼ Found Items ]`, and `[ 💰 With Reward ]`.
+- [x] **Photo & Image Attachment**:
+  - Integrated `JFileChooser` on both Lost and Found reporting forms allowing users to browse and attach real photos.
+  - Image scaling and cropping engine (`ImageHelper`) with bilinear downscaling and rounded corner clipping.
+  - Images persist across application restarts in CSV storage.
 - [x] **Distinct Reporting Forms**:
   - `ReportLostItemPanel`: Title, category, date lost, location lost, optional reward, narrative description, and owner contact details.
   - `ReportFoundItemPanel`: Title, category, date found, location discovered, physical holding/safe location, narrative description, and finder contact notes.
