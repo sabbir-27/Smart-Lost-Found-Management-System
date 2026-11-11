@@ -26,6 +26,8 @@ public class ReportFoundItemPanel extends JPanel {
     private JTextField locationFoundField;
     private JTextField storageLocationField;
     private JTextArea descriptionArea;
+    private JLabel photoStatusLabel;
+    private String selectedImagePath = "";
 
     private JTextField finderNameField;
     private JTextField finderEmailField;
@@ -139,10 +141,33 @@ public class ReportFoundItemPanel extends JPanel {
         gbc.gridx = 1;
         gbc.weightx = 0.7;
         gbc.anchor = GridBagConstraints.CENTER;
-        descriptionArea = UIUtils.createStyledTextArea(4, 25);
+        descriptionArea = UIUtils.createStyledTextArea(3, 25);
         JScrollPane descScroll = new JScrollPane(descriptionArea);
         descScroll.setBorder(new LineBorder(UIUtils.COLOR_BORDER, 1));
         formCard.add(descScroll, gbc);
+        row++;
+
+        // Item Photo Attachment
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0.3;
+        formCard.add(UIUtils.createFormLabel("Attach Item Photo:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        JPanel photoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        photoPanel.setOpaque(false);
+
+        JButton browsePhotoBtn = UIUtils.createSecondaryButton("📷 Browse Photo...");
+        browsePhotoBtn.addActionListener(e -> selectPhoto());
+
+        photoStatusLabel = new JLabel("No photo attached (visual banner will be generated)");
+        photoStatusLabel.setFont(UIUtils.FONT_SMALL);
+        photoStatusLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
+
+        photoPanel.add(browsePhotoBtn);
+        photoPanel.add(photoStatusLabel);
+        formCard.add(photoPanel, gbc);
         row++;
 
         // Section 2 Header
@@ -293,10 +318,22 @@ public class ReportFoundItemPanel extends JPanel {
 
         controller.handleReportFoundItem(
                 name, category, date, description, reporter, locationFound,
-                storageLocation, finderNotes,
+                storageLocation, finderNotes, selectedImagePath,
                 SwingUtilities.getWindowAncestor(this),
                 this::resetForm
         );
+    }
+
+    private void selectPhoto() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select Found Item Photo");
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Image Files (*.jpg, *.jpeg, *.png, *.webp, *.gif)", "jpg", "jpeg", "png", "webp", "gif"));
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            selectedImagePath = chooser.getSelectedFile().getAbsolutePath();
+            photoStatusLabel.setText("✓ " + chooser.getSelectedFile().getName());
+            photoStatusLabel.setForeground(UIUtils.COLOR_SUCCESS);
+        }
     }
 
     public void resetForm() {
@@ -306,6 +343,11 @@ public class ReportFoundItemPanel extends JPanel {
         locationFoundField.setText("");
         storageLocationField.setText("");
         descriptionArea.setText("");
+        selectedImagePath = "";
+        if (photoStatusLabel != null) {
+            photoStatusLabel.setText("No photo attached (visual banner will be generated)");
+            photoStatusLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
+        }
         finderNameField.setText("");
         finderEmailField.setText("");
         finderPhoneField.setText("");

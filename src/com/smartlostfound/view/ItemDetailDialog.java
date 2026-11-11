@@ -78,6 +78,12 @@ public class ItemDetailDialog extends JDialog {
         contentPanel.setBackground(UIUtils.COLOR_BACKGROUND);
         contentPanel.setBorder(new EmptyBorder(16, 20, 16, 20));
 
+        // Photo Banner Preview
+        JLabel photoBanner = new JLabel(ImageHelper.getItemImageThumbnail(item, 600, 200));
+        photoBanner.setAlignmentX(Component.CENTER_ALIGNMENT);
+        contentPanel.add(photoBanner);
+        contentPanel.add(Box.createVerticalStrut(14));
+
         // Section 1: Item Attributes Card
         JPanel infoCard = UIUtils.createCardPanel(10);
         infoCard.setLayout(new GridLayout(0, 2, 14, 10));

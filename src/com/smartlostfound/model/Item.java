@@ -25,6 +25,7 @@ public abstract class Item implements Serializable {
     private User reporter;
     private String resolutionNotes;
     private LocalDateTime createdAt;
+    private String imagePath;
 
     /**
      * Protected constructor to be invoked by subclass constructors.
@@ -48,6 +49,7 @@ public abstract class Item implements Serializable {
         setReporter(reporter);
         this.resolutionNotes = "";
         this.createdAt = LocalDateTime.now();
+        this.imagePath = "";
     }
 
     // =========================================================================
@@ -174,6 +176,18 @@ public abstract class Item implements Serializable {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = (createdAt != null) ? createdAt : LocalDateTime.now();
+    }
+
+    public String getImagePath() {
+        return imagePath != null ? imagePath : "";
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = (imagePath == null) ? "" : imagePath.trim();
+    }
+
+    public boolean hasImage() {
+        return imagePath != null && !imagePath.trim().isEmpty() && new java.io.File(imagePath).exists();
     }
 
     /**

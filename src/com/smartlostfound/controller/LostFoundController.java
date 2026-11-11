@@ -53,9 +53,18 @@ public class LostFoundController {
     public void handleReportLostItem(String name, ItemCategory category, LocalDate date,
                                      String description, User reporter, String locationLost,
                                      double rewardAmount, Window parent, Runnable onSuccess) {
+        handleReportLostItem(name, category, date, description, reporter, locationLost, rewardAmount, "", parent, onSuccess);
+    }
+
+    /**
+     * Handles submission of a new Lost Item report with image attachment.
+     */
+    public void handleReportLostItem(String name, ItemCategory category, LocalDate date,
+                                     String description, User reporter, String locationLost,
+                                     double rewardAmount, String imagePath, Window parent, Runnable onSuccess) {
         try {
             LostItem item = manager.reportLostItem(
-                    name, category, date, description, reporter, locationLost, rewardAmount);
+                    name, category, date, description, reporter, locationLost, rewardAmount, imagePath);
 
             JOptionPane.showMessageDialog(parent,
                     "Lost Item report submitted successfully!\n" +
@@ -83,16 +92,23 @@ public class LostFoundController {
         }
     }
 
-    /**
-     * Handles submission of a new Found Item report.
-     */
     public void handleReportFoundItem(String name, ItemCategory category, LocalDate date,
                                       String description, User reporter, String locationFound,
                                       String storageLocation, String finderNotes,
                                       Window parent, Runnable onSuccess) {
+        handleReportFoundItem(name, category, date, description, reporter, locationFound, storageLocation, finderNotes, "", parent, onSuccess);
+    }
+
+    /**
+     * Handles submission of a new Found Item report with image attachment.
+     */
+    public void handleReportFoundItem(String name, ItemCategory category, LocalDate date,
+                                      String description, User reporter, String locationFound,
+                                      String storageLocation, String finderNotes, String imagePath,
+                                      Window parent, Runnable onSuccess) {
         try {
             FoundItem item = manager.reportFoundItem(
-                    name, category, date, description, reporter, locationFound, storageLocation, finderNotes);
+                    name, category, date, description, reporter, locationFound, storageLocation, finderNotes, imagePath);
 
             JOptionPane.showMessageDialog(parent,
                     "Found Item report submitted successfully!\n" +

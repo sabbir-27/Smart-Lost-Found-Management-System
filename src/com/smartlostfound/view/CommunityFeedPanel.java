@@ -248,7 +248,7 @@ public class CommunityFeedPanel extends JPanel {
     private JPanel createPostCard(Item item) {
         JPanel postCard = UIUtils.createCardPanel(12);
         postCard.setLayout(new BorderLayout(0, 12));
-        postCard.setMaximumSize(new Dimension(860, 360));
+        postCard.setMaximumSize(new Dimension(860, 560));
 
         boolean isLost = item instanceof LostItem;
         User user = item.getReporter();
@@ -358,6 +358,22 @@ public class CommunityFeedPanel extends JPanel {
         }
 
         bodyPanel.add(highlightBox);
+        bodyPanel.add(Box.createVerticalStrut(10));
+
+        // Item Picture / Visual Photo Banner (Facebook Post Image)
+        ImageIcon thumbnail = ImageHelper.getItemImageThumbnail(item, 760, 220);
+        JLabel imageLabel = new JLabel(thumbnail);
+        imageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        imageLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        imageLabel.setToolTipText("Click image to view full post and owner contact");
+        imageLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                controller.openItemDetailDialog(item, SwingUtilities.getWindowAncestor(CommunityFeedPanel.this));
+            }
+        });
+        bodyPanel.add(imageLabel);
+
         postCard.add(bodyPanel, BorderLayout.CENTER);
 
         // 3. Post Footer Actions (Like/Looking, Contact, Update, Details)

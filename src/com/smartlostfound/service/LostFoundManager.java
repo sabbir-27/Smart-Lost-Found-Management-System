@@ -93,9 +93,31 @@ public class LostFoundManager {
                                                 String description, User reporter,
                                                 String locationLost, double rewardAmount)
             throws DataPersistenceException {
+        return reportLostItem(name, category, date, description, reporter, locationLost, rewardAmount, "");
+    }
+
+    /**
+     * Registers a new LostItem with image attachment, automatic ID generation, and persistence.
+     *
+     * @param name Name of the item
+     * @param category Classification category
+     * @param date Date when lost
+     * @param description Narrative description
+     * @param reporter Person reporting the loss
+     * @param locationLost Specific location where lost
+     * @param rewardAmount Optional reward offered (>= 0.0)
+     * @param imagePath Optional local file path of image
+     * @return The registered {@link LostItem} instance
+     * @throws DataPersistenceException if persistence fails
+     */
+    public synchronized LostItem reportLostItem(String name, ItemCategory category, LocalDate date,
+                                                String description, User reporter,
+                                                String locationLost, double rewardAmount, String imagePath)
+            throws DataPersistenceException {
         String id = generateNextLostId();
         LostItem item = new LostItem(id, name, category, date, description, ItemStatus.LOST,
                 reporter, locationLost, rewardAmount);
+        item.setImagePath(imagePath);
         items.add(0, item); // Insert at front for newest-first display
         persistCurrentState();
         return item;
@@ -120,9 +142,21 @@ public class LostFoundManager {
                                                   String locationFound, String storageLocation,
                                                   String finderContactInfo)
             throws DataPersistenceException {
+        return reportFoundItem(name, category, date, description, reporter, locationFound, storageLocation, finderContactInfo, "");
+    }
+
+    /**
+     * Registers a new FoundItem with image attachment, automatic ID generation, and persistence.
+     */
+    public synchronized FoundItem reportFoundItem(String name, ItemCategory category, LocalDate date,
+                                                  String description, User reporter,
+                                                  String locationFound, String storageLocation,
+                                                  String finderContactInfo, String imagePath)
+            throws DataPersistenceException {
         String id = generateNextFoundId();
         FoundItem item = new FoundItem(id, name, category, date, description, ItemStatus.FOUND,
                 reporter, locationFound, storageLocation, finderContactInfo);
+        item.setImagePath(imagePath);
         items.add(0, item);
         persistCurrentState();
         return item;

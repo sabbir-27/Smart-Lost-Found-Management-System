@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class CsvItemStorageService implements ItemStorageService {
     private static final String CSV_HEADER = 
-            "TYPE,ID,NAME,CATEGORY,DATE,DESCRIPTION,STATUS,LOCATION,SPECIFIC_1,SPECIFIC_2,REPORTER_NAME,REPORTER_EMAIL,REPORTER_PHONE,RESOLUTION_NOTES,CREATED_AT";
+            "TYPE,ID,NAME,CATEGORY,DATE,DESCRIPTION,STATUS,LOCATION,SPECIFIC_1,SPECIFIC_2,REPORTER_NAME,REPORTER_EMAIL,REPORTER_PHONE,RESOLUTION_NOTES,CREATED_AT,IMAGE_PATH";
 
     private final Path filePath;
 
@@ -172,7 +172,8 @@ public class CsvItemStorageService implements ItemStorageService {
                 escapeCsv(reporterEmail),
                 escapeCsv(reporterPhone),
                 escapeCsv(resolutionNotes),
-                escapeCsv(createdAt)
+                escapeCsv(createdAt),
+                escapeCsv(item.getImagePath())
         );
     }
 
@@ -234,6 +235,9 @@ public class CsvItemStorageService implements ItemStorageService {
 
         item.setResolutionNotes(resolutionNotes);
         item.setCreatedAt(createdAt);
+        if (fields.size() > 15) {
+            item.setImagePath(fields.get(15).trim());
+        }
         return item;
     }
 
