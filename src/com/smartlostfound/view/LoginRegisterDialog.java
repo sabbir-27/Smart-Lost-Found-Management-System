@@ -15,7 +15,7 @@ import java.awt.geom.RoundRectangle2D;
 
 /**
  * High-end modal authentication gateway for login and registration.
- * Follows the DesignRush Best Designs aesthetic: Carbon-black branding sidebar,
+ * Follows the DesignRush Best Designs aesthetic: Carbon-black gradient branding sidebar,
  * signature red action buttons, and segmented navigation tabs.
  */
 public class LoginRegisterDialog extends JDialog {
@@ -51,7 +51,7 @@ public class LoginRegisterDialog extends JDialog {
         this.controller = controller;
 
         initComponents();
-        setSize(760, 620);
+        setSize(780, 640);
         setResizable(false);
         setLocationRelativeTo(parent);
     }
@@ -60,7 +60,7 @@ public class LoginRegisterDialog extends JDialog {
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
 
-        // 1. Left Branding Panel (Carbon Black)
+        // 1. Left Branding Panel (Carbon Gradient)
         add(createBrandingPanel(), BorderLayout.WEST);
 
         // 2. Right Form Panel (White)
@@ -68,9 +68,20 @@ public class LoginRegisterDialog extends JDialog {
     }
 
     private JPanel createBrandingPanel() {
-        JPanel brandPanel = new JPanel(new BorderLayout());
-        brandPanel.setPreferredSize(new Dimension(280, 0));
-        brandPanel.setBackground(UIUtils.COLOR_SIDEBAR_BG);
+        JPanel brandPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gp = new GradientPaint(0, 0, UIUtils.COLOR_SIDEBAR_TOP, 0, getHeight(), UIUtils.COLOR_SIDEBAR_BOTTOM);
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        brandPanel.setPreferredSize(new Dimension(290, 0));
+        brandPanel.setOpaque(false);
         brandPanel.setBorder(new EmptyBorder(32, 24, 32, 24));
 
         // Top Brand Header
@@ -78,15 +89,15 @@ public class LoginRegisterDialog extends JDialog {
         top.setOpaque(false);
 
         JLabel logo = new JLabel("■");
-        logo.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        logo.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 26));
         logo.setForeground(UIUtils.COLOR_PRIMARY);
 
         JLabel title = new JLabel("LOST & FOUND");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 20));
         title.setForeground(Color.WHITE);
 
         JLabel subtitle = new JLabel("DESIGNRUSH RECOVERY HUB");
-        subtitle.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        subtitle.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 10));
         subtitle.setForeground(UIUtils.COLOR_PRIMARY);
 
         JLabel tagline = new JLabel("Enterprise Property Intelligence");
@@ -147,12 +158,12 @@ public class LoginRegisterDialog extends JDialog {
         // Top Segmented Switcher
         JPanel topSwitcher = new JPanel(new GridLayout(1, 2, 8, 0));
         topSwitcher.setOpaque(false);
-        topSwitcher.setPreferredSize(new Dimension(0, 40));
+        topSwitcher.setPreferredSize(new Dimension(0, 42));
 
-        signInTabBtn = UIUtils.createModernButton("Sign In", UIUtils.COLOR_SIDEBAR_BG,
-                UIUtils.COLOR_SIDEBAR_BG, Color.WHITE, 8);
-        registerTabBtn = UIUtils.createModernButton("Create Account", new Color(244, 244, 245),
-                new Color(228, 228, 231), UIUtils.COLOR_TEXT_PRIMARY, 8);
+        signInTabBtn = UIUtils.createModernButton("Sign In", UIUtils.COLOR_CHARCOAL_BTN,
+                UIUtils.COLOR_CHARCOAL_BTN, Color.WHITE, 8);
+        registerTabBtn = UIUtils.createModernButton("Create Account", new Color(244, 244, 246),
+                new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
 
         signInTabBtn.addActionListener(e -> showSignInCard());
         registerTabBtn.addActionListener(e -> showRegisterCard());
@@ -181,7 +192,7 @@ public class LoginRegisterDialog extends JDialog {
         panel.setBorder(new EmptyBorder(20, 4, 10, 4));
 
         JLabel title = new JLabel("Welcome Back");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 20));
         title.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -234,8 +245,7 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(Box.createVerticalStrut(18));
 
         // Sign In Button
-        JButton signInSubmit = UIUtils.createModernButton("Sign In to Recovery Hub",
-                UIUtils.COLOR_PRIMARY, UIUtils.COLOR_PRIMARY_HOVER, Color.WHITE, 8);
+        JButton signInSubmit = UIUtils.createPrimaryButton("Sign In to Recovery Hub");
         signInSubmit.setFont(UIUtils.FONT_HEADER);
         signInSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         signInSubmit.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -308,7 +318,7 @@ public class LoginRegisterDialog extends JDialog {
         panel.setBorder(new EmptyBorder(14, 4, 10, 4));
 
         JLabel title = new JLabel("Create a New Account");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 18));
         title.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -322,7 +332,7 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(sub);
         panel.add(Box.createVerticalStrut(12));
 
-        // Form Fields in 2 columns or grid
+        // Form Fields in 2 columns
         JPanel formGrid = new JPanel(new GridLayout(5, 2, 10, 8));
         formGrid.setOpaque(false);
         formGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 230));
@@ -357,7 +367,7 @@ public class LoginRegisterDialog extends JDialog {
 
         formGrid.add(createLabeledField("Account Role *", regRoleCombo));
 
-        // Row 5: Admin Secret Code (visible only when Admin selected)
+        // Row 5: Admin Secret Code
         regAdminCodeField = new JPasswordField(15);
         regAdminCodeField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_BORDER, 1, true), new EmptyBorder(6, 10, 6, 10)));
         adminCodeContainer = createLabeledField("Admin Security Code (Use: ADMIN2026)", regAdminCodeField);
@@ -376,8 +386,7 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(Box.createVerticalStrut(14));
 
         // Register Button
-        JButton registerSubmit = UIUtils.createModernButton("Register Account & Sign In",
-                UIUtils.COLOR_PRIMARY, UIUtils.COLOR_PRIMARY_HOVER, Color.WHITE, 8);
+        JButton registerSubmit = UIUtils.createPrimaryButton("Register Account & Sign In");
         registerSubmit.setFont(UIUtils.FONT_HEADER);
         registerSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         registerSubmit.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -418,17 +427,17 @@ public class LoginRegisterDialog extends JDialog {
 
     private void showSignInCard() {
         authCardLayout.show(authCardsContainer, "SIGN_IN");
-        signInTabBtn.setBackground(UIUtils.COLOR_SIDEBAR_BG);
+        signInTabBtn.setBackground(UIUtils.COLOR_CHARCOAL_BTN);
         signInTabBtn.setForeground(Color.WHITE);
-        registerTabBtn.setBackground(new Color(244, 244, 245));
+        registerTabBtn.setBackground(new Color(244, 244, 246));
         registerTabBtn.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
     }
 
     private void showRegisterCard() {
         authCardLayout.show(authCardsContainer, "REGISTER");
-        registerTabBtn.setBackground(UIUtils.COLOR_SIDEBAR_BG);
+        registerTabBtn.setBackground(UIUtils.COLOR_CHARCOAL_BTN);
         registerTabBtn.setForeground(Color.WHITE);
-        signInTabBtn.setBackground(new Color(244, 244, 245));
+        signInTabBtn.setBackground(new Color(244, 244, 246));
         signInTabBtn.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
     }
 

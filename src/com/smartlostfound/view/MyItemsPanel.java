@@ -134,22 +134,22 @@ public class MyItemsPanel extends JPanel {
 
         tableModel = new ItemTableModel();
         itemTable = new JTable(tableModel);
-        itemTable.setRowHeight(42);
+        itemTable.setRowHeight(44);
         itemTable.setFont(UIUtils.FONT_BODY);
         itemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        itemTable.setGridColor(UIUtils.COLOR_BORDER);
+        itemTable.setGridColor(UIUtils.COLOR_BORDER_LIGHT);
         itemTable.setShowGrid(true);
         itemTable.setIntercellSpacing(new Dimension(1, 1));
-        itemTable.setSelectionBackground(UIUtils.COLOR_PRIMARY_LIGHT);
+        itemTable.setSelectionBackground(UIUtils.COLOR_TABLE_SELECTION);
         itemTable.setSelectionForeground(UIUtils.COLOR_TEXT_PRIMARY);
 
         // Header
         JTableHeader header = itemTable.getTableHeader();
         header.setFont(UIUtils.FONT_BODY_BOLD);
-        header.setBackground(Color.WHITE);
+        header.setBackground(UIUtils.COLOR_TABLE_HEADER);
         header.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
         header.setPreferredSize(new Dimension(0, 42));
-        header.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UIUtils.COLOR_BORDER));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIUtils.COLOR_BORDER));
 
         // Renderer
         ItemStatusCellRenderer renderer = new ItemStatusCellRenderer();

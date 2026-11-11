@@ -7,6 +7,7 @@ import com.smartlostfound.model.UserRole;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 /**
  * Enterprise application frame styled with DesignRush Best Designs aesthetics:
- * Carbon-black sidebar, vibrant signature red accents, editorial typography,
+ * Carbon-black gradient sidebar, vibrant signature red accents, editorial typography,
  * social media activity feed, dedicated User Panel, and executive Admin Console.
  */
 public class MainFrame extends JFrame {
@@ -66,7 +67,7 @@ public class MainFrame extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(UIUtils.COLOR_BACKGROUND);
 
-        // 1. Left Sidebar Navigation (Carbon Black)
+        // 1. Left Sidebar Navigation (Carbon Black Gradient)
         add(createSidebarPanel(), BorderLayout.WEST);
 
         // 2. Right Workspace Container
@@ -107,18 +108,49 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createSidebarPanel() {
-        JPanel sidebar = new JPanel(new BorderLayout());
-        sidebar.setPreferredSize(new Dimension(260, 0));
-        sidebar.setBackground(UIUtils.COLOR_SIDEBAR_BG);
+        JPanel sidebar = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // Vertical obsidian to deep carbon gradient
+                GradientPaint gp = new GradientPaint(0, 0, UIUtils.COLOR_SIDEBAR_TOP, 0, getHeight(), UIUtils.COLOR_SIDEBAR_BOTTOM);
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        sidebar.setOpaque(false);
+        sidebar.setPreferredSize(new Dimension(264, 0));
         sidebar.setBorder(new EmptyBorder(22, 16, 22, 16));
 
         // Brand Header (DesignRush style)
-        JPanel brandPanel = new JPanel(new BorderLayout(10, 6));
+        JPanel brandPanel = new JPanel(new BorderLayout(12, 6));
         brandPanel.setOpaque(false);
 
+        // Red Accent Icon in glossy capsule
+        JPanel logoCapsule = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(229, 46, 45, 35));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
+                g2.setColor(new Color(229, 46, 45, 90));
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 12, 12));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        logoCapsule.setPreferredSize(new Dimension(38, 38));
+        logoCapsule.setOpaque(false);
+
         JLabel logoIcon = new JLabel("■");
-        logoIcon.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        logoIcon.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 20));
         logoIcon.setForeground(UIUtils.COLOR_PRIMARY);
+        logoCapsule.add(logoIcon);
 
         JPanel brandTextPanel = new JPanel(new GridLayout(2, 1, 0, 2));
         brandTextPanel.setOpaque(false);
@@ -128,13 +160,13 @@ public class MainFrame extends JFrame {
         brandTitle.setForeground(Color.WHITE);
 
         JLabel brandSubtitle = new JLabel("DESIGNRUSH RECOVERY HUB");
-        brandSubtitle.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        brandSubtitle.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 9));
         brandSubtitle.setForeground(UIUtils.COLOR_PRIMARY);
 
         brandTextPanel.add(brandTitle);
         brandTextPanel.add(brandSubtitle);
 
-        brandPanel.add(logoIcon, BorderLayout.WEST);
+        brandPanel.add(logoCapsule, BorderLayout.WEST);
         brandPanel.add(brandTextPanel, BorderLayout.CENTER);
 
         sidebar.add(brandPanel, BorderLayout.NORTH);
@@ -143,7 +175,7 @@ public class MainFrame extends JFrame {
         JPanel navContainer = new JPanel();
         navContainer.setLayout(new BoxLayout(navContainer, BoxLayout.Y_AXIS));
         navContainer.setOpaque(false);
-        navContainer.setBorder(new EmptyBorder(28, 0, 0, 0));
+        navContainer.setBorder(new EmptyBorder(26, 0, 0, 0));
 
         SidebarNavButton dashBtn = new SidebarNavButton("●  Dashboard & Records", () -> switchToDashboard());
         SidebarNavButton feedBtn = new SidebarNavButton("📰  Community Feed", () -> switchToFeed());
@@ -172,8 +204,8 @@ public class MainFrame extends JFrame {
 
         // Distinct Admin Section Divider
         JLabel adminSectionLabel = new JLabel("MANAGEMENT & GOVERNANCE");
-        adminSectionLabel.setFont(new Font("Segoe UI", Font.BOLD, 9));
-        adminSectionLabel.setForeground(new Color(113, 113, 122));
+        adminSectionLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 9));
+        adminSectionLabel.setForeground(UIUtils.COLOR_SIDEBAR_MUTED);
         adminSectionLabel.setBorder(new EmptyBorder(0, 16, 4, 0));
         navContainer.add(adminSectionLabel);
         navContainer.add(adminBtn);
@@ -187,7 +219,9 @@ public class MainFrame extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(UIUtils.COLOR_SIDEBAR_CARD);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                g2.setColor(new Color(255, 255, 255, 12));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 10, 10));
                 g2.dispose();
                 super.paintComponent(g);
             }
@@ -196,11 +230,11 @@ public class MainFrame extends JFrame {
         footerCard.setLayout(new GridLayout(2, 1, 2, 4));
         footerCard.setBorder(new EmptyBorder(12, 14, 12, 14));
 
-        JLabel onlineStatus = new JLabel("● Storage Synced & Active");
+        JLabel onlineStatus = new JLabel("● SYSTEM ACTIVE & SYNCED");
         onlineStatus.setFont(UIUtils.FONT_SMALL_BOLD);
         onlineStatus.setForeground(UIUtils.COLOR_SUCCESS);
 
-        JLabel versionLabel = new JLabel("Best Designs v2.2 • RBAC");
+        JLabel versionLabel = new JLabel("Best Designs v2.2 • Executive Tier");
         versionLabel.setFont(UIUtils.FONT_SMALL);
         versionLabel.setForeground(UIUtils.COLOR_SIDEBAR_TEXT);
 
@@ -250,13 +284,12 @@ public class MainFrame extends JFrame {
         sep.setForeground(UIUtils.COLOR_BORDER);
         rightContainer.add(sep);
 
-        // Quick Action Buttons
-        JButton feedToggleBtn = UIUtils.createModernButton("📰 Feed", new Color(244, 244, 245),
-                new Color(228, 228, 231), UIUtils.COLOR_TEXT_PRIMARY, 8);
+        // Quick Action Buttons with Gradient styling
+        JButton feedToggleBtn = UIUtils.createModernButton("📰 Feed", new Color(244, 244, 246),
+                new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
         feedToggleBtn.addActionListener(e -> switchToFeed());
 
-        JButton newLostBtn = UIUtils.createModernButton("+ Report Lost", UIUtils.COLOR_PRIMARY_LIGHT,
-                UIUtils.COLOR_PRIMARY_BORDER, UIUtils.COLOR_PRIMARY, 8);
+        JButton newLostBtn = UIUtils.createPrimaryButton("+ Report Lost");
         newLostBtn.addActionListener(e -> switchToReportLost());
 
         JButton newFoundBtn = UIUtils.createDarkButton("+ Report Found");
@@ -271,8 +304,21 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createProfileChip() {
-        JPanel chip = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel chip = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(UIUtils.COLOR_SURFACE_ALT);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
+                g2.setColor(UIUtils.COLOR_BORDER);
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 24, 24));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         chip.setOpaque(false);
+        chip.setBorder(new EmptyBorder(4, 8, 4, 8));
 
         userAvatarLabel = new AvatarCircleLabel("SA", UIUtils.COLOR_PRIMARY);
 
@@ -284,15 +330,16 @@ public class MainFrame extends JFrame {
         userNameLabel.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
 
         userRoleBadgeLabel = new JLabel("🛡️ ADMIN");
-        userRoleBadgeLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        userRoleBadgeLabel.setFont(UIUtils.FONT_BADGE);
         userRoleBadgeLabel.setForeground(UIUtils.COLOR_PRIMARY);
 
         details.add(userNameLabel);
         details.add(userRoleBadgeLabel);
 
-        JButton authBtn = UIUtils.createModernButton("Switch / Sign In", new Color(244, 244, 245),
-                new Color(228, 228, 231), UIUtils.COLOR_TEXT_PRIMARY, 6);
+        JButton authBtn = UIUtils.createModernButton("Switch", new Color(244, 244, 246),
+                new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 6);
         authBtn.setFont(UIUtils.FONT_SMALL_BOLD);
+        authBtn.setBorder(new EmptyBorder(5, 10, 5, 10));
         authBtn.addActionListener(e -> controller.openLoginDialog(this));
 
         chip.add(userAvatarLabel);
@@ -334,8 +381,8 @@ public class MainFrame extends JFrame {
             }
         });
 
-        setSize(1240, 840);
-        setMinimumSize(new Dimension(1040, 700));
+        setSize(1260, 860);
+        setMinimumSize(new Dimension(1060, 720));
         setLocationRelativeTo(null);
     }
 
@@ -493,7 +540,7 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * Circular Avatar Label.
+     * Circular Avatar Label with anti-aliased colored edge ring.
      */
     private static class AvatarCircleLabel extends JLabel {
         private Color bgColor;
@@ -502,7 +549,7 @@ public class MainFrame extends JFrame {
             super(initials, SwingConstants.CENTER);
             this.bgColor = bgColor;
             setPreferredSize(new Dimension(36, 36));
-            setFont(new Font("Segoe UI", Font.BOLD, 13));
+            setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 12));
             setForeground(Color.WHITE);
             setOpaque(false);
         }
@@ -516,15 +563,23 @@ public class MainFrame extends JFrame {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // Fill circle
             g2.setColor(bgColor);
-            g2.fill(new Ellipse2D.Float(0, 0, getWidth(), getHeight()));
+            g2.fill(new Ellipse2D.Float(1, 1, getWidth() - 2, getHeight() - 2));
+
+            // Inner highlight ring
+            g2.setColor(new Color(255, 255, 255, 90));
+            g2.setStroke(new BasicStroke(1.2f));
+            g2.draw(new Ellipse2D.Float(1.5f, 1.5f, getWidth() - 3, getHeight() - 3));
+
             g2.dispose();
             super.paintComponent(g);
         }
     }
 
     /**
-     * Modern sidebar navigation button styled with DesignRush red active bar.
+     * Modern sidebar navigation button styled with DesignRush red active bar and subtle ambient glow.
      */
     private static class SidebarNavButton extends JPanel {
         private boolean selected = false;
@@ -536,7 +591,7 @@ public class MainFrame extends JFrame {
             setOpaque(false);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
             setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
-            setPreferredSize(new Dimension(228, 44));
+            setPreferredSize(new Dimension(232, 44));
 
             label = new JLabel(title);
             label.setFont(UIUtils.FONT_BODY_BOLD);
@@ -576,15 +631,20 @@ public class MainFrame extends JFrame {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             if (selected) {
+                // Active Card surface
                 g2.setColor(UIUtils.COLOR_SIDEBAR_CARD);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
 
                 // Left active accent bar (DesignRush Signature Red)
                 g2.setColor(UIUtils.COLOR_PRIMARY);
                 g2.fill(new RoundRectangle2D.Float(2, 6, 4, getHeight() - 12, 4, 4));
+
+                // Subtle red glow on active
+                g2.setColor(new Color(229, 46, 45, 18));
+                g2.fill(new RoundRectangle2D.Float(6, 0, getWidth() - 6, getHeight(), 10, 10));
             } else if (hovered) {
                 g2.setColor(UIUtils.COLOR_SIDEBAR_HOVER);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
             }
 
             g2.dispose();

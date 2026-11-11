@@ -221,7 +221,7 @@ public class DashboardPanel extends JPanel {
         };
 
         itemTable.setFont(UIUtils.FONT_BODY);
-        itemTable.setRowHeight(40);
+        itemTable.setRowHeight(44);
         itemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         itemTable.setShowGrid(false);
         itemTable.setIntercellSpacing(new Dimension(0, 1));
@@ -303,7 +303,7 @@ public class DashboardPanel extends JPanel {
         header.setFont(UIUtils.FONT_BODY_BOLD);
         header.setBackground(UIUtils.COLOR_TABLE_HEADER);
         header.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
-        header.setPreferredSize(new Dimension(header.getWidth(), 38));
+        header.setPreferredSize(new Dimension(header.getWidth(), 42));
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIUtils.COLOR_BORDER));
         header.setReorderingAllowed(false);
 

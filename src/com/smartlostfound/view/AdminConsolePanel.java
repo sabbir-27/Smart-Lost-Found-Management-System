@@ -172,22 +172,22 @@ public class AdminConsolePanel extends JPanel {
         // Table
         userTableModel = new UserTableModel();
         userTable = new JTable(userTableModel);
-        userTable.setRowHeight(38);
+        userTable.setRowHeight(44);
         userTable.setFont(UIUtils.FONT_BODY);
         userTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        userTable.setGridColor(UIUtils.COLOR_BORDER);
+        userTable.setGridColor(UIUtils.COLOR_BORDER_LIGHT);
         userTable.setShowGrid(true);
         userTable.setIntercellSpacing(new Dimension(1, 1));
-        userTable.setSelectionBackground(UIUtils.COLOR_PRIMARY_LIGHT);
+        userTable.setSelectionBackground(UIUtils.COLOR_TABLE_SELECTION);
         userTable.setSelectionForeground(UIUtils.COLOR_TEXT_PRIMARY);
 
         // Header Styling
         JTableHeader header = userTable.getTableHeader();
         header.setFont(UIUtils.FONT_BODY_BOLD);
-        header.setBackground(Color.WHITE);
+        header.setBackground(UIUtils.COLOR_TABLE_HEADER);
         header.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
-        header.setPreferredSize(new Dimension(0, 40));
-        header.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UIUtils.COLOR_BORDER));
+        header.setPreferredSize(new Dimension(0, 42));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIUtils.COLOR_BORDER));
 
         // Renderers
         userTable.setDefaultRenderer(Object.class, new UserTableCellRenderer());
@@ -464,43 +464,75 @@ public class AdminConsolePanel extends JPanel {
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus,
                                                        int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-            setBorder(new EmptyBorder(0, 10, 0, 10));
+            setBorder(new EmptyBorder(0, 12, 0, 12));
             setFont(UIUtils.FONT_BODY);
 
             if (column == 0) {
                 setFont(UIUtils.FONT_BODY_BOLD);
                 setForeground(UIUtils.COLOR_TEXT_PRIMARY);
+                return label;
             } else if (column == 1) {
-                // Role Badge
-                if (value instanceof UserRole) {
-                    UserRole role = (UserRole) value;
-                    if (role == UserRole.ADMIN) {
-                        setText("  🛡️ ADMIN  ");
-                        setForeground(UIUtils.COLOR_PRIMARY);
-                        setFont(UIUtils.FONT_SMALL_BOLD);
-                    } else {
-                        setText("  👤 USER  ");
-                        setForeground(UIUtils.COLOR_TEXT_SECONDARY);
-                        setFont(UIUtils.FONT_SMALL_BOLD);
+                // Role Badge Pill
+                boolean isAdmin = value == UserRole.ADMIN;
+                JPanel p = new JPanel(new GridBagLayout()) {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                        g2.setColor(isSelected ? UIUtils.COLOR_TABLE_SELECTION : Color.WHITE);
+                        g2.fillRect(0, 0, getWidth(), getHeight());
+
+                        int bw = 96;
+                        int bh = 24;
+                        int x = (getWidth() - bw) / 2;
+                        int y = (getHeight() - bh) / 2;
+                        g2.setColor(isAdmin ? UIUtils.COLOR_PRIMARY_LIGHT : new Color(244, 244, 246));
+                        g2.fill(new RoundRectangle2D.Float(x, y, bw, bh, 12, 12));
+                        g2.setColor(isAdmin ? UIUtils.COLOR_PRIMARY_BORDER : UIUtils.COLOR_BORDER);
+                        g2.draw(new RoundRectangle2D.Float(x + 0.5f, y + 0.5f, bw - 1, bh - 1, 12, 12));
+                        g2.dispose();
                     }
-                }
+                };
+                p.setOpaque(false);
+                JLabel roleLabel = new JLabel(isAdmin ? "🛡️ ADMIN" : "👤 USER");
+                roleLabel.setFont(UIUtils.FONT_BADGE);
+                roleLabel.setForeground(isAdmin ? UIUtils.COLOR_PRIMARY : UIUtils.COLOR_TEXT_SECONDARY);
+                p.add(roleLabel);
+                return p;
             } else if (column == 5) {
-                // Status Badge
-                String s = String.valueOf(value);
-                if ("ACTIVE".equalsIgnoreCase(s)) {
-                    setForeground(UIUtils.COLOR_SUCCESS);
-                    setFont(UIUtils.FONT_SMALL_BOLD);
-                } else {
-                    setForeground(UIUtils.COLOR_PRIMARY);
-                    setFont(UIUtils.FONT_SMALL_BOLD);
-                }
-            } else {
-                setForeground(isSelected ? UIUtils.COLOR_TEXT_PRIMARY : UIUtils.COLOR_TEXT_SECONDARY);
+                // Status Badge Pill
+                boolean isActive = "ACTIVE".equalsIgnoreCase(String.valueOf(value));
+                JPanel p = new JPanel(new GridBagLayout()) {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                        g2.setColor(isSelected ? UIUtils.COLOR_TABLE_SELECTION : Color.WHITE);
+                        g2.fillRect(0, 0, getWidth(), getHeight());
+
+                        int bw = 96;
+                        int bh = 24;
+                        int x = (getWidth() - bw) / 2;
+                        int y = (getHeight() - bh) / 2;
+                        g2.setColor(isActive ? UIUtils.COLOR_SUCCESS_LIGHT : UIUtils.COLOR_PRIMARY_LIGHT);
+                        g2.fill(new RoundRectangle2D.Float(x, y, bw, bh, 12, 12));
+                        g2.setColor(isActive ? UIUtils.COLOR_SUCCESS_BORDER : UIUtils.COLOR_PRIMARY_BORDER);
+                        g2.draw(new RoundRectangle2D.Float(x + 0.5f, y + 0.5f, bw - 1, bh - 1, 12, 12));
+                        g2.dispose();
+                    }
+                };
+                p.setOpaque(false);
+                JLabel stLabel = new JLabel(isActive ? "● ACTIVE" : "● SUSPENDED");
+                stLabel.setFont(UIUtils.FONT_BADGE);
+                stLabel.setForeground(isActive ? UIUtils.COLOR_SUCCESS : UIUtils.COLOR_PRIMARY);
+                p.add(stLabel);
+                return p;
             }
 
-            return c;
+            setForeground(isSelected ? UIUtils.COLOR_TEXT_PRIMARY : UIUtils.COLOR_TEXT_SECONDARY);
+            return label;
         }
     }
 }

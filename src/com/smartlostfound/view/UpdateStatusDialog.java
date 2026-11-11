@@ -28,7 +28,7 @@ public class UpdateStatusDialog extends JDialog {
         this.controller = controller;
 
         initComponents();
-        setSize(520, 440);
+        setSize(540, 460);
         setLocationRelativeTo(owner);
     }
 
@@ -36,9 +36,20 @@ public class UpdateStatusDialog extends JDialog {
         setLayout(new BorderLayout());
         getContentPane().setBackground(UIUtils.COLOR_BACKGROUND);
 
-        // Header Panel
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(UIUtils.COLOR_SIDEBAR_BG);
+        // Header Panel with Obsidian Gradient
+        JPanel headerPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gp = new GradientPaint(0, 0, UIUtils.COLOR_SIDEBAR_TOP, 0, getHeight(), UIUtils.COLOR_SIDEBAR_BOTTOM);
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(16, 22, 16, 22));
 
         JLabel titleLabel = new JLabel("Transition Item Status");
@@ -58,7 +69,7 @@ public class UpdateStatusDialog extends JDialog {
         bodyWrapper.setBackground(UIUtils.COLOR_BACKGROUND);
         bodyWrapper.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        JPanel formCard = UIUtils.createCardPanel(10);
+        JPanel formCard = UIUtils.createCardPanel(12);
         formCard.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -73,7 +84,7 @@ public class UpdateStatusDialog extends JDialog {
 
         gbc.gridx = 1;
         gbc.weightx = 0.65;
-        JLabel currentStatusLabel = new JLabel(item.getStatus().getDisplayName().toUpperCase());
+        JLabel currentStatusLabel = new JLabel("● " + item.getStatus().getDisplayName().toUpperCase());
         currentStatusLabel.setFont(UIUtils.FONT_BODY_BOLD);
         currentStatusLabel.setForeground(item.getStatus().getForegroundColor());
         formCard.add(currentStatusLabel, gbc);
@@ -98,14 +109,14 @@ public class UpdateStatusDialog extends JDialog {
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         gbc.insets = new Insets(14, 8, 4, 8);
-        formCard.add(UIUtils.createFormLabel("Resolution / Claimer Audit Remarks:"), gbc);
+        formCard.add(UIUtils.createFormLabel("Resolution / Claim Verification Remarks:"), gbc);
 
         gbc.gridy = 3;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weighty = 1.0;
         gbc.insets = new Insets(4, 8, 8, 8);
-        notesTextArea = UIUtils.createStyledTextArea(5, 30);
-        notesTextArea.setText(item.getResolutionNotes());
+        notesTextArea = UIUtils.createStyledTextArea(4, 25);
+        if (item.getResolutionNotes() != null) {
+            notesTextArea.setText(item.getResolutionNotes());
+        }
         JScrollPane notesScroll = new JScrollPane(notesTextArea);
         notesScroll.setBorder(new LineBorder(UIUtils.COLOR_BORDER, 1));
         formCard.add(notesScroll, gbc);
@@ -113,46 +124,40 @@ public class UpdateStatusDialog extends JDialog {
         bodyWrapper.add(formCard, BorderLayout.CENTER);
         add(bodyWrapper, BorderLayout.CENTER);
 
-        // Action Buttons
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
-        footerPanel.setBackground(Color.WHITE);
-        footerPanel.setBorder(new CompoundBorder(
+        // Footer Action Buttons
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
+        footer.setBackground(Color.WHITE);
+        footer.setBorder(new CompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtils.COLOR_BORDER),
                 new EmptyBorder(8, 20, 8, 20)
         ));
 
-        JButton saveBtn = UIUtils.createPrimaryButton("Save & Apply");
-        saveBtn.addActionListener(e -> onSave());
-
         JButton cancelBtn = UIUtils.createSecondaryButton("Cancel");
         cancelBtn.addActionListener(e -> dispose());
 
-        footerPanel.add(saveBtn);
-        footerPanel.add(cancelBtn);
-        add(footerPanel, BorderLayout.SOUTH);
+        JButton saveBtn = UIUtils.createPrimaryButton("Save Status Update");
+        saveBtn.addActionListener(e -> saveStatus());
+
+        footer.add(cancelBtn);
+        footer.add(saveBtn);
+        add(footer, BorderLayout.SOUTH);
     }
 
     private ItemStatus suggestNextStatus(ItemStatus current) {
         switch (current) {
-            case LOST:
-                return ItemStatus.RECOVERED;
-            case FOUND:
-                return ItemStatus.CLAIMED;
-            case RECOVERED:
-            case CLAIMED:
-                return ItemStatus.ARCHIVED;
-            default:
-                return current;
+            case LOST: return ItemStatus.RECOVERED;
+            case FOUND: return ItemStatus.CLAIMED;
+            default: return current;
         }
     }
 
-    private void onSave() {
+    private void saveStatus() {
         ItemStatus newStatus = (ItemStatus) statusComboBox.getSelectedItem();
         String notes = notesTextArea.getText().trim();
 
         if (newStatus == null) {
             JOptionPane.showMessageDialog(this,
-                    "Please select a valid new status.",
+                    "Please select a target status.",
                     "Validation Error", JOptionPane.WARNING_MESSAGE);
             return;
         }

@@ -27,7 +27,7 @@ public class ItemStatusCellRenderer extends DefaultTableCellRenderer {
 
         if (value instanceof ItemStatus) {
             ItemStatus status = (ItemStatus) value;
-            return new BadgePanel(status, isSelected, table.getSelectionBackground());
+            return new BadgePanel(status, isSelected);
         }
 
         return label;
@@ -39,19 +39,26 @@ public class ItemStatusCellRenderer extends DefaultTableCellRenderer {
     private static class BadgePanel extends JPanel {
         private final ItemStatus status;
         private final boolean isSelected;
-        private final Color selectionBg;
 
-        public BadgePanel(ItemStatus status, boolean isSelected, Color selectionBg) {
+        public BadgePanel(ItemStatus status, boolean isSelected) {
             this.status = status;
             this.isSelected = isSelected;
-            this.selectionBg = selectionBg;
             setLayout(new GridBagLayout());
             setOpaque(true);
 
-            JLabel label = new JLabel(status.getDisplayName().toUpperCase());
-            label.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            String prefix;
+            switch (status) {
+                case LOST: prefix = "● "; break;
+                case FOUND: prefix = "● "; break;
+                case RECOVERED: prefix = "✓ "; break;
+                case CLAIMED: prefix = "★ "; break;
+                default: prefix = "● "; break;
+            }
+
+            JLabel label = new JLabel(prefix + status.getDisplayName().toUpperCase());
+            label.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 10));
             label.setForeground(status.getForegroundColor());
-            label.setBorder(new EmptyBorder(3, 10, 3, 10));
+            label.setBorder(new EmptyBorder(2, 10, 2, 10));
 
             add(label);
         }
@@ -70,19 +77,20 @@ public class ItemStatusCellRenderer extends DefaultTableCellRenderer {
             g2.fillRect(0, 0, getWidth(), getHeight());
 
             // Rounded Pill Badge
-            int badgeWidth = Math.min(getWidth() - 16, 92);
-            int badgeHeight = 24;
+            int badgeWidth = Math.min(getWidth() - 12, 100);
+            int badgeHeight = 26;
             int x = (getWidth() - badgeWidth) / 2;
             int y = (getHeight() - badgeHeight) / 2;
 
+            // Fill badge background
             g2.setColor(status.getBackgroundColor());
-            g2.fill(new RoundRectangle2D.Float(x, y, badgeWidth, badgeHeight, 12, 12));
+            g2.fill(new RoundRectangle2D.Float(x, y, badgeWidth, badgeHeight, badgeHeight, badgeHeight));
 
-            g2.setColor(new Color(status.getForegroundColor().getRed(),
-                                  status.getForegroundColor().getGreen(),
-                                  status.getForegroundColor().getBlue(), 120));
+            // Draw soft 1px border
+            Color fg = status.getForegroundColor();
+            g2.setColor(new Color(fg.getRed(), fg.getGreen(), fg.getBlue(), 90));
             g2.setStroke(new BasicStroke(1.0f));
-            g2.draw(new RoundRectangle2D.Float(x + 0.5f, y + 0.5f, badgeWidth - 1, badgeHeight - 1, 12, 12));
+            g2.draw(new RoundRectangle2D.Float(x + 0.5f, y + 0.5f, badgeWidth - 1, badgeHeight - 1, badgeHeight, badgeHeight));
 
             g2.dispose();
             super.paintChildren(g);
