@@ -621,13 +621,13 @@ public class MainFrame extends JFrame {
 
     public void updateUserSession(UserAccount user) {
         if (user == null) {
-            userNameLabel.setText("Guest User");
-            userRoleBadgeLabel.setText("👤 GUEST");
-            userRoleBadgeLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
-            userAvatarLabel.setText("GU");
-            userAvatarLabel.setBackgroundColor(new Color(113, 113, 122));
+            userNameLabel.setText("Guest Visitor");
+            userRoleBadgeLabel.setText("🔒 BROWSE ONLY");
+            userRoleBadgeLabel.setForeground(new Color(248, 113, 113));
+            userAvatarLabel.setText("GV");
+            userAvatarLabel.setBackgroundColor(new Color(63, 63, 70));
             if (authBtn != null) {
-                authBtn.setText("Sign In");
+                authBtn.setText("Sign In / Register");
             }
             if (reportLostPanel != null) {
                 reportLostPanel.autoFillReporter(null);
@@ -635,7 +635,16 @@ public class MainFrame extends JFrame {
             if (reportFoundPanel != null) {
                 reportFoundPanel.autoFillReporter(null);
             }
-            setStatusMessage("Browsing as Guest. Sign in anytime to report or manage items.");
+
+            // Lock all non-feed sections in sidebar for guest browsers
+            setNavButtonLocked("DASHBOARD", true);
+            setNavButtonLocked("REPORT_LOST", true);
+            setNavButtonLocked("REPORT_FOUND", true);
+            setNavButtonLocked("MY_ITEMS", true);
+            setNavButtonLocked("ADMIN_CONSOLE", true);
+            setNavButtonLocked("FEED", false);
+
+            setStatusMessage("Browsing in Guest Mode (Community Feed Only) • Sign in to access other features");
             repaint();
             return;
         }
@@ -657,6 +666,14 @@ public class MainFrame extends JFrame {
             authBtn.setText("Switch");
         }
 
+        // Unlock sections according to account permissions
+        setNavButtonLocked("DASHBOARD", false);
+        setNavButtonLocked("FEED", false);
+        setNavButtonLocked("REPORT_LOST", false);
+        setNavButtonLocked("REPORT_FOUND", false);
+        setNavButtonLocked("MY_ITEMS", false);
+        setNavButtonLocked("ADMIN_CONSOLE", !user.isAdmin());
+
         // Pre-fill reporting forms with this user's profile
         if (reportLostPanel != null) {
             reportLostPanel.autoFillReporter(user);
@@ -669,6 +686,39 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
+    private void setNavButtonLocked(String key, boolean locked) {
+        SidebarNavButton btn = navButtons.get(key);
+        if (btn != null) {
+            btn.setLocked(locked);
+        }
+    }
+
+    public void enterGuestBrowseMode() {
+        controller.setCurrentUser(null);
+        updateUserSession(null);
+        showMainWorkspace();
+        setActiveNav("FEED");
+        setStatusMessage("Guest Mode (Community Feed Only) • Sign in to report or claim items");
+    }
+
+    public void promptGuestSignIn(String actionDescription) {
+        int choice = JOptionPane.showOptionDialog(
+                this,
+                "Authentication Required:\n\n" +
+                "You are currently browsing in Guest Mode (Community Feed Only).\n" +
+                "To " + actionDescription + ", please sign in to your account or register.\n",
+                "Sign In Required",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                new String[]{"Sign In / Register", "Stay on Feed"},
+                "Sign In / Register"
+        );
+        if (choice == 0) {
+            showAuthPage();
+        }
+    }
+
     public void setStatusMessage(String message) {
         if (statusMessageLabel != null) {
             statusMessageLabel.setText(message);
@@ -676,6 +726,10 @@ public class MainFrame extends JFrame {
     }
 
     public void switchToDashboard() {
+        if (controller.getCurrentUser() == null) {
+            promptGuestSignIn("access the Dashboard and inventory records");
+            return;
+        }
         setActiveNav("DASHBOARD");
     }
 
@@ -684,26 +738,42 @@ public class MainFrame extends JFrame {
     }
 
     public void switchToReportLost() {
+        if (controller.getCurrentUser() == null) {
+            promptGuestSignIn("report a lost property item");
+            return;
+        }
         setActiveNav("REPORT_LOST");
     }
 
     public void switchToReportFound() {
+        if (controller.getCurrentUser() == null) {
+            promptGuestSignIn("report a discovered property item");
+            return;
+        }
         setActiveNav("REPORT_FOUND");
     }
 
     public void switchToMyItems() {
+        if (controller.getCurrentUser() == null) {
+            promptGuestSignIn("view and manage your reported items");
+            return;
+        }
         setActiveNav("MY_ITEMS");
     }
 
     public void switchToAdminConsole() {
+        if (controller.getCurrentUser() == null) {
+            promptGuestSignIn("access the Executive Administrative Control Console");
+            return;
+        }
         if (!controller.isAdmin()) {
             UserAccount current = controller.getCurrentUser();
             int choice = JOptionPane.showConfirmDialog(this,
                     "Access Restricted:\n" +
                     "Executive Administrator privileges are required to access the Admin Console.\n" +
-                    "Currently signed in as: @" + (current != null ? current.getUsername() : "guest") +
-                    " (" + (current != null ? current.getRole().getDisplayName() : "Guest") + ").\n\n" +
-                    "Would you like to sign in as an Administrator (e.g. username: admin / pass: admin123)?",
+                    "Currently signed in as: @" + current.getUsername() +
+                    " (" + current.getRole().getDisplayName() + ").\n\n" +
+                    "Would you like to switch to an Administrator account (e.g. admin / admin123)?",
                     "Administrative Permission Required",
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
@@ -842,26 +912,40 @@ public class MainFrame extends JFrame {
             });
         }
 
+        private boolean locked = false;
+
+        public void setLocked(boolean locked) {
+            this.locked = locked;
+            updateDisplay();
+        }
+
         public void setCollapsed(boolean col) {
             this.collapsed = col;
+            updateDisplay();
+        }
+
+        private void updateDisplay() {
             if (collapsed) {
-                label.setText(iconOnly);
+                label.setText(locked ? "🔒" : iconOnly);
                 label.setHorizontalAlignment(SwingConstants.CENTER);
                 label.setBorder(new EmptyBorder(0, 0, 0, 0));
                 setPreferredSize(new Dimension(48, 44));
             } else {
-                label.setText(iconOnly + "  " + fullTitle);
+                String text = iconOnly + "  " + fullTitle + (locked ? "  🔒" : "");
+                label.setText(text);
                 label.setHorizontalAlignment(SwingConstants.LEFT);
                 label.setBorder(new EmptyBorder(0, 16, 0, 16));
                 setPreferredSize(new Dimension(228, 44));
             }
+            label.setForeground(locked ? UIUtils.COLOR_SIDEBAR_MUTED : (selected ? Color.WHITE : UIUtils.COLOR_SIDEBAR_TEXT));
+            setToolTipText(fullTitle + (locked ? " (Sign in required)" : ""));
             revalidate();
             repaint();
         }
 
         public void setSelected(boolean sel) {
             this.selected = sel;
-            label.setForeground(selected ? Color.WHITE : UIUtils.COLOR_SIDEBAR_TEXT);
+            label.setForeground(selected ? Color.WHITE : (locked ? UIUtils.COLOR_SIDEBAR_MUTED : UIUtils.COLOR_SIDEBAR_TEXT));
             repaint();
         }
 

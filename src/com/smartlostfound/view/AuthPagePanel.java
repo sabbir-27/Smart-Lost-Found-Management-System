@@ -409,11 +409,12 @@ public class AuthPagePanel extends JPanel {
 
         panel.add(Box.createVerticalStrut(10));
 
-        // Secondary Action: Continue as Guest
-        JButton guestBtn = UIUtils.createSecondaryButton("Continue as Guest →");
+        // Secondary Action: Browse Community Feed as Guest
+        JButton guestBtn = UIUtils.createSecondaryButton("Browse Feed as Guest →");
         guestBtn.setFont(UIUtils.FONT_BODY_BOLD);
         guestBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         guestBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        guestBtn.setToolTipText("Open the Community Feed in read-only guest mode");
         guestBtn.addActionListener(e -> handleContinueAsGuest());
         panel.add(guestBtn);
 
@@ -782,7 +783,7 @@ public class AuthPagePanel extends JPanel {
     private void handleContinueAsGuest() {
         controller.setCurrentUser(null);
         if (mainFrame != null) {
-            mainFrame.showMainWorkspace();
+            mainFrame.enterGuestBrowseMode();
         }
     }
 }

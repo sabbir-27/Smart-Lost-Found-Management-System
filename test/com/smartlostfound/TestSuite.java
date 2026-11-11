@@ -4,11 +4,17 @@ import com.smartlostfound.controller.LostFoundController;
 import com.smartlostfound.model.*;
 import com.smartlostfound.service.LostFoundManager;
 import com.smartlostfound.service.UserManager;
+import com.smartlostfound.service.WebFeedServer;
 import com.smartlostfound.storage.CsvItemStorageService;
 import com.smartlostfound.storage.CsvUserStorageService;
 import com.smartlostfound.view.ItemTableModel;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -41,6 +47,7 @@ public class TestSuite {
         testUserCsvPersistence();
         testUserManagerAuthenticationAndRegistration();
         testRoleBasedAccessControl();
+        testWebFeedServerSecurityAndAccess();
 
         System.out.println("==========================================================");
         System.out.printf("Test Results: %d Passed, %d Failed\n", testsPassed, testsFailed);
@@ -490,6 +497,93 @@ public class TestSuite {
         } catch (Exception e) {
             System.err.println("Test failed with exception: " + e.getMessage());
             testsFailed++;
+        }
+    }
+
+    private static void testWebFeedServerSecurityAndAccess() {
+        System.out.println("\n--- 13. Testing Web Feed Server Security & Access Isolation ---");
+        WebFeedServer webServer = null;
+        Path tempItemCsv = null;
+        try {
+            tempItemCsv = Files.createTempFile("test_web_feed_", ".csv");
+            LostFoundManager manager = new LostFoundManager(new CsvItemStorageService(tempItemCsv));
+
+            // Populate sample item
+            manager.reportLostItem(
+                    "Test Watch", ItemCategory.JEWELRY_WATCH, LocalDate.now(),
+                    "Silver mesh", new User("Tester", "test@example.com", "555-0000"), "Library", 15.0
+            );
+
+            webServer = new WebFeedServer(manager);
+            boolean started = webServer.start();
+            assertTrue(started, "WebFeedServer started successfully");
+            assertTrue(webServer.isRunning(), "WebFeedServer reports isRunning() == true");
+
+            int port = webServer.getPort();
+            String baseUrl = "http://localhost:" + port;
+
+            // 1. GET /feed should succeed with 200 and return Community Feed HTML
+            HttpURLConnection feedConn = (HttpURLConnection) new URL(baseUrl + "/feed").openConnection();
+            feedConn.setRequestMethod("GET");
+            feedConn.setConnectTimeout(3000);
+            feedConn.setReadTimeout(3000);
+            int feedCode = feedConn.getResponseCode();
+            assertEquals(200, feedCode, "GET /feed returns HTTP 200 OK");
+
+            StringBuilder body = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(feedConn.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    body.append(line).append("\n");
+                }
+            }
+            assertTrue(body.toString().contains("Public Community Feed"), "Feed HTML contains 'Public Community Feed' heading");
+            assertTrue(body.toString().contains("Test Watch"), "Feed HTML displays reported lost item");
+
+            // 2. GET / should also succeed with 200
+            HttpURLConnection rootConn = (HttpURLConnection) new URL(baseUrl + "/").openConnection();
+            rootConn.setRequestMethod("GET");
+            assertEquals(200, rootConn.getResponseCode(), "GET / returns HTTP 200 OK");
+
+            // 3. Security Boundary: GET /admin must be strictly 403 Forbidden
+            HttpURLConnection adminConn = (HttpURLConnection) new URL(baseUrl + "/admin").openConnection();
+            adminConn.setRequestMethod("GET");
+            int adminCode = adminConn.getResponseCode();
+            assertEquals(403, adminCode, "GET /admin is restricted with HTTP 403 Forbidden");
+
+            // 4. Security Boundary: GET /dashboard must be strictly 403 Forbidden
+            HttpURLConnection dashConn = (HttpURLConnection) new URL(baseUrl + "/dashboard").openConnection();
+            dashConn.setRequestMethod("GET");
+            int dashCode = dashConn.getResponseCode();
+            assertEquals(403, dashCode, "GET /dashboard is restricted with HTTP 403 Forbidden");
+
+            // 5. Security Boundary: GET /report must be strictly 403 Forbidden
+            HttpURLConnection reportConn = (HttpURLConnection) new URL(baseUrl + "/report").openConnection();
+            reportConn.setRequestMethod("GET");
+            int reportCode = reportConn.getResponseCode();
+            assertEquals(403, reportCode, "GET /report is restricted with HTTP 403 Forbidden");
+
+            // 6. Security Boundary: POST /feed must be 405 Method Not Allowed
+            HttpURLConnection postConn = (HttpURLConnection) new URL(baseUrl + "/feed").openConnection();
+            postConn.setRequestMethod("POST");
+            postConn.setDoOutput(true);
+            int postCode = postConn.getResponseCode();
+            assertEquals(405, postCode, "POST /feed is rejected with HTTP 405 Method Not Allowed");
+
+        } catch (Exception e) {
+            System.err.println("WebFeedServer test failed with exception: " + e.getMessage());
+            e.printStackTrace();
+            testsFailed++;
+        } finally {
+            if (webServer != null) {
+                webServer.stop();
+                assertTrue(!webServer.isRunning(), "WebFeedServer successfully stopped");
+            }
+            if (tempItemCsv != null) {
+                try {
+                    Files.deleteIfExists(tempItemCsv);
+                } catch (IOException ignored) {}
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ package com.smartlostfound;
 import com.smartlostfound.controller.LostFoundController;
 import com.smartlostfound.service.LostFoundManager;
 import com.smartlostfound.service.UserManager;
+import com.smartlostfound.service.WebFeedServer;
 import com.smartlostfound.view.MainFrame;
 import com.smartlostfound.view.UIUtils;
 
@@ -59,14 +60,19 @@ public class Main {
                 LostFoundManager manager = new LostFoundManager();
                 UserManager userManager = new UserManager();
 
-                // 2. Controller
+                // 2. Embedded Web Feed Server (Restricted to Community Feed only for web browsers)
+                WebFeedServer webFeedServer = new WebFeedServer(manager);
+                webFeedServer.start();
+                Runtime.getRuntime().addShutdownHook(new Thread(webFeedServer::stop));
+
+                // 3. Controller
                 LostFoundController controller = new LostFoundController(manager, userManager);
 
-                // 3. View Frame (Opens directly into the Full-Page Authentication Portal)
+                // 4. View Frame (Opens directly into the Full-Page Authentication Portal)
                 MainFrame frame = new MainFrame(controller);
                 controller.setMainFrame(frame);
 
-                // 4. Reveal the full application window
+                // 5. Reveal the full application window
                 frame.setVisible(true);
 
             } catch (Exception e) {
