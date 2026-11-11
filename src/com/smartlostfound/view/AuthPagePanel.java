@@ -53,6 +53,9 @@ public class AuthPagePanel extends JPanel {
     // Responsive Left Showcase Reference
     private JPanel leftShowcasePanel;
 
+    // Post-authentication redirection target (e.g. "REPORT_LOST", "REPORT_FOUND")
+    private String pendingPostAuthTarget = null;
+
     public AuthPagePanel(LostFoundController controller, MainFrame mainFrame) {
         this.controller = controller;
         this.mainFrame = mainFrame;
@@ -376,7 +379,20 @@ public class AuthPagePanel extends JPanel {
         panel.add(title);
         panel.add(Box.createVerticalStrut(4));
         panel.add(sub);
-        panel.add(Box.createVerticalStrut(24));
+        panel.add(Box.createVerticalStrut(20));
+
+        // Google Sign-In Action
+        JButton googleSignInBtn = UIUtils.createGoogleButton("Continue with Google");
+        googleSignInBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        googleSignInBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        googleSignInBtn.addActionListener(e -> handleGoogleLogin());
+        panel.add(googleSignInBtn);
+
+        panel.add(Box.createVerticalStrut(14));
+        JPanel orDiv = UIUtils.createOrDivider("OR SIGN IN WITH USERNAME");
+        orDiv.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(orDiv);
+        panel.add(Box.createVerticalStrut(14));
 
         // Username Field
         panel.add(createFieldLabel("Username or Email"));
@@ -545,6 +561,19 @@ public class AuthPagePanel extends JPanel {
         panel.add(sub);
         panel.add(Box.createVerticalStrut(18));
 
+        // Google Sign-Up Action
+        JButton googleSignUpBtn = UIUtils.createGoogleButton("Sign up with Google");
+        googleSignUpBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        googleSignUpBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        googleSignUpBtn.addActionListener(e -> handleGoogleLogin());
+        panel.add(googleSignUpBtn);
+
+        panel.add(Box.createVerticalStrut(14));
+        JPanel orDiv = UIUtils.createOrDivider("OR SIGN UP WITH EMAIL");
+        orDiv.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(orDiv);
+        panel.add(Box.createVerticalStrut(14));
+
         // Form Fields (Clean & Sequential)
         panel.add(createFieldLabel("Full Name *"));
         panel.add(Box.createVerticalStrut(4));
@@ -659,6 +688,14 @@ public class AuthPagePanel extends JPanel {
         setTabPillState(signInTabBtn, false);
     }
 
+    public void setPendingPostAuthTarget(String target) {
+        this.pendingPostAuthTarget = target;
+    }
+
+    public String getPendingPostAuthTarget() {
+        return pendingPostAuthTarget;
+    }
+
     public void updateReturnToAppVisibility(boolean visible) {
         if (returnToAppBtn != null) {
             returnToAppBtn.setVisible(visible);
@@ -705,9 +742,7 @@ public class AuthPagePanel extends JPanel {
                     "Logged in as: " + account.getRole().getDisplayName(),
                     "Authentication Successful", JOptionPane.INFORMATION_MESSAGE);
 
-            if (mainFrame != null) {
-                mainFrame.showMainWorkspace();
-            }
+            proceedPostAuth();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
@@ -770,13 +805,37 @@ public class AuthPagePanel extends JPanel {
                     "Account @" + account.getUsername() + " created with role: " + account.getRole().getDisplayName(),
                     "Account Created", JOptionPane.INFORMATION_MESSAGE);
 
-            if (mainFrame != null) {
-                mainFrame.showMainWorkspace();
-            }
+            proceedPostAuth();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
                     "Registration Failed", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handleGoogleLogin() {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        UserAccount account = GoogleAuthDialog.showDialog(owner, controller);
+        if (account != null) {
+            controller.setCurrentUser(account);
+            JOptionPane.showMessageDialog(this,
+                    "Signed in with Google successfully!\n" +
+                    "Welcome, " + account.getName() + " (" + account.getEmail() + ")",
+                    "Google Authentication", JOptionPane.INFORMATION_MESSAGE);
+            proceedPostAuth();
+        }
+    }
+
+    private void proceedPostAuth() {
+        if (mainFrame != null) {
+            mainFrame.updateUserSession(controller.getCurrentUser());
+            mainFrame.showMainWorkspace();
+            if ("REPORT_LOST".equals(pendingPostAuthTarget)) {
+                mainFrame.switchToReportLost();
+            } else if ("REPORT_FOUND".equals(pendingPostAuthTarget)) {
+                mainFrame.switchToReportFound();
+            }
+            pendingPostAuthTarget = null;
         }
     }
 

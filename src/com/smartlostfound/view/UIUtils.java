@@ -7,6 +7,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Arrays;
@@ -304,6 +305,157 @@ public final class UIUtils {
         button.setBorder(new EmptyBorder(9, 18, 9, 18));
 
         return button;
+    }
+
+    /**
+     * Official 4-color Google "G" vector icon rendered cleanly via Java2D.
+     */
+    public static class GoogleLogoIcon implements Icon {
+        private final int size;
+
+        public GoogleLogoIcon(int size) {
+            this.size = size;
+        }
+
+        @Override
+        public int getIconWidth() {
+            return size;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return size;
+        }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+            g2.translate(x, y);
+
+            float s = size;
+            float strokeW = s * 0.22f;
+            float pad = strokeW / 2.0f + 0.5f;
+            float diam = s - strokeW - 1.0f;
+
+            Stroke stroke = new BasicStroke(strokeW, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+            g2.setStroke(stroke);
+
+            // Red (Top sweep: ~45 to 140 deg) #EA4335
+            g2.setColor(new Color(234, 67, 53));
+            g2.draw(new Arc2D.Float(pad, pad, diam, diam, 45, 95, Arc2D.OPEN));
+
+            // Yellow (Left sweep: ~140 to 225 deg) #FBBC05
+            g2.setColor(new Color(251, 188, 5));
+            g2.draw(new Arc2D.Float(pad, pad, diam, diam, 140, 85, Arc2D.OPEN));
+
+            // Green (Bottom sweep: ~225 to 315 deg) #34A853
+            g2.setColor(new Color(52, 168, 83));
+            g2.draw(new Arc2D.Float(pad, pad, diam, diam, 225, 90, Arc2D.OPEN));
+
+            // Blue (Right arc) #4285F4
+            g2.setColor(new Color(66, 133, 244));
+            g2.draw(new Arc2D.Float(pad, pad, diam, diam, 315, 50, Arc2D.OPEN));
+
+            // Blue horizontal crossbar to center
+            float barH = strokeW * 0.95f;
+            float barW = s * 0.52f;
+            float barX = s * 0.46f;
+            float barY = (s - barH) / 2.0f;
+            g2.fill(new RoundRectangle2D.Float(barX, barY, barW, barH, 2, 2));
+
+            g2.dispose();
+        }
+    }
+
+    /**
+     * Creates an authentic Google Sign-In button following Google's official brand guidelines.
+     */
+    public static JButton createGoogleButton(String text) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int w = getWidth();
+                int h = getHeight();
+
+                Color bg = Color.WHITE;
+                if (!isEnabled()) {
+                    bg = new Color(244, 244, 246);
+                } else if (getModel().isPressed()) {
+                    bg = new Color(238, 239, 242);
+                } else if (getModel().isRollover()) {
+                    bg = new Color(248, 249, 250);
+                }
+
+                g2.setColor(bg);
+                g2.fill(new RoundRectangle2D.Float(0, 0, w, h, 10, 10));
+
+                // Google official light grey outline #DADCE0
+                g2.setColor(getModel().isRollover() ? new Color(180, 185, 195) : new Color(218, 220, 224));
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, 10, 10));
+
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+
+        button.setIcon(new GoogleLogoIcon(18));
+        button.setIconTextGap(12);
+        button.setFont(new Font(FONT_FAMILY, Font.BOLD, 13));
+        button.setForeground(new Color(60, 64, 67)); // Google official dark grey #3C4043
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(new EmptyBorder(10, 16, 10, 16));
+        return button;
+    }
+
+    /**
+     * Creates a horizontal divider with centered label (e.g. "OR CONTINUE WITH EMAIL").
+     */
+    public static JPanel createOrDivider(String labelText) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+
+        // Left Line
+        gbc.gridx = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JSeparator leftSep = new JSeparator();
+        leftSep.setForeground(COLOR_BORDER);
+        panel.add(leftSep, gbc);
+
+        // Center Label
+        gbc.gridx = 1;
+        gbc.weightx = 0.0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = new Insets(0, 12, 0, 12);
+        JLabel label = new JLabel(labelText);
+        label.setFont(new Font(FONT_FAMILY, Font.BOLD, 10));
+        label.setForeground(COLOR_TEXT_MUTED);
+        panel.add(label, gbc);
+
+        // Right Line
+        gbc.gridx = 2;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        JSeparator rightSep = new JSeparator();
+        rightSep.setForeground(COLOR_BORDER);
+        panel.add(rightSep, gbc);
+
+        return panel;
     }
 
     /**

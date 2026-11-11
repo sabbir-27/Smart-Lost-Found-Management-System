@@ -739,7 +739,7 @@ public class MainFrame extends JFrame {
 
     public void switchToReportLost() {
         if (controller.getCurrentUser() == null) {
-            promptGuestSignIn("report a lost property item");
+            promptGuestReportAction("Lost", "REPORT_LOST");
             return;
         }
         setActiveNav("REPORT_LOST");
@@ -747,10 +747,14 @@ public class MainFrame extends JFrame {
 
     public void switchToReportFound() {
         if (controller.getCurrentUser() == null) {
-            promptGuestSignIn("report a discovered property item");
+            promptGuestReportAction("Found", "REPORT_FOUND");
             return;
         }
         setActiveNav("REPORT_FOUND");
+    }
+
+    public void promptGuestReportAction(String reportType, String targetNavKey) {
+        GuestReportAuthDialog.prompt(this, controller, reportType, targetNavKey);
     }
 
     public void switchToMyItems() {
@@ -787,9 +791,19 @@ public class MainFrame extends JFrame {
     }
 
     public void showAuthPage() {
+        showAuthPage(false, null);
+    }
+
+    public void showAuthPage(boolean showRegister, String pendingTarget) {
         if (authPagePanel != null) {
             authPagePanel.updateReturnToAppVisibility(controller.getCurrentUser() != null);
             authPagePanel.resetFields();
+            authPagePanel.setPendingPostAuthTarget(pendingTarget);
+            if (showRegister) {
+                authPagePanel.showRegisterCard();
+            } else {
+                authPagePanel.showSignInCard();
+            }
         }
         rootCardLayout.show(rootCardPanel, "AUTH_VIEW");
         setTitle("Sign In & Authentication - Smart Lost & Found");

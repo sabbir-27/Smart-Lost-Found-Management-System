@@ -48,6 +48,7 @@ public class TestSuite {
         testUserManagerAuthenticationAndRegistration();
         testRoleBasedAccessControl();
         testWebFeedServerSecurityAndAccess();
+        testGoogleAuthenticationAndAutoRegistration();
 
         System.out.println("==========================================================");
         System.out.printf("Test Results: %d Passed, %d Failed\n", testsPassed, testsFailed);
@@ -582,6 +583,49 @@ public class TestSuite {
             if (tempItemCsv != null) {
                 try {
                     Files.deleteIfExists(tempItemCsv);
+                } catch (IOException ignored) {}
+            }
+        }
+    }
+
+    private static void testGoogleAuthenticationAndAutoRegistration() {
+        System.out.println("\n--- 14. Testing Google Authentication & Auto-Registration ---");
+        Path tempUserCsv = null;
+        try {
+            tempUserCsv = Files.createTempFile("test_google_users_", ".csv");
+            UserManager userManager = new UserManager(new CsvUserStorageService(tempUserCsv));
+
+            int initialCount = userManager.getAllUsers().size();
+
+            // 1. First time Google login: should auto-register new account
+            UserAccount googleUser = userManager.authenticateOrRegisterGoogle("alex.rivera.dev@gmail.com", "Alex Rivera");
+            assertEquals("Alex Rivera", googleUser.getName(), "Google user full name matches");
+            assertEquals("alex.rivera.dev@gmail.com", googleUser.getEmail(), "Google user email matches");
+            assertEquals(UserRole.USER, googleUser.getRole(), "Google user has Standard User role");
+            assertTrue(googleUser.isActive(), "Google user is active");
+            assertTrue(googleUser.getUsername().contains("alex"), "Generated username derives from Google email prefix");
+            assertEquals(initialCount + 1, userManager.getAllUsers().size(), "User count incremented after Google registration");
+
+            // 2. Second time Google login with SAME email: should return existing account without duplicates
+            UserAccount existingGoogleUser = userManager.authenticateOrRegisterGoogle("alex.rivera.dev@gmail.com", "Alex Rivera");
+            assertEquals(googleUser.getUsername(), existingGoogleUser.getUsername(), "Same Google account returned on repeated login");
+            assertEquals(initialCount + 1, userManager.getAllUsers().size(), "User count does not increase on re-authentication");
+
+            // 3. Persistence verification: reload from CSV
+            UserManager reloadedManager = new UserManager(new CsvUserStorageService(tempUserCsv));
+            Optional<UserAccount> loadedGoogleUser = reloadedManager.findByUsername(googleUser.getUsername());
+            assertTrue(loadedGoogleUser.isPresent(), "Google account persisted to disk and reloaded");
+            assertEquals("Alex Rivera", loadedGoogleUser.get().getName(), "Persisted Google user name preserved");
+            assertEquals("alex.rivera.dev@gmail.com", loadedGoogleUser.get().getEmail(), "Persisted Google email preserved");
+
+        } catch (Exception e) {
+            System.err.println("Google auth test failed with exception: " + e.getMessage());
+            e.printStackTrace();
+            testsFailed++;
+        } finally {
+            if (tempUserCsv != null) {
+                try {
+                    Files.deleteIfExists(tempUserCsv);
                 } catch (IOException ignored) {}
             }
         }

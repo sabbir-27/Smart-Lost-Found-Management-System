@@ -225,7 +225,20 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(title);
         panel.add(Box.createVerticalStrut(4));
         panel.add(sub);
-        panel.add(Box.createVerticalStrut(20));
+        panel.add(Box.createVerticalStrut(16));
+
+        // Google Sign-In Action
+        JButton googleBtn = UIUtils.createGoogleButton("Continue with Google");
+        googleBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        googleBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        googleBtn.addActionListener(e -> handleGoogleLogin());
+        panel.add(googleBtn);
+
+        panel.add(Box.createVerticalStrut(12));
+        JPanel orDiv = UIUtils.createOrDivider("OR SIGN IN WITH USERNAME");
+        orDiv.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(orDiv);
+        panel.add(Box.createVerticalStrut(12));
 
         // Username
         panel.add(createFormLabel("Username:"));
@@ -365,6 +378,19 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(Box.createVerticalStrut(2));
         panel.add(sub);
         panel.add(Box.createVerticalStrut(12));
+
+        // Google Sign-Up Action
+        JButton googleRegBtn = UIUtils.createGoogleButton("Sign up with Google");
+        googleRegBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        googleRegBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        googleRegBtn.addActionListener(e -> handleGoogleLogin());
+        panel.add(googleRegBtn);
+
+        panel.add(Box.createVerticalStrut(10));
+        JPanel orRegDiv = UIUtils.createOrDivider("OR SIGN UP WITH EMAIL");
+        orRegDiv.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(orRegDiv);
+        panel.add(Box.createVerticalStrut(10));
 
         // Form Fields in 2 columns
         JPanel formGrid = new JPanel(new GridLayout(5, 2, 10, 8));
@@ -588,6 +614,20 @@ public class LoginRegisterDialog extends JDialog {
         this.authenticatedAccount = null;
         controller.setCurrentUser(null);
         dispose();
+    }
+
+    private void handleGoogleLogin() {
+        UserAccount account = GoogleAuthDialog.showDialog(this, controller);
+        if (account != null) {
+            this.enteredApp = true;
+            this.authenticatedAccount = account;
+            controller.setCurrentUser(account);
+            JOptionPane.showMessageDialog(this,
+                    "Signed in with Google successfully!\n" +
+                    "Welcome, " + account.getName() + " (" + account.getEmail() + ")",
+                    "Google Authentication", JOptionPane.INFORMATION_MESSAGE);
+            dispose();
+        }
     }
 
     public void setInitialLaunch(boolean initialLaunch) {

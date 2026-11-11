@@ -182,6 +182,66 @@ public class UserManager {
     }
 
     /**
+     * Authenticates an existing user matching the Google email, or creates and registers
+     * a new Standard User account with the Google profile credentials.
+     *
+     * @param googleEmail Google email address (e.g. alex.rivera@gmail.com)
+     * @param fullName Full name of the user (e.g. Alex Rivera)
+     * @return Authenticated UserAccount
+     * @throws DataPersistenceException if disk write fails
+     */
+    public synchronized UserAccount authenticateOrRegisterGoogle(String googleEmail, String fullName)
+            throws DataPersistenceException {
+        if (googleEmail == null || googleEmail.trim().isEmpty()) {
+            throw new IllegalArgumentException("Google email cannot be empty.");
+        }
+        String cleanEmail = googleEmail.trim().toLowerCase();
+
+        // 1. Check if user already exists by email (case-insensitive)
+        for (UserAccount existing : usersByUsername.values()) {
+            if (cleanEmail.equalsIgnoreCase(existing.getEmail())) {
+                if (!existing.isActive()) {
+                    throw new IllegalArgumentException("This Google account is currently deactivated. Contact an administrator.");
+                }
+                return existing;
+            }
+        }
+
+        // 2. Generate a clean, unique username from the email prefix
+        String rawPrefix = cleanEmail.contains("@") ? cleanEmail.split("@")[0] : cleanEmail;
+        String baseUsername = rawPrefix.replaceAll("[^a-zA-Z0-9_.-]", "");
+        if (baseUsername.length() < 3) {
+            baseUsername = "user_" + baseUsername;
+        }
+        if (baseUsername.length() > 20) {
+            baseUsername = baseUsername.substring(0, 20);
+        }
+
+        String candidateUsername = baseUsername;
+        int counter = 1;
+        while (usersByUsername.containsKey(candidateUsername.toLowerCase())) {
+            candidateUsername = baseUsername + counter;
+            counter++;
+        }
+
+        String cleanName = (fullName != null && !fullName.trim().isEmpty()) ? fullName.trim() : rawPrefix;
+        String generatedPass = "GOOGLE_OAUTH_" + UUID.randomUUID().toString();
+
+        UserAccount newGoogleAccount = UserAccount.create(
+                candidateUsername,
+                generatedPass,
+                UserRole.USER,
+                cleanName,
+                cleanEmail,
+                ""
+        );
+
+        usersByUsername.put(candidateUsername.toLowerCase(), newGoogleAccount);
+        persistCurrentState();
+        return newGoogleAccount;
+    }
+
+    /**
      * Retrieves an account by username.
      */
     public Optional<UserAccount> findByUsername(String username) {
