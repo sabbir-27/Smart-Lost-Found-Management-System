@@ -170,8 +170,8 @@ public class CommunityFeedPanel extends JPanel {
         pillGroup.setOpaque(false);
 
         pillGroup.add(createFilterChip("All Posts", "ALL"));
-        pillGroup.add(createFilterChip("▲ Lost Items", "LOST"));
-        pillGroup.add(createFilterChip("▼ Found Items", "FOUND"));
+        pillGroup.add(createFilterChip("Lost Only", "LOST"));
+        pillGroup.add(createFilterChip("Found Only", "FOUND"));
         pillGroup.add(createFilterChip("🏆 With Reward", "REWARD"));
 
         bar.add(pillGroup, BorderLayout.WEST);

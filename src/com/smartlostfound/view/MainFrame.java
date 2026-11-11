@@ -43,6 +43,9 @@ public class MainFrame extends JFrame {
     private JLabel breadcrumbSubtitleLabel;
     private JLabel statusMessageLabel;
 
+    // Top Bar Action Container
+    private JPanel topBarActionsContainer;
+
     // User Profile Chip components
     private AvatarCircleLabel userAvatarLabel;
     private JLabel userNameLabel;
@@ -284,20 +287,10 @@ public class MainFrame extends JFrame {
         sep.setForeground(UIUtils.COLOR_BORDER);
         rightContainer.add(sep);
 
-        // Quick Action Buttons with Gradient styling
-        JButton feedToggleBtn = UIUtils.createModernButton("📰 Feed", new Color(244, 244, 246),
-                new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
-        feedToggleBtn.addActionListener(e -> switchToFeed());
-
-        JButton newLostBtn = UIUtils.createPrimaryButton("+ Report Lost");
-        newLostBtn.addActionListener(e -> switchToReportLost());
-
-        JButton newFoundBtn = UIUtils.createDarkButton("+ Report Found");
-        newFoundBtn.addActionListener(e -> switchToReportFound());
-
-        rightContainer.add(feedToggleBtn);
-        rightContainer.add(newLostBtn);
-        rightContainer.add(newFoundBtn);
+        // Dynamic Quick Action Buttons container (contextual per active view)
+        topBarActionsContainer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        topBarActionsContainer.setOpaque(false);
+        rightContainer.add(topBarActionsContainer);
 
         topBar.add(rightContainer, BorderLayout.EAST);
         return topBar;
@@ -428,6 +421,88 @@ public class MainFrame extends JFrame {
                 adminConsolePanel.refreshData();
                 break;
         }
+
+        updateTopBarActions(key);
+    }
+
+    /**
+     * Updates top action buttons contextually to eliminate duplicate report actions
+     * when browsing dedicated sections like the Community Feed or reporting forms.
+     */
+    private void updateTopBarActions(String key) {
+        if (topBarActionsContainer == null) return;
+        topBarActionsContainer.removeAll();
+
+        switch (key) {
+            case "FEED":
+                // In Community Feed: do not duplicate "Report Lost" / "Report Found" buttons
+                // from the header since the feed already has its own dedicated social composer.
+                JButton refreshFeedBtn = UIUtils.createModernButton("🔄 Refresh Feed", new Color(244, 244, 246),
+                        new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
+                refreshFeedBtn.addActionListener(e -> controller.refreshView());
+                topBarActionsContainer.add(refreshFeedBtn);
+                break;
+
+            case "DASHBOARD":
+                JButton feedToggleBtn = UIUtils.createModernButton("📰 Community Feed", new Color(244, 244, 246),
+                        new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
+                feedToggleBtn.addActionListener(e -> switchToFeed());
+
+                JButton dashLostBtn = UIUtils.createPrimaryButton("+ Report Lost");
+                dashLostBtn.addActionListener(e -> switchToReportLost());
+
+                JButton dashFoundBtn = UIUtils.createDarkButton("+ Report Found");
+                dashFoundBtn.addActionListener(e -> switchToReportFound());
+
+                topBarActionsContainer.add(feedToggleBtn);
+                topBarActionsContainer.add(dashLostBtn);
+                topBarActionsContainer.add(dashFoundBtn);
+                break;
+
+            case "REPORT_LOST":
+                JButton feedFromLost = UIUtils.createModernButton("📰 Community Feed", new Color(244, 244, 246),
+                        new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
+                feedFromLost.addActionListener(e -> switchToFeed());
+
+                JButton backDashFromLost = UIUtils.createDarkButton("● Inventory Records");
+                backDashFromLost.addActionListener(e -> switchToDashboard());
+
+                topBarActionsContainer.add(feedFromLost);
+                topBarActionsContainer.add(backDashFromLost);
+                break;
+
+            case "REPORT_FOUND":
+                JButton feedFromFound = UIUtils.createModernButton("📰 Community Feed", new Color(244, 244, 246),
+                        new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
+                feedFromFound.addActionListener(e -> switchToFeed());
+
+                JButton backDashFromFound = UIUtils.createDarkButton("● Inventory Records");
+                backDashFromFound.addActionListener(e -> switchToDashboard());
+
+                topBarActionsContainer.add(feedFromFound);
+                topBarActionsContainer.add(backDashFromFound);
+                break;
+
+            case "MY_ITEMS":
+                JButton myLostBtn = UIUtils.createPrimaryButton("+ Report Lost");
+                myLostBtn.addActionListener(e -> switchToReportLost());
+
+                JButton myFoundBtn = UIUtils.createDarkButton("+ Report Found");
+                myFoundBtn.addActionListener(e -> switchToReportFound());
+
+                topBarActionsContainer.add(myLostBtn);
+                topBarActionsContainer.add(myFoundBtn);
+                break;
+
+            case "ADMIN_CONSOLE":
+                JButton syncBtn = UIUtils.createDarkButton("🔄 Sync Directory");
+                syncBtn.addActionListener(e -> adminConsolePanel.refreshData());
+                topBarActionsContainer.add(syncBtn);
+                break;
+        }
+
+        topBarActionsContainer.revalidate();
+        topBarActionsContainer.repaint();
     }
 
     public void updateUserSession(UserAccount user) {
