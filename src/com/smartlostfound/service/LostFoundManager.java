@@ -214,6 +214,16 @@ public class LostFoundManager {
     }
 
     /**
+     * Alias for {@link #getItemById(String)}.
+     *
+     * @param itemId Unique ID string
+     * @return Optional containing the item if found
+     */
+    public Optional<Item> findById(String itemId) {
+        return getItemById(itemId);
+    }
+
+    /**
      * Returns an unmodifiable snapshot of all items.
      *
      * @return List of all items

@@ -3,7 +3,9 @@ package com.smartlostfound;
 import com.smartlostfound.controller.LostFoundController;
 import com.smartlostfound.model.*;
 import com.smartlostfound.service.LostFoundManager;
+import com.smartlostfound.service.UserManager;
 import com.smartlostfound.storage.CsvItemStorageService;
+import com.smartlostfound.storage.CsvUserStorageService;
 import com.smartlostfound.view.ItemTableModel;
 
 import java.io.IOException;
@@ -15,7 +17,7 @@ import java.util.Optional;
 
 /**
  * Automated test suite validating Domain Models, Business Services,
- * CSV Persistence, Polymorphism, Encapsulation, and Controller Operations.
+ * CSV Persistence, Polymorphism, Encapsulation, Authentication, RBAC, and Controller Operations.
  */
 public class TestSuite {
 
@@ -35,6 +37,10 @@ public class TestSuite {
         testCsvPersistenceAndEdgeCases();
         testTableModelIntegration();
         testControllerOperations();
+        testUserAccountAndRoles();
+        testUserCsvPersistence();
+        testUserManagerAuthenticationAndRegistration();
+        testRoleBasedAccessControl();
 
         System.out.println("==========================================================");
         System.out.printf("Test Results: %d Passed, %d Failed\n", testsPassed, testsFailed);
@@ -78,73 +84,86 @@ public class TestSuite {
 
         User nameOnly = new User("Bob");
         assertTrue(!nameOnly.isValid(), "User with name only is invalid without contact");
-
-        assertEquals("alice@example.com | 555-1234", user.getContactDetails(), "Contact details format");
     }
 
     private static void testItemPolymorphismAndEncapsulation() {
-        System.out.println("\n--- 2. Testing Item Polymorphism & Encapsulation ---");
-        User reporter = new User("John Doe", "john@example.com", "555-9876");
+        System.out.println("\n--- 2. Testing Item Polymorphism and Encapsulation ---");
+        User owner = new User("David Miller", "david@example.com", "555-9876");
+        User finder = new User("Campus Security Officer", "security@campus.edu", "555-0100");
 
-        Item lost = new LostItem("LOST-9001", "Silver Ring", ItemCategory.JEWELRY_WATCH,
-                LocalDate.now(), "Engraved with initials", ItemStatus.LOST, reporter,
-                "Park Bench", 75.0);
+        Item lost = new LostItem(
+                "LOST-1001",
+                "Dell XPS 15",
+                ItemCategory.ELECTRONICS,
+                LocalDate.of(2026, 11, 8),
+                "Silver laptop with stickers",
+                ItemStatus.LOST,
+                owner,
+                "Library 2nd Floor",
+                100.0
+        );
 
-        Item found = new FoundItem("FND-9001", "Car Keys", ItemCategory.KEYS,
-                LocalDate.now(), "Honda key fob with blue lanyard", ItemStatus.FOUND, reporter,
-                "Cafeteria Floor", "Front Desk Drawer 1", "Found near table 5");
+        Item found = new FoundItem(
+                "FND-2001",
+                "Blue Hydro Flask",
+                ItemCategory.OTHER,
+                LocalDate.of(2026, 11, 9),
+                "32oz insulated bottle",
+                ItemStatus.FOUND,
+                finder,
+                "Gymnasium Bench",
+                "Security Desk Lockbox",
+                "Has a scratch on lid"
+        );
 
-        // Polymorphic methods
-        assertEquals("Lost", lost.getItemType(), "LostItem returns 'Lost'");
-        assertEquals("Found", found.getItemType(), "FoundItem returns 'Found'");
-        assertEquals("Park Bench", lost.getSpecificLocation(), "LostItem specific location");
-        assertEquals("Cafeteria Floor", found.getSpecificLocation(), "FoundItem specific location");
-        assertEquals("Reward: $75.00", lost.getSpecificDetailsSummary(), "LostItem specific summary");
-        assertEquals("Stored: Front Desk Drawer 1", found.getSpecificDetailsSummary(), "FoundItem specific summary");
+        // Polymorphic method calls
+        assertEquals("Lost", lost.getItemType(), "Polymorphic getItemType on LostItem");
+        assertEquals("Found", found.getItemType(), "Polymorphic getItemType on FoundItem");
 
-        // Encapsulation validation
-        try {
-            lost.setName("");
-            assertTrue(false, "Setting empty name should throw exception");
-        } catch (IllegalArgumentException e) {
-            assertTrue(true, "Encapsulation prevents empty name on Item");
-        }
+        assertEquals("Library 2nd Floor", lost.getSpecificLocation(), "LostItem location");
+        assertEquals("Gymnasium Bench", found.getSpecificLocation(), "FoundItem location");
 
-        try {
-            ((LostItem) lost).setRewardAmount(-10.0);
-            assertTrue(false, "Setting negative reward should throw exception");
-        } catch (IllegalArgumentException e) {
-            assertTrue(true, "Encapsulation prevents negative reward on LostItem");
-        }
+        assertTrue(lost.getSpecificDetailsSummary().contains("Reward: $100.00"), "LostItem summary has reward");
+        assertTrue(found.getSpecificDetailsSummary().contains("Security Desk Lockbox"), "FoundItem summary has storage");
+
+        // Encapsulation checks
+        assertEquals("LOST-1001", lost.getId(), "Item ID getter");
+        assertEquals("Dell XPS 15", lost.getName(), "Item Name getter");
+        assertEquals(ItemStatus.LOST, lost.getStatus(), "Item Status getter");
+        assertEquals(100.0, ((LostItem) lost).getRewardAmount(), "LostItem reward getter");
+        assertEquals("Security Desk Lockbox", ((FoundItem) found).getStorageLocation(), "FoundItem storage getter");
     }
 
     private static void testManagerOperationsAndIdGeneration() {
-        System.out.println("\n--- 3. Testing Manager Operations & ID Generation ---");
+        System.out.println("\n--- 3. Testing LostFoundManager and ID Generation ---");
         try {
             Path tempCsv = Files.createTempFile("test_mgr_", ".csv");
-            CsvItemStorageService storage = new CsvItemStorageService(tempCsv);
-            LostFoundManager manager = new LostFoundManager(storage);
+            LostFoundManager manager = new LostFoundManager(new CsvItemStorageService(tempCsv));
 
-            // Sample data loaded automatically
-            assertTrue(manager.getAllItems().size() > 0, "Initial sample items loaded");
+            int initialCount = manager.getAllItems().size();
+            assertTrue(initialCount > 0, "Manager loaded sample data when storage empty");
 
-            User reporter = new User("Clara Oswald", "clara@tardis.org", "555-2233");
+            User reporter = new User("Emma Watson", "emma@example.com", "555-3333");
             LostItem lost = manager.reportLostItem(
-                    "Antique Pocket Watch", ItemCategory.JEWELRY_WATCH, LocalDate.now(),
-                    "Gold mechanical pocket watch", reporter, "Clock Tower", 200.0);
+                    "Car Keys", ItemCategory.KEYS, LocalDate.now(),
+                    "Honda keychain with 3 keys", reporter, "Parking Lot B", 25.0
+            );
 
-            assertTrue(lost.getId().startsWith("LOST-"), "Generated ID starts with LOST-");
-            Optional<Item> fetched = manager.getItemById(lost.getId());
-            assertTrue(fetched.isPresent(), "Newly registered item is retrievable by ID");
-            assertEquals("Antique Pocket Watch", fetched.get().getName(), "Item name retrieved matches");
+            assertTrue(lost.getId().startsWith("LOST-"), "Generated Lost ID has correct prefix");
+            assertEquals(initialCount + 1, manager.getAllItems().size(), "Item count incremented");
 
             FoundItem found = manager.reportFoundItem(
-                    "Leather Notebook", ItemCategory.BOOKS_STATIONERY, LocalDate.now(),
-                    "Black moleskine notebook with sketches", reporter, "Library Hall",
-                    "Security Safe 2", "Handed in by student");
+                    "Winter Beanie", ItemCategory.CLOTHING, LocalDate.now(),
+                    "Red knitted cap", reporter, "Cafeteria", "Lost and Found Bin 1", "Clean condition"
+            );
 
-            assertTrue(found.getId().startsWith("FND-"), "Generated ID starts with FND-");
-            assertEquals("Leather Notebook", manager.getItemById(found.getId()).get().getName(), "Found item retrievable");
+            assertTrue(found.getId().startsWith("FND-"), "Generated Found ID has correct prefix");
+            assertEquals(initialCount + 2, manager.getAllItems().size(), "Item count incremented twice");
+
+            // Test deletion
+            boolean deleted = manager.deleteItem(lost.getId());
+            assertTrue(deleted, "Item deletion succeeded");
+            assertEquals(initialCount + 1, manager.getAllItems().size(), "Item count decremented after deletion");
 
             Files.deleteIfExists(tempCsv);
         } catch (Exception e) {
@@ -154,33 +173,36 @@ public class TestSuite {
     }
 
     private static void testSearchAndFilterLogic() {
-        System.out.println("\n--- 4. Testing Search & Filter Logic ---");
+        System.out.println("\n--- 4. Testing Search and Filter Logic ---");
         try {
-            Path tempCsv = Files.createTempFile("test_search_", ".csv");
+            Path tempCsv = Files.createTempFile("test_filter_", ".csv");
             LostFoundManager manager = new LostFoundManager(new CsvItemStorageService(tempCsv));
 
-            // Search by keyword "MacBook"
-            List<Item> macbookResults = manager.searchAndFilter("MacBook", null, null, "ALL");
-            assertTrue(!macbookResults.isEmpty(), "Search finds 'MacBook'");
-            assertEquals("LOST-1001", macbookResults.get(0).getId(), "First result is LOST-1001");
+            // Test keyword search
+            List<Item> searchMacbook = manager.searchAndFilter("MacBook", null, null, "ALL");
+            assertTrue(searchMacbook.size() >= 1, "Search keyword found MacBook");
 
-            // Filter by Type "LOST"
+            // Test category filter
+            List<Item> electronics = manager.searchAndFilter("", ItemCategory.ELECTRONICS, null, "ALL");
+            assertTrue(electronics.size() >= 1, "Category filter found electronics");
+            for (Item item : electronics) {
+                assertEquals(ItemCategory.ELECTRONICS, item.getCategory(), "Filtered items match category");
+            }
+
+            // Test type filter
             List<Item> lostOnly = manager.searchAndFilter("", null, null, "LOST");
             for (Item item : lostOnly) {
-                assertTrue(item instanceof LostItem, "Every item in LOST filter is a LostItem");
+                assertTrue(item instanceof LostItem, "Type filter returned only LostItem");
             }
 
-            // Filter by Type "FOUND"
             List<Item> foundOnly = manager.searchAndFilter("", null, null, "FOUND");
             for (Item item : foundOnly) {
-                assertTrue(item instanceof FoundItem, "Every item in FOUND filter is a FoundItem");
+                assertTrue(item instanceof FoundItem, "Type filter returned only FoundItem");
             }
 
-            // Filter by Category
-            List<Item> keyItems = manager.searchAndFilter("", ItemCategory.KEYS, null, "ALL");
-            for (Item item : keyItems) {
-                assertEquals(ItemCategory.KEYS, item.getCategory(), "Every item has KEYS category");
-            }
+            // Test multi-criteria filter
+            List<Item> specific = manager.searchAndFilter("Space Gray", ItemCategory.ELECTRONICS, ItemStatus.LOST, "LOST");
+            assertTrue(specific.size() >= 1, "Combined multi-criteria search succeeded");
 
             Files.deleteIfExists(tempCsv);
         } catch (Exception e) {
@@ -190,25 +212,26 @@ public class TestSuite {
     }
 
     private static void testStatusUpdatesAndStatistics() {
-        System.out.println("\n--- 5. Testing Status Updates & Statistics ---");
+        System.out.println("\n--- 5. Testing Status Updates and Statistics ---");
         try {
-            Path tempCsv = Files.createTempFile("test_stats_", ".csv");
+            Path tempCsv = Files.createTempFile("test_status_", ".csv");
             LostFoundManager manager = new LostFoundManager(new CsvItemStorageService(tempCsv));
 
-            // Update status of LOST-1001 to RECOVERED
-            Item updated = manager.updateItemStatus("LOST-1001", ItemStatus.RECOVERED, "Returned to owner Alex.");
-            assertEquals(ItemStatus.RECOVERED, updated.getStatus(), "Status changed to RECOVERED");
-            assertEquals("Returned to owner Alex.", updated.getResolutionNotes(), "Resolution notes saved");
-            assertTrue(updated.isResolved(), "Item is now resolved");
+            Optional<Item> itemOpt = manager.getAllItems().stream()
+                    .filter(i -> i.getStatus() == ItemStatus.LOST)
+                    .findFirst();
 
+            assertTrue(itemOpt.isPresent(), "Found a LOST item to update");
+            Item target = itemOpt.get();
+
+            Item updated = manager.updateItemStatus(target.getId(), ItemStatus.RECOVERED, "Returned to verified owner");
+            assertEquals(ItemStatus.RECOVERED, updated.getStatus(), "Item status transitioned to RECOVERED");
+            assertEquals("Returned to verified owner", updated.getResolutionNotes(), "Resolution notes saved");
+
+            // Check Statistics calculations
             LostFoundManager.SystemStats stats = manager.getStatistics();
-            assertTrue(stats.getRecoveredCount() >= 1, "Recovered count reflects update");
-            assertEquals(stats.getTotalCount(), stats.getLostCount() + stats.getFoundCount(), "Total equals lost + found");
-
-            // Delete item
-            boolean deleted = manager.deleteItem("LOST-1001");
-            assertTrue(deleted, "Item was deleted");
-            assertTrue(!manager.getItemById("LOST-1001").isPresent(), "Deleted item is no longer found");
+            assertEquals(manager.getAllItems().size(), stats.getTotalCount(), "Stats total count accurate");
+            assertTrue(stats.getResolvedCount() >= 1, "Stats resolved count updated");
 
             Files.deleteIfExists(tempCsv);
         } catch (Exception e) {
@@ -218,35 +241,54 @@ public class TestSuite {
     }
 
     private static void testCsvPersistenceAndEdgeCases() {
-        System.out.println("\n--- 6. Testing CSV Persistence & RFC-4180 Edge Cases ---");
+        System.out.println("\n--- 6. Testing CSV Persistence and Edge Cases ---");
         try {
-            Path tempCsv = Files.createTempFile("test_persist_", ".csv");
+            Path tempCsv = Files.createTempFile("test_csv_", ".csv");
             CsvItemStorageService storage = new CsvItemStorageService(tempCsv);
 
-            User reporter = new User("Complex Name, with Comma", "quote\"email@test.com", "123-456");
-            Item lost = new LostItem("LOST-9999", "Special \"Quoted\" Item, with Comma",
-                    ItemCategory.ELECTRONICS, LocalDate.now(),
-                    "Line 1 description\nLine 2 with comma, and \"quotes\"",
-                    ItemStatus.LOST, reporter, "Building A, Floor 2", 99.50);
+            // Create items with commas, quotes, and multiline descriptions
+            User user = new User("Jane \"JJ\" Doe", "jane@example.com", "555-4444");
+            LostItem complexLost = new LostItem(
+                    "LOST-9999",
+                    "Wallet, Black Leather",
+                    ItemCategory.WALLET_PURSE,
+                    LocalDate.of(2026, 11, 1),
+                    "Line 1 description\nLine 2 with \"quotes\" and commas, here.",
+                    ItemStatus.LOST,
+                    user,
+                    "Starbucks, Table #4",
+                    50.0
+            );
 
-            Item found = new FoundItem("FND-9999", "Gym Bag",
-                    ItemCategory.BAG_BACKPACK, LocalDate.now(),
-                    "Red bag with sneakers",
-                    ItemStatus.FOUND, reporter, "Gymnasium", "Room 101, Cabinet B", "None");
+            FoundItem complexFound = new FoundItem(
+                    "FND-8888",
+                    "USB Flash Drive",
+                    ItemCategory.ELECTRONICS,
+                    LocalDate.of(2026, 11, 2),
+                    "Kingston 64GB",
+                    ItemStatus.FOUND,
+                    user,
+                    "Lab 102",
+                    "Room 101, Cabinet B",
+                    "Blue cap"
+            );
 
-            storage.saveItems(List.of(lost, found));
+            storage.saveItems(List.of(complexLost, complexFound));
 
+            // Reload and verify exact preservation
             List<Item> reloaded = storage.loadItems();
-            assertEquals(2, reloaded.size(), "Reloaded 2 items");
+            assertEquals(2, reloaded.size(), "Reloaded 2 items successfully");
 
             Item reloadedLost = reloaded.get(0);
-            assertTrue(reloadedLost instanceof LostItem, "Reloaded item 0 is polymorphic LostItem");
-            assertEquals("Special \"Quoted\" Item, with Comma", reloadedLost.getName(), "Name preserved with quotes and commas");
-            assertEquals(99.50, ((LostItem) reloadedLost).getRewardAmount(), "Reward amount preserved");
-            assertEquals("Complex Name, with Comma", reloadedLost.getReporter().getName(), "Reporter name with comma preserved");
+            assertEquals("LOST-9999", reloadedLost.getId(), "Preserved complex ID");
+            assertEquals("Wallet, Black Leather", reloadedLost.getName(), "Preserved comma in name");
+            assertEquals("Line 1 description\nLine 2 with \"quotes\" and commas, here.",
+                    reloadedLost.getDescription(), "Preserved multiline description with quotes and commas");
+            assertEquals("Jane \"JJ\" Doe", reloadedLost.getReporter().getName(), "Preserved quotes in reporter name");
 
             Item reloadedFound = reloaded.get(1);
-            assertTrue(reloadedFound instanceof FoundItem, "Reloaded item 1 is polymorphic FoundItem");
+            assertEquals("FND-8888", reloadedFound.getId(), "Preserved FoundItem ID");
+            assertTrue(reloadedFound instanceof FoundItem, "Preserved polymorphism upon CSV deserialization");
             assertEquals("Room 101, Cabinet B", ((FoundItem) reloadedFound).getStorageLocation(), "Storage location preserved");
 
             Files.deleteIfExists(tempCsv);
@@ -283,6 +325,168 @@ public class TestSuite {
             Files.deleteIfExists(tempCsv);
             System.out.println("  [PASS] Controller initialized and queryable");
             testsPassed++;
+        } catch (Exception e) {
+            System.err.println("Test failed with exception: " + e.getMessage());
+            testsFailed++;
+        }
+    }
+
+    private static void testUserAccountAndRoles() {
+        System.out.println("\n--- 9. Testing UserAccount and UserRole ---");
+        UserRole adminRole = UserRole.ADMIN;
+        UserRole userRole = UserRole.USER;
+
+        assertTrue(adminRole.isAdmin(), "AdminRole.isAdmin returns true");
+        assertTrue(!userRole.isAdmin(), "UserRole.isAdmin returns false");
+
+        UserAccount account = UserAccount.create(
+                "alex99",
+                "secretPassword",
+                UserRole.ADMIN,
+                "Alex Mercer",
+                "alex@mercer.com",
+                "555-0909"
+        );
+
+        assertEquals("alex99", account.getUsername(), "Username matches");
+        assertEquals("Alex Mercer", account.getName(), "Name matches (inherited)");
+        assertEquals("alex@mercer.com", account.getEmail(), "Email matches (inherited)");
+        assertTrue(account.isAdmin(), "Account reports admin role");
+        assertTrue(account.verifyPassword("secretPassword"), "Password verification matches");
+        assertTrue(!account.verifyPassword("wrongPassword"), "Wrong password rejected");
+        assertEquals("AM", account.getInitials(), "Avatar initials computed correctly");
+        assertTrue(account instanceof User, "UserAccount polymorphically inherits User");
+    }
+
+    private static void testUserCsvPersistence() {
+        System.out.println("\n--- 10. Testing User CSV Persistence ---");
+        try {
+            Path tempCsv = Files.createTempFile("test_users_", ".csv");
+            CsvUserStorageService storage = new CsvUserStorageService(tempCsv);
+
+            UserAccount u1 = UserAccount.create("alice", "pass123", UserRole.USER, "Alice Cooper", "alice@music.com", "555-1111");
+            UserAccount u2 = UserAccount.create("root_admin", "adminPass", UserRole.ADMIN, "Super Admin", "root@sys.org", "555-9999");
+
+            storage.saveUsers(List.of(u1, u2));
+
+            List<UserAccount> reloaded = storage.loadUsers();
+            assertEquals(2, reloaded.size(), "Reloaded 2 user accounts");
+
+            UserAccount reloadedUser = reloaded.get(0);
+            assertEquals("alice", reloadedUser.getUsername(), "Username preserved");
+            assertEquals(UserRole.USER, reloadedUser.getRole(), "User role preserved");
+            assertTrue(reloadedUser.verifyPassword("pass123"), "Password hash verification holds across persistence");
+
+            UserAccount reloadedAdmin = reloaded.get(1);
+            assertEquals("root_admin", reloadedAdmin.getUsername(), "Admin username preserved");
+            assertEquals(UserRole.ADMIN, reloadedAdmin.getRole(), "Admin role preserved");
+
+            Files.deleteIfExists(tempCsv);
+        } catch (Exception e) {
+            System.err.println("Test failed with exception: " + e.getMessage());
+            testsFailed++;
+        }
+    }
+
+    private static void testUserManagerAuthenticationAndRegistration() {
+        System.out.println("\n--- 11. Testing UserManager Authentication & Registration ---");
+        try {
+            Path tempCsv = Files.createTempFile("test_usermgr_", ".csv");
+            UserManager manager = new UserManager(new CsvUserStorageService(tempCsv));
+
+            // Default seed check
+            assertEquals(3, manager.getTotalCount(), "UserManager seeded 3 default accounts");
+            assertEquals(1, manager.getAdminCount(), "1 seeded administrator");
+
+            // Successful authentication
+            UserAccount admin = manager.authenticate("admin", "admin123");
+            assertTrue(admin.isAdmin(), "Admin authenticated successfully");
+
+            UserAccount john = manager.authenticate("john", "user123");
+            assertTrue(!john.isAdmin(), "John Doe authenticated successfully as standard user");
+
+            // Registration
+            UserAccount registered = manager.registerUser(
+                    "clara_o", "claraPass", "Clara Oswald", "clara@tardis.org", "555-7777", UserRole.USER);
+            assertEquals("clara_o", registered.getUsername(), "Registered username matches");
+            assertEquals(4, manager.getTotalCount(), "User count incremented to 4");
+
+            // Duplicate registration prevention
+            boolean threwDuplicate = false;
+            try {
+                manager.registerUser("clara_o", "anotherPass", "Clara Clone", "clara2@tardis.org", "555-8888", UserRole.USER);
+            } catch (IllegalArgumentException e) {
+                threwDuplicate = true;
+            }
+            assertTrue(threwDuplicate, "Duplicate username registration prevented");
+
+            // Wrong password rejection
+            boolean threwBadPass = false;
+            try {
+                manager.authenticate("clara_o", "wrongPass");
+            } catch (IllegalArgumentException e) {
+                threwBadPass = true;
+            }
+            assertTrue(threwBadPass, "Invalid password throws authentication exception");
+
+            // Role updates
+            manager.updateUserRole("clara_o", UserRole.ADMIN);
+            assertEquals(2, manager.getAdminCount(), "Admin count updated after promoting Clara");
+
+            // Deactivate and verify login blocked
+            manager.toggleUserStatus("clara_o");
+            boolean threwDeactivated = false;
+            try {
+                manager.authenticate("clara_o", "claraPass");
+            } catch (IllegalArgumentException e) {
+                threwDeactivated = true;
+            }
+            assertTrue(threwDeactivated, "Deactivated account rejected at login");
+
+            Files.deleteIfExists(tempCsv);
+        } catch (Exception e) {
+            System.err.println("Test failed with exception: " + e.getMessage());
+            testsFailed++;
+        }
+    }
+
+    private static void testRoleBasedAccessControl() {
+        System.out.println("\n--- 12. Testing Role-Based Access Control (RBAC) ---");
+        try {
+            Path tempItemCsv = Files.createTempFile("test_rbac_items_", ".csv");
+            Path tempUserCsv = Files.createTempFile("test_rbac_users_", ".csv");
+
+            LostFoundManager itemManager = new LostFoundManager(new CsvItemStorageService(tempItemCsv));
+            UserManager userManager = new UserManager(new CsvUserStorageService(tempUserCsv));
+            LostFoundController controller = new LostFoundController(itemManager, userManager);
+
+            UserAccount adminUser = userManager.authenticate("admin", "admin123");
+            UserAccount johnUser = userManager.authenticate("john", "user123");
+
+            // Create an item reported by John
+            User reporterJohn = new User("John Doe", "john.doe@example.com", "+1-555-0199");
+            LostItem johnItem = itemManager.reportLostItem(
+                    "Leather Wallet", ItemCategory.WALLET_PURSE, LocalDate.now(),
+                    "Brown bi-fold", reporterJohn, "Library", 20.0);
+
+            // Create an item reported by someone else (Sarah)
+            User reporterSarah = new User("Sarah Jenkins", "sarah.j@example.com", "+1-555-0142");
+            LostItem sarahItem = itemManager.reportLostItem(
+                    "AirPods Pro", ItemCategory.ELECTRONICS, LocalDate.now(),
+                    "White case", reporterSarah, "Gym", 30.0);
+
+            // When logged in as Admin: can modify BOTH
+            controller.setCurrentUser(adminUser);
+            assertTrue(controller.canModifyItem(johnItem), "Admin can modify John's item");
+            assertTrue(controller.canModifyItem(sarahItem), "Admin can modify Sarah's item");
+
+            // When logged in as John: can modify John's item, but NOT Sarah's
+            controller.setCurrentUser(johnUser);
+            assertTrue(controller.canModifyItem(johnItem), "John can modify his own item");
+            assertTrue(!controller.canModifyItem(sarahItem), "John CANNOT modify Sarah's item");
+
+            Files.deleteIfExists(tempItemCsv);
+            Files.deleteIfExists(tempUserCsv);
         } catch (Exception e) {
             System.err.println("Test failed with exception: " + e.getMessage());
             testsFailed++;

@@ -2,8 +2,10 @@ package com.smartlostfound.controller;
 
 import com.smartlostfound.model.*;
 import com.smartlostfound.service.LostFoundManager;
+import com.smartlostfound.service.UserManager;
 import com.smartlostfound.storage.DataPersistenceException;
 import com.smartlostfound.view.ItemDetailDialog;
+import com.smartlostfound.view.LoginRegisterDialog;
 import com.smartlostfound.view.MainFrame;
 import com.smartlostfound.view.UpdateStatusDialog;
 
@@ -11,15 +13,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Central controller in the MVC architecture.
  * Mediates user actions originating from Views, executes business rules and queries
- * via {@link LostFoundManager}, and updates View components accordingly.
+ * via {@link LostFoundManager} and {@link UserManager}, and updates View components accordingly.
  */
 public class LostFoundController {
 
     private final LostFoundManager manager;
+    private final UserManager userManager;
+    private UserAccount currentUser;
     private MainFrame mainFrame;
 
     // Last known filter parameters for consistent view refresh
@@ -29,12 +34,25 @@ public class LostFoundController {
     private String currentType = "ALL";
 
     /**
-     * Constructs the controller with the backing service manager.
+     * Constructs the controller with default backing services.
      *
      * @param manager Core business logic manager
      */
     public LostFoundController(LostFoundManager manager) {
+        this(manager, new UserManager());
+    }
+
+    /**
+     * Constructs the controller with specific managers for dependency injection and testing.
+     *
+     * @param manager Item inventory manager
+     * @param userManager User accounts and authentication manager
+     */
+    public LostFoundController(LostFoundManager manager, UserManager userManager) {
         this.manager = manager;
+        this.userManager = (userManager != null) ? userManager : new UserManager();
+        // Initialize default session to Admin for frictionless review or prompt
+        this.currentUser = this.userManager.findByUsername("admin").orElse(null);
     }
 
     /**
@@ -44,7 +62,75 @@ public class LostFoundController {
      */
     public void setMainFrame(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
+        if (mainFrame != null && currentUser != null) {
+            mainFrame.updateUserSession(currentUser);
+        }
         refreshView();
+    }
+
+    public LostFoundManager getManager() {
+        return manager;
+    }
+
+    public UserManager getUserManager() {
+        return userManager;
+    }
+
+    public UserAccount getCurrentUser() {
+        return currentUser;
+    }
+
+    public void setCurrentUser(UserAccount currentUser) {
+        this.currentUser = currentUser;
+        if (mainFrame != null) {
+            mainFrame.updateUserSession(currentUser);
+        }
+        refreshView();
+    }
+
+    public boolean isAdmin() {
+        return currentUser != null && currentUser.isAdmin();
+    }
+
+    /**
+     * Evaluates whether the current active user has permission to modify or delete an item.
+     * Administrators have universal access; standard users can modify items they reported.
+     */
+    public boolean canModifyItem(Item item) {
+        if (item == null) {
+            return false;
+        }
+        if (currentUser == null) {
+            return true;
+        }
+        if (currentUser.isAdmin()) {
+            return true;
+        }
+        if (item.getReporter() == null) {
+            return false;
+        }
+
+        String myName = currentUser.getName().toLowerCase();
+        String myEmail = currentUser.getEmail().toLowerCase();
+        String myPhone = currentUser.getPhone().toLowerCase();
+        String myUser = currentUser.getUsername().toLowerCase();
+
+        String repName = item.getReporter().getName().toLowerCase();
+        String repEmail = item.getReporter().getEmail().toLowerCase();
+        String repPhone = item.getReporter().getPhone().toLowerCase();
+
+        return (!myName.isEmpty() && repName.contains(myName)) ||
+                (!myEmail.isEmpty() && repEmail.equalsIgnoreCase(myEmail)) ||
+                (!myPhone.isEmpty() && repPhone.equalsIgnoreCase(myPhone)) ||
+                repName.contains(myUser);
+    }
+
+    /**
+     * Opens the login &amp; registration modal dialog.
+     */
+    public void openLoginDialog(Window parent) {
+        LoginRegisterDialog dialog = new LoginRegisterDialog(parent, this);
+        dialog.setVisible(true);
     }
 
     /**
@@ -137,7 +223,7 @@ public class LostFoundController {
     }
 
     /**
-     * Handles lifecycle status updates for an existing item.
+     * Handles lifecycle status updates for an existing item with role verification.
      */
     public void handleUpdateStatus(String itemId, ItemStatus newStatus, String resolutionNotes, Window dialog) {
         try {
@@ -167,11 +253,31 @@ public class LostFoundController {
     }
 
     /**
-     * Handles item deletion after user confirmation.
+     * Handles item deletion after user confirmation and role-based permission verification.
      */
     public void handleDeleteItem(String itemId, Window parent) {
+        Optional<Item> itemOpt = manager.getItemById(itemId);
+        if (!itemOpt.isPresent()) {
+            JOptionPane.showMessageDialog(parent,
+                    "Record not found: " + itemId,
+                    "Not Found", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Item item = itemOpt.get();
+        if (!canModifyItem(item)) {
+            JOptionPane.showMessageDialog(parent,
+                    "Permission Denied:\n" +
+                    "Standard users (@" + (currentUser != null ? currentUser.getUsername() : "user") +
+                    ") can only delete property reports submitted by themselves.\n" +
+                    "This item was reported by: " + (item.getReporter() != null ? item.getReporter().getName() : "another user") + ".\n\n" +
+                    "Please contact a System Administrator (@admin) to manage this record.",
+                    "Administrative Permission Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         int choice = JOptionPane.showConfirmDialog(parent,
-                "Are you sure you want to permanently delete record " + itemId + "?\n" +
+                "Are you sure you want to permanently delete record " + itemId + " (" + item.getName() + ")?\n" +
                 "This action cannot be undone.",
                 "Confirm Deletion",
                 JOptionPane.YES_NO_OPTION,
@@ -188,10 +294,6 @@ public class LostFoundController {
                     if (mainFrame != null) {
                         mainFrame.setStatusMessage("Deleted record: " + itemId);
                     }
-                } else {
-                    JOptionPane.showMessageDialog(parent,
-                            "Record not found: " + itemId,
-                            "Not Found", JOptionPane.WARNING_MESSAGE);
                 }
             } catch (DataPersistenceException e) {
                 JOptionPane.showMessageDialog(parent,
@@ -213,7 +315,7 @@ public class LostFoundController {
     }
 
     /**
-     * Re-executes current filters and updates the Dashboard view, Feed, and stats.
+     * Re-executes current filters and updates the Dashboard view, Feed, User Panel, and Admin Console.
      */
     public void refreshView() {
         if (mainFrame == null) {
@@ -232,6 +334,14 @@ public class LostFoundController {
         if (mainFrame.getFeedPanel() != null) {
             mainFrame.getFeedPanel().displayFeedItems(manager.getAllItems());
         }
+
+        if (mainFrame.getMyItemsPanel() != null) {
+            mainFrame.getMyItemsPanel().refreshData();
+        }
+
+        if (mainFrame.getAdminConsolePanel() != null) {
+            mainFrame.getAdminConsolePanel().refreshData();
+        }
     }
 
     /**
@@ -239,6 +349,7 @@ public class LostFoundController {
      */
     public void handleReloadData() {
         manager.initializeData();
+        userManager.initializeData();
         refreshView();
         if (mainFrame != null) {
             mainFrame.setStatusMessage("Data reloaded from persistence storage. Total records: " + 
@@ -268,6 +379,7 @@ public class LostFoundController {
     public void handleApplicationExit(Window window) {
         try {
             manager.persistCurrentState();
+            userManager.persistCurrentState();
         } catch (DataPersistenceException e) {
             System.err.println("Warning: Error during final save on exit: " + e.getMessage());
         }

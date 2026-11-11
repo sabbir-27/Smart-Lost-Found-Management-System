@@ -336,6 +336,20 @@ public class ReportFoundItemPanel extends JPanel {
         }
     }
 
+    public void autoFillReporter(User user) {
+        if (user != null) {
+            if (finderNameField != null) {
+                finderNameField.setText(user.getName());
+            }
+            if (finderEmailField != null) {
+                finderEmailField.setText(user.getEmail());
+            }
+            if (finderPhoneField != null) {
+                finderPhoneField.setText(user.getPhone());
+            }
+        }
+    }
+
     public void resetForm() {
         nameField.setText("");
         categoryComboBox.setSelectedIndex(0);

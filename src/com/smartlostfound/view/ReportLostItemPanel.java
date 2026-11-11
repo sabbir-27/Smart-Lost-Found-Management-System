@@ -328,6 +328,20 @@ public class ReportLostItemPanel extends JPanel {
         }
     }
 
+    public void autoFillReporter(User user) {
+        if (user != null) {
+            if (reporterNameField != null) {
+                reporterNameField.setText(user.getName());
+            }
+            if (reporterEmailField != null) {
+                reporterEmailField.setText(user.getEmail());
+            }
+            if (reporterPhoneField != null) {
+                reporterPhoneField.setText(user.getPhone());
+            }
+        }
+    }
+
     public void resetForm() {
         nameField.setText("");
         categoryComboBox.setSelectedIndex(0);
