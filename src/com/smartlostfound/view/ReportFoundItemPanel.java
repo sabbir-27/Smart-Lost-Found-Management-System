@@ -1,6 +1,7 @@
 package com.smartlostfound.view;
 
 import com.smartlostfound.controller.LostFoundController;
+import com.smartlostfound.model.FoundItem;
 import com.smartlostfound.model.Item;
 import com.smartlostfound.model.ItemCategory;
 import com.smartlostfound.model.User;
@@ -9,6 +10,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -26,7 +32,12 @@ public class ReportFoundItemPanel extends JPanel {
     private JTextField locationFoundField;
     private JTextField storageLocationField;
     private JTextArea descriptionArea;
-    private JLabel photoStatusLabel;
+
+    // Photo Upload & Preview UI
+    private JPanel photoSectionContainer;
+    private JLabel photoThumbnailLabel;
+    private JLabel photoFileNameLabel;
+    private JLabel photoSpecsLabel;
     private String selectedImagePath = "";
 
     private JTextField finderNameField;
@@ -155,19 +166,7 @@ public class ReportFoundItemPanel extends JPanel {
 
         gbc.gridx = 1;
         gbc.weightx = 0.7;
-        JPanel photoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        photoPanel.setOpaque(false);
-
-        JButton browsePhotoBtn = UIUtils.createSecondaryButton("📷 Browse Photo...");
-        browsePhotoBtn.addActionListener(e -> selectPhoto());
-
-        photoStatusLabel = new JLabel("No photo attached (visual banner will be generated)");
-        photoStatusLabel.setFont(UIUtils.FONT_SMALL);
-        photoStatusLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
-
-        photoPanel.add(browsePhotoBtn);
-        photoPanel.add(photoStatusLabel);
-        formCard.add(photoPanel, gbc);
+        formCard.add(createPhotoAttachmentComponent(), gbc);
         row++;
 
         // Section 2 Header
@@ -324,16 +323,186 @@ public class ReportFoundItemPanel extends JPanel {
         );
     }
 
+    private JPanel createPhotoAttachmentComponent() {
+        photoSectionContainer = new JPanel(new BorderLayout());
+        photoSectionContainer.setOpaque(false);
+        renderPhotoSection();
+        return photoSectionContainer;
+    }
+
+    private void renderPhotoSection() {
+        if (photoSectionContainer == null) return;
+        photoSectionContainer.removeAll();
+
+        if (selectedImagePath == null || selectedImagePath.trim().isEmpty()) {
+            // Elegant Upload Dropzone Card
+            JPanel dropzone = new JPanel(new BorderLayout(12, 0)) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(248, 250, 252));
+                    g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                    g2.setColor(new Color(203, 213, 225));
+                    float[] dash = {4f, 4f};
+                    g2.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, dash, 0f));
+                    g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 10, 10));
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            dropzone.setOpaque(false);
+            dropzone.setBorder(new EmptyBorder(12, 16, 12, 16));
+            dropzone.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            dropzone.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    selectPhoto();
+                }
+            });
+
+            JPanel textCol = new JPanel(new GridLayout(2, 1, 0, 2));
+            textCol.setOpaque(false);
+
+            JLabel mainPrompt = new JLabel("📷  Upload Property Photograph");
+            mainPrompt.setFont(UIUtils.FONT_BODY_BOLD);
+            mainPrompt.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
+
+            JLabel subPrompt = new JLabel("PNG, JPG, WEBP • Max 10MB • Automatically cached and published to Community Feed");
+            subPrompt.setFont(UIUtils.FONT_SMALL);
+            subPrompt.setForeground(UIUtils.COLOR_TEXT_MUTED);
+
+            textCol.add(mainPrompt);
+            textCol.add(subPrompt);
+            dropzone.add(textCol, BorderLayout.CENTER);
+
+            JButton browseBtn = UIUtils.createSecondaryButton("Browse Photo...");
+            browseBtn.addActionListener(e -> selectPhoto());
+            dropzone.add(browseBtn, BorderLayout.EAST);
+
+            photoSectionContainer.add(dropzone, BorderLayout.CENTER);
+        } else {
+            // Active Preview Card with Thumbnail and Specs
+            JPanel previewCard = new JPanel(new BorderLayout(14, 0)) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(241, 245, 249));
+                    g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                    g2.setColor(new Color(226, 232, 240));
+                    g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 10, 10));
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            previewCard.setOpaque(false);
+            previewCard.setBorder(new EmptyBorder(10, 12, 10, 14));
+
+            // Thumbnail on left
+            File imgFile = new File(selectedImagePath);
+            ImageIcon thumbIcon = null;
+            if (imgFile.exists()) {
+                try {
+                    BufferedImage bimg = javax.imageio.ImageIO.read(imgFile);
+                    if (bimg != null) {
+                        thumbIcon = new ImageIcon(ImageHelper.scaleAndCrop(bimg, 110, 72, 6));
+                    }
+                } catch (Exception ignored) {}
+            }
+            if (thumbIcon == null) {
+                thumbIcon = new ImageIcon(ImageHelper.generateEditorialBanner(
+                        new FoundItem("TEMP", "Preview", ItemCategory.ELECTRONICS, LocalDate.now(), "", new User("Preview", "", ""), "Preview Location", "Storage"), 110, 72));
+            }
+
+            photoThumbnailLabel = new JLabel(thumbIcon);
+            photoThumbnailLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            photoThumbnailLabel.setToolTipText("Click to inspect photo in high-resolution lightbox");
+            photoThumbnailLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    inspectSelectedPhoto();
+                }
+            });
+            previewCard.add(photoThumbnailLabel, BorderLayout.WEST);
+
+            // Middle: Specs & Verification
+            JPanel metaCol = new JPanel(new GridLayout(3, 1, 0, 2));
+            metaCol.setOpaque(false);
+
+            String displayName = imgFile.getName();
+            photoFileNameLabel = new JLabel("✓ " + displayName);
+            photoFileNameLabel.setFont(UIUtils.FONT_BODY_BOLD);
+            photoFileNameLabel.setForeground(UIUtils.COLOR_SUCCESS);
+
+            String specsText = ImageHelper.getImageMetadata(selectedImagePath);
+            photoSpecsLabel = new JLabel(specsText);
+            photoSpecsLabel.setFont(UIUtils.FONT_SMALL);
+            photoSpecsLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
+
+            JLabel readyLabel = new JLabel("● Image Cached & Ready for High-Res Feed Banner");
+            readyLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 10));
+            readyLabel.setForeground(new Color(2, 132, 199));
+
+            metaCol.add(photoFileNameLabel);
+            metaCol.add(photoSpecsLabel);
+            metaCol.add(readyLabel);
+            previewCard.add(metaCol, BorderLayout.CENTER);
+
+            // Right: Actions
+            JPanel btnGroup = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 12));
+            btnGroup.setOpaque(false);
+
+            JButton inspectBtn = UIUtils.createSecondaryButton("🔍 Inspect");
+            inspectBtn.addActionListener(e -> inspectSelectedPhoto());
+
+            JButton changeBtn = UIUtils.createSecondaryButton("🔄 Change");
+            changeBtn.addActionListener(e -> selectPhoto());
+
+            JButton removeBtn = UIUtils.createModernButton("✕ Remove", new Color(254, 242, 242),
+                    new Color(254, 226, 226), UIUtils.COLOR_PRIMARY, 6);
+            removeBtn.addActionListener(e -> clearSelectedPhoto());
+
+            btnGroup.add(inspectBtn);
+            btnGroup.add(changeBtn);
+            btnGroup.add(removeBtn);
+            previewCard.add(btnGroup, BorderLayout.EAST);
+
+            photoSectionContainer.add(previewCard, BorderLayout.CENTER);
+        }
+
+        photoSectionContainer.revalidate();
+        photoSectionContainer.repaint();
+    }
+
+    private void inspectSelectedPhoto() {
+        if (selectedImagePath != null && !selectedImagePath.trim().isEmpty()) {
+            ItemCategory cat = (ItemCategory) categoryComboBox.getSelectedItem();
+            if (cat == null) cat = ItemCategory.OTHER;
+            FoundItem temp = new FoundItem("PREVIEW", nameField.getText().isEmpty() ? "Item Photograph" : nameField.getText(),
+                    cat, LocalDate.now(), descriptionArea.getText(),
+                    new com.smartlostfound.model.User("Finder", "", ""),
+                    locationFoundField.getText(), storageLocationField.getText());
+            temp.setImagePath(selectedImagePath);
+            new PhotoLightboxDialog(SwingUtilities.getWindowAncestor(this), temp).setVisible(true);
+        }
+    }
+
     private void selectPhoto() {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Select Found Item Photo");
         chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
                 "Image Files (*.jpg, *.jpeg, *.png, *.webp, *.gif)", "jpg", "jpeg", "png", "webp", "gif"));
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            selectedImagePath = chooser.getSelectedFile().getAbsolutePath();
-            photoStatusLabel.setText("✓ " + chooser.getSelectedFile().getName());
-            photoStatusLabel.setForeground(UIUtils.COLOR_SUCCESS);
+            File chosenFile = chooser.getSelectedFile();
+            this.selectedImagePath = ImageHelper.copyImageToStorage(chosenFile);
+            renderPhotoSection();
         }
+    }
+
+    private void clearSelectedPhoto() {
+        this.selectedImagePath = "";
+        renderPhotoSection();
     }
 
     public void autoFillReporter(User user) {
@@ -357,11 +526,7 @@ public class ReportFoundItemPanel extends JPanel {
         locationFoundField.setText("");
         storageLocationField.setText("");
         descriptionArea.setText("");
-        selectedImagePath = "";
-        if (photoStatusLabel != null) {
-            photoStatusLabel.setText("No photo attached (visual banner will be generated)");
-            photoStatusLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
-        }
+        clearSelectedPhoto();
         finderNameField.setText("");
         finderEmailField.setText("");
         finderPhoneField.setText("");

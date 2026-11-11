@@ -367,10 +367,18 @@ public class CommunityFeedPanel extends JPanel {
         bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
         bodyPanel.setOpaque(false);
 
-        // Item Title
+        // Item Title (Clickable link to full details)
         JLabel titleLabel = new JLabel((isLost ? "⚠️ LOST: " : "📦 FOUND: ") + item.getName());
         titleLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 16));
         titleLabel.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
+        titleLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        titleLabel.setToolTipText("Click to view complete property record and custodian details");
+        titleLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                controller.openItemDetailDialog(item, SwingUtilities.getWindowAncestor(CommunityFeedPanel.this));
+            }
+        });
         bodyPanel.add(titleLabel);
         bodyPanel.add(Box.createVerticalStrut(6));
 
@@ -415,16 +423,16 @@ public class CommunityFeedPanel extends JPanel {
         bodyPanel.add(highlightBox);
         bodyPanel.add(Box.createVerticalStrut(10));
 
-        // Item Picture / Visual Photo Banner (Facebook Post Image - Sized to fit 680x220)
-        ImageIcon thumbnail = ImageHelper.getItemImageThumbnail(item, 680, 220);
+        // Item Picture / Visual Photo Banner (16:9 Proportion - Sized to fit 680x350)
+        ImageIcon thumbnail = ImageHelper.getItemImageThumbnail(item, 680, 350);
         JLabel imageLabel = new JLabel(thumbnail);
         imageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         imageLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        imageLabel.setToolTipText("Click image to view full post and owner contact");
+        imageLabel.setToolTipText("Click to expand photo in high-resolution lightbox viewer");
         imageLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                controller.openItemDetailDialog(item, SwingUtilities.getWindowAncestor(CommunityFeedPanel.this));
+                new PhotoLightboxDialog(SwingUtilities.getWindowAncestor(CommunityFeedPanel.this), item).setVisible(true);
             }
         });
         bodyPanel.add(imageLabel);

@@ -84,40 +84,191 @@ public final class ImageHelper {
     }
 
     /**
-     * Scales and crops an image to fit exact dimensions with rounded corners.
+     * Retrieves the uncropped, full-resolution original image for an item.
+     * If no physical image file exists, an 800x480 graphic banner is generated.
+     */
+    public static BufferedImage getOriginalImage(Item item) {
+        ensureDummyPhotosExist();
+        String path = item.getImagePath();
+        if (path == null || path.trim().isEmpty()) {
+            path = getDefaultPhotoPathForId(item.getId());
+            item.setImagePath(path);
+        }
+
+        if (path != null && !path.trim().isEmpty()) {
+            File file = new File(path);
+            if (file.exists() && file.isFile()) {
+                try {
+                    BufferedImage original = ImageIO.read(file);
+                    if (original != null) {
+                        return original;
+                    }
+                } catch (Exception e) {
+                    System.err.println("Could not load full image: " + path);
+                }
+            }
+        }
+
+        return generateEditorialBanner(item, 800, 480);
+    }
+
+    /**
+     * Safely copies an attached user image into the internal data/images directory
+     * so that the application maintains permanent, portable possession of the photo.
+     *
+     * @param sourceFile The file selected by the user
+     * @return Relative path to the stored image (e.g. data/images/upload_1762859123_photo.png)
+     */
+    public static String copyImageToStorage(File sourceFile) {
+        if (sourceFile == null || !sourceFile.exists() || !sourceFile.isFile()) {
+            return "";
+        }
+
+        try {
+            Path targetDir = Paths.get(IMAGES_DIR);
+            if (!Files.exists(targetDir)) {
+                Files.createDirectories(targetDir);
+            }
+
+            // If already in target directory, return relative path
+            File imagesDirFile = new File(IMAGES_DIR).getAbsoluteFile();
+            if (sourceFile.getParentFile() != null &&
+                    sourceFile.getParentFile().getAbsoluteFile().equals(imagesDirFile)) {
+                return IMAGES_DIR + "/" + sourceFile.getName();
+            }
+
+            // Sanitize filename and create unique timestamped name
+            String rawName = sourceFile.getName().toLowerCase().replaceAll("[^a-z0-9._-]", "_");
+            String targetFileName = "upload_" + System.currentTimeMillis() + "_" + rawName;
+            Path targetPath = targetDir.resolve(targetFileName);
+
+            Files.copy(sourceFile.toPath(), targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            return IMAGES_DIR + "/" + targetFileName;
+        } catch (Exception ex) {
+            System.err.println("Failed copying image to storage: " + ex.getMessage());
+            return sourceFile.getAbsolutePath();
+        }
+    }
+
+    /**
+     * Formats photographic metadata including dimensions, file size, and format.
+     */
+    public static String getImageMetadata(String path) {
+        if (path == null || path.trim().isEmpty()) {
+            return "No image file attached";
+        }
+        File file = new File(path);
+        if (!file.exists() || !file.isFile()) {
+            return "File: " + file.getName();
+        }
+
+        long bytes = file.length();
+        String sizeStr = bytes > 1024 * 1024
+                ? String.format("%.1f MB", bytes / (1024.0 * 1024.0))
+                : String.format("%d KB", bytes / 1024);
+
+        try {
+            BufferedImage bimg = ImageIO.read(file);
+            if (bimg != null) {
+                String ext = file.getName().contains(".")
+                        ? file.getName().substring(file.getName().lastIndexOf('.') + 1).toUpperCase()
+                        : "IMG";
+                return String.format("%d × %d px • %s %s", bimg.getWidth(), bimg.getHeight(), sizeStr, ext);
+            }
+        } catch (Exception ignored) {
+        }
+
+        return file.getName() + " • " + sizeStr;
+    }
+
+    /**
+     * Scales and crops an image to fit exact dimensions with rounded corners,
+     * bicubic rendering, smart aspect preservation, and overlay badge.
      */
     public static BufferedImage scaleAndCrop(BufferedImage src, int width, int height, int radius) {
         BufferedImage output = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = output.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+        // Fill background with matte carbon gradient so any letterbox is luxurious
+        GradientPaint bgGrad = new GradientPaint(0, 0, new Color(24, 24, 27), 0, height, new Color(15, 15, 17));
+        g2.setPaint(bgGrad);
+        g2.fill(new RoundRectangle2D.Float(0, 0, width, height, radius * 2, radius * 2));
 
         // Clip to rounded rectangle
         g2.setClip(new RoundRectangle2D.Float(0, 0, width, height, radius * 2, radius * 2));
 
-        // Aspect fill
         double srcAspect = (double) src.getWidth() / src.getHeight();
         double dstAspect = (double) width / height;
 
-        int drawW = width;
-        int drawH = height;
-        int drawX = 0;
-        int drawY = 0;
+        int drawW;
+        int drawH;
+        int drawX;
+        int drawY;
 
-        if (srcAspect > dstAspect) {
-            drawW = (int) (height * srcAspect);
-            drawX = -(drawW - width) / 2;
+        // If aspect ratios are relatively close, do aspect fill centered
+        if (Math.abs(srcAspect - dstAspect) < 0.65) {
+            if (srcAspect > dstAspect) {
+                drawW = (int) Math.round(height * srcAspect);
+                drawH = height;
+                drawX = -(drawW - width) / 2;
+                drawY = 0;
+            } else {
+                drawW = width;
+                drawH = (int) Math.round(width / srcAspect);
+                drawX = 0;
+                drawY = -(drawH - height) / 2;
+            }
         } else {
-            drawH = (int) (width / srcAspect);
-            drawY = -(drawH - height) / 2;
+            // For extreme portrait or panoramic photos, fit contain with centered matte backdrop
+            if (srcAspect > dstAspect) {
+                drawW = width;
+                drawH = (int) Math.round(width / srcAspect);
+                drawX = 0;
+                drawY = (height - drawH) / 2;
+            } else {
+                drawH = height;
+                drawW = (int) Math.round(height * srcAspect);
+                drawX = (width - drawW) / 2;
+                drawY = 0;
+            }
         }
 
         g2.drawImage(src, drawX, drawY, drawW, drawH, null);
 
+        // Soft bottom gradient vignette for depth
+        GradientPaint vignette = new GradientPaint(
+                0, height - 55, new Color(0, 0, 0, 0),
+                0, height, new Color(0, 0, 0, 95));
+        g2.setPaint(vignette);
+        g2.fillRect(0, height - 55, width, 55);
+
+        // Corner camera badge pill: "🔍 Expand Photo"
+        if (width >= 300 && height >= 180) {
+            int pillW = 120;
+            int pillH = 22;
+            int px = width - pillW - 12;
+            int py = height - pillH - 10;
+            g2.setColor(new Color(15, 23, 42, 195));
+            g2.fill(new RoundRectangle2D.Float(px, py, pillW, pillH, 10, 10));
+            g2.setColor(new Color(255, 255, 255, 45));
+            g2.draw(new RoundRectangle2D.Float(px + 0.5f, py + 0.5f, pillW - 1, pillH - 1, 10, 10));
+
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 10));
+            FontMetrics pfm = g2.getFontMetrics();
+            String pText = "🔍 View Full Photo";
+            int tx = px + (pillW - pfm.stringWidth(pText)) / 2;
+            int ty = py + ((pillH - pfm.getHeight()) / 2) + pfm.getAscent();
+            g2.drawString(pText, tx, ty);
+        }
+
         // Subtle outer border
         g2.setClip(null);
-        g2.setColor(new Color(228, 228, 231));
-        g2.setStroke(new BasicStroke(1.0f));
+        g2.setColor(new Color(228, 228, 231, 180));
+        g2.setStroke(new BasicStroke(1.2f));
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, width - 1, height - 1, radius * 2, radius * 2));
 
         g2.dispose();
@@ -148,14 +299,14 @@ public final class ImageHelper {
         g2.fillOval((width - 76) / 2, (height - 76) / 2 - 12, 76, 76);
 
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 34));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 34));
         FontMetrics fm = g2.getFontMetrics();
         int iconX = (width - fm.stringWidth(iconSymbol)) / 2;
         int iconY = ((height - 76) / 2 - 12) + ((76 - fm.getHeight()) / 2) + fm.getAscent();
         g2.drawString(iconSymbol, iconX, iconY);
 
         // Title text in banner
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 15));
         fm = g2.getFontMetrics();
         String bannerTitle = item.getName();
         if (bannerTitle.length() > 38) {
@@ -165,7 +316,7 @@ public final class ImageHelper {
         g2.drawString(bannerTitle, titleX, height - 34);
 
         // Category subtitle
-        g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 12));
         g2.setColor(new Color(161, 161, 170));
         fm = g2.getFontMetrics();
         String catSubtitle = item.getCategory().getDisplayName().toUpperCase() + "  •  " + item.getId();
@@ -178,7 +329,7 @@ public final class ImageHelper {
         g2.setColor(isLost ? UIUtils.COLOR_PRIMARY : new Color(2, 132, 199));
         g2.fill(new RoundRectangle2D.Float(14, 14, badgeW, badgeH, 10, 10));
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 10));
         fm = g2.getFontMetrics();
         String badgeText = isLost ? "● LOST ITEM" : "■ FOUND ITEM";
         int bx = 14 + (badgeW - fm.stringWidth(badgeText)) / 2;
@@ -404,7 +555,7 @@ public final class ImageHelper {
 
         // Osprey style logo emblem
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 14));
         g2.drawString("OSPREY", 370, 190);
 
         drawPhotoOverlay(g2, "NAVY OSPREY BACKPACK", "Cafeteria East Wing • Contains notebooks and bottle", w, h);
@@ -457,12 +608,12 @@ public final class ImageHelper {
         g2.setColor(new Color(37, 99, 235));
         g2.fillRect(415, 150, 130, 18);
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 9));
         g2.drawString("CAMPUS STUDENT ID", 422, 163);
 
         // Embossed brand logo
         g2.setColor(new Color(254, 243, 199, 180));
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 12));
         g2.drawString("TOMMY HILFIGER", 260, 320);
 
         drawPhotoOverlay(g2, "BROWN LEATHER BI-FOLD WALLET", "Gymnasium Locker Room • Driver's License & Student ID", w, h);
@@ -515,7 +666,7 @@ public final class ImageHelper {
         g2.fill(new RoundRectangle2D.Float(305, 255, 50, 28, 8, 8));
         g2.fill(new RoundRectangle2D.Float(305, 290, 50, 28, 8, 8));
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 12));
         g2.drawString("LOCK", 314, 274);
         g2.drawString("UNLK", 314, 309);
 
@@ -589,7 +740,7 @@ public final class ImageHelper {
 
         // Specular Sparkle Star
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 36));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 36));
         g2.drawString("✦", 442, 195);
         g2.drawString("✧", 335, 285);
 
@@ -629,7 +780,7 @@ public final class ImageHelper {
         g2.setColor(new Color(30, 41, 59));
         g2.fillOval(376, 186, 48, 48);
         g2.setColor(new Color(217, 119, 6));
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 22));
         g2.drawString("★", 392, 218);
 
         // Golden Typography
@@ -655,11 +806,11 @@ public final class ImageHelper {
         g2.fillOval(30, h - 45, 10, 10);
 
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 14));
         g2.drawString(title, 50, h - 42);
 
         g2.setColor(new Color(161, 161, 170));
-        g2.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        g2.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 11));
         g2.drawString(subtitle, 50, h - 26);
     }
 

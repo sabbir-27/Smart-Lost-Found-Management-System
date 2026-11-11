@@ -11,6 +11,8 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 
 /**
@@ -90,9 +92,17 @@ public class ItemDetailDialog extends JDialog {
         contentPanel.setBackground(UIUtils.COLOR_BACKGROUND);
         contentPanel.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        // Photo Banner Preview
-        JLabel photoBanner = new JLabel(ImageHelper.getItemImageThumbnail(item, 620, 210));
+        // Photo Banner Preview (16:9 Proportion with interactive Lightbox expansion)
+        JLabel photoBanner = new JLabel(ImageHelper.getItemImageThumbnail(item, 620, 310));
         photoBanner.setAlignmentX(Component.CENTER_ALIGNMENT);
+        photoBanner.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        photoBanner.setToolTipText("Click to inspect photo in high-resolution lightbox viewer");
+        photoBanner.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                new PhotoLightboxDialog(ItemDetailDialog.this, item).setVisible(true);
+            }
+        });
         contentPanel.add(photoBanner);
         contentPanel.add(Box.createVerticalStrut(14));
 
