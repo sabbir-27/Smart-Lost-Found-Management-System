@@ -81,7 +81,7 @@ public class AdminConsolePanel extends JPanel {
         left.setOpaque(false);
 
         JLabel title = new JLabel("🛡️ EXECUTIVE ADMINISTRATIVE CONTROL CONSOLE");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        title.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 15));
         title.setForeground(Color.WHITE);
 
         JLabel sub = new JLabel("Privileged oversight: Manage credentials, modify roles, monitor audit logs, and trigger system sync.");
@@ -119,6 +119,21 @@ public class AdminConsolePanel extends JPanel {
         kpiPanel.add(UIUtils.createKpiCard("⚡", "Active Accounts", activeCountKpiLabel, UIUtils.COLOR_SUCCESS, "Enabled authentication logins"));
         kpiPanel.add(UIUtils.createKpiCard("📦", "Managed Items", inventoryCountKpiLabel, UIUtils.COLOR_BLUE, "Total inventory records"));
 
+        kpiPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                int w = kpiPanel.getWidth();
+                GridLayout layout = (GridLayout) kpiPanel.getLayout();
+                if (w < 820 && layout.getRows() != 2) {
+                    kpiPanel.setLayout(new GridLayout(2, 2, 10, 10));
+                    kpiPanel.revalidate();
+                } else if (w >= 820 && layout.getRows() != 1) {
+                    kpiPanel.setLayout(new GridLayout(1, 4, 14, 0));
+                    kpiPanel.revalidate();
+                }
+            }
+        });
+
         return kpiPanel;
     }
 
@@ -127,7 +142,7 @@ public class AdminConsolePanel extends JPanel {
         card.setLayout(new BorderLayout(0, 12));
 
         // Header
-        JPanel cardHeader = new JPanel(new BorderLayout());
+        JPanel cardHeader = new JPanel(new BorderLayout(8, 0));
         cardHeader.setOpaque(false);
         cardHeader.setBorder(new EmptyBorder(4, 4, 8, 4));
 
@@ -138,25 +153,25 @@ public class AdminConsolePanel extends JPanel {
         cardHeader.add(title, BorderLayout.WEST);
 
         // Action Toolbar
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 2));
         toolbar.setOpaque(false);
 
         JButton refreshBtn = UIUtils.createSecondaryButton("🔄 Refresh");
         refreshBtn.addActionListener(e -> refreshData());
 
-        JButton addAccountBtn = UIUtils.createModernButton("+ Create Account", UIUtils.COLOR_PRIMARY_LIGHT,
+        JButton addAccountBtn = UIUtils.createModernButton("+ Create User", UIUtils.COLOR_PRIMARY_LIGHT,
                 UIUtils.COLOR_PRIMARY_BORDER, UIUtils.COLOR_PRIMARY, 8);
         addAccountBtn.addActionListener(e -> openAddUserDialog());
 
-        toggleRoleBtn = UIUtils.createSecondaryButton("👑 Switch Role (User/Admin)");
+        toggleRoleBtn = UIUtils.createSecondaryButton("👑 Switch Role");
         toggleRoleBtn.setEnabled(false);
         toggleRoleBtn.addActionListener(e -> handleToggleRole());
 
-        toggleActiveBtn = UIUtils.createSecondaryButton("🚫 Toggle Active / Suspend");
+        toggleActiveBtn = UIUtils.createSecondaryButton("🚫 Toggle Status");
         toggleActiveBtn.setEnabled(false);
         toggleActiveBtn.addActionListener(e -> handleToggleActive());
 
-        deleteUserBtn = UIUtils.createDangerButton("🗑️ Delete User");
+        deleteUserBtn = UIUtils.createDangerButton("🗑️ Delete");
         deleteUserBtn.setEnabled(false);
         deleteUserBtn.addActionListener(e -> handleDeleteUser());
 
@@ -167,6 +182,36 @@ public class AdminConsolePanel extends JPanel {
         toolbar.add(deleteUserBtn);
 
         cardHeader.add(toolbar, BorderLayout.EAST);
+
+        // Responsive adjustment for toolbar on narrow screens
+        cardHeader.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                int w = cardHeader.getWidth();
+                if (w < 820 && cardHeader.getLayout() instanceof BorderLayout) {
+                    BorderLayout bl = (BorderLayout) cardHeader.getLayout();
+                    if (bl.getVgap() == 0) {
+                        cardHeader.removeAll();
+                        cardHeader.setLayout(new BorderLayout(0, 8));
+                        cardHeader.add(title, BorderLayout.NORTH);
+                        toolbar.setLayout(new FlowLayout(FlowLayout.LEFT, 6, 2));
+                        cardHeader.add(toolbar, BorderLayout.CENTER);
+                        cardHeader.revalidate();
+                    }
+                } else if (w >= 820 && cardHeader.getLayout() instanceof BorderLayout) {
+                    BorderLayout bl = (BorderLayout) cardHeader.getLayout();
+                    if (bl.getVgap() != 0) {
+                        cardHeader.removeAll();
+                        cardHeader.setLayout(new BorderLayout(8, 0));
+                        cardHeader.add(title, BorderLayout.WEST);
+                        toolbar.setLayout(new FlowLayout(FlowLayout.RIGHT, 6, 2));
+                        cardHeader.add(toolbar, BorderLayout.EAST);
+                        cardHeader.revalidate();
+                    }
+                }
+            }
+        });
+
         card.add(cardHeader, BorderLayout.NORTH);
 
         // Table

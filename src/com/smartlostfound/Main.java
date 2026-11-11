@@ -62,11 +62,11 @@ public class Main {
                 // 2. Controller
                 LostFoundController controller = new LostFoundController(manager, userManager);
 
-                // 3. View Frame
+                // 3. View Frame (Opens directly into the Full-Page Authentication Portal)
                 MainFrame frame = new MainFrame(controller);
                 controller.setMainFrame(frame);
 
-                // Display main window
+                // 4. Reveal the full application window
                 frame.setVisible(true);
 
             } catch (Exception e) {

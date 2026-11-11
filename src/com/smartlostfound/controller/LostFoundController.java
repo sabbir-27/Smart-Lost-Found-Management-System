@@ -51,8 +51,7 @@ public class LostFoundController {
     public LostFoundController(LostFoundManager manager, UserManager userManager) {
         this.manager = manager;
         this.userManager = (userManager != null) ? userManager : new UserManager();
-        // Initialize default session to Admin for frictionless review or prompt
-        this.currentUser = this.userManager.findByUsername("admin").orElse(null);
+        this.currentUser = null;
     }
 
     /**
@@ -62,7 +61,7 @@ public class LostFoundController {
      */
     public void setMainFrame(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
-        if (mainFrame != null && currentUser != null) {
+        if (mainFrame != null) {
             mainFrame.updateUserSession(currentUser);
         }
         refreshView();
@@ -101,7 +100,7 @@ public class LostFoundController {
             return false;
         }
         if (currentUser == null) {
-            return true;
+            return false;
         }
         if (currentUser.isAdmin()) {
             return true;
@@ -129,7 +128,12 @@ public class LostFoundController {
      * Opens the login &amp; registration modal dialog.
      */
     public void openLoginDialog(Window parent) {
+        if (mainFrame != null) {
+            mainFrame.showAuthPage();
+            return;
+        }
         LoginRegisterDialog dialog = new LoginRegisterDialog(parent, this);
+        dialog.setInitialLaunch(false);
         dialog.setVisible(true);
     }
 

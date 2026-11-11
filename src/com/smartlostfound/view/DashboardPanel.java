@@ -95,6 +95,22 @@ public class DashboardPanel extends JPanel {
         kpiPanel.add(UIUtils.createKpiCard("▼", "In Custody", foundKpiLabel, UIUtils.COLOR_BLUE, "Secured on premises"));
         kpiPanel.add(UIUtils.createKpiCard("●", "Resolved", resolvedKpiLabel, UIUtils.COLOR_SUCCESS, "Recovered & claimed items"));
 
+        // Responsive KPI card wrapping for all display resolutions
+        kpiPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                int w = kpiPanel.getWidth();
+                GridLayout layout = (GridLayout) kpiPanel.getLayout();
+                if (w < 820 && layout.getRows() != 2) {
+                    kpiPanel.setLayout(new GridLayout(2, 2, 10, 10));
+                    kpiPanel.revalidate();
+                } else if (w >= 820 && layout.getRows() != 1) {
+                    kpiPanel.setLayout(new GridLayout(1, 4, 14, 0));
+                    kpiPanel.revalidate();
+                }
+            }
+        });
+
         return kpiPanel;
     }
 
@@ -103,20 +119,23 @@ public class DashboardPanel extends JPanel {
         filterCard.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.insets = new Insets(5, 6, 5, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Keyword Search Label and Input
+        // Row 0: Full-Width Search Input & Reset Button
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.0;
+        gbc.gridwidth = 1;
         JLabel searchLabel = new JLabel("Search:");
         searchLabel.setFont(UIUtils.FONT_BODY_BOLD);
         searchLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
         filterCard.add(searchLabel, gbc);
 
         gbc.gridx = 1;
-        gbc.weightx = 0.35;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.gridwidth = 4;
         searchField = UIUtils.createStyledTextField(18);
         searchField.setToolTipText("Filter by item name, ID, location, description, or reporter");
         searchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -126,16 +145,28 @@ public class DashboardPanel extends JPanel {
         });
         filterCard.add(searchField, gbc);
 
+        gbc.gridx = 5;
+        gbc.gridy = 0;
+        gbc.weightx = 0.0;
+        gbc.gridwidth = 1;
+        JButton resetBtn = UIUtils.createSecondaryButton("Reset Filters");
+        resetBtn.addActionListener(e -> resetFilters());
+        filterCard.add(resetBtn, gbc);
+
+        // Row 1: Dropdown filters (Spaced evenly and clearly visible on all devices)
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+
         // Type Filter
-        gbc.gridx = 2;
+        gbc.gridx = 0;
         gbc.weightx = 0.0;
         JLabel typeLabel = new JLabel("Type:");
         typeLabel.setFont(UIUtils.FONT_BODY_BOLD);
         typeLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
         filterCard.add(typeLabel, gbc);
 
-        gbc.gridx = 3;
-        gbc.weightx = 0.15;
+        gbc.gridx = 1;
+        gbc.weightx = 0.25;
         typeFilterCombo = new JComboBox<>(new String[]{"ALL", "LOST", "FOUND"});
         typeFilterCombo.setFont(UIUtils.FONT_BODY);
         typeFilterCombo.setBackground(Color.WHITE);
@@ -143,15 +174,15 @@ public class DashboardPanel extends JPanel {
         filterCard.add(typeFilterCombo, gbc);
 
         // Category Filter
-        gbc.gridx = 4;
+        gbc.gridx = 2;
         gbc.weightx = 0.0;
         JLabel catLabel = new JLabel("Category:");
         catLabel.setFont(UIUtils.FONT_BODY_BOLD);
         catLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
         filterCard.add(catLabel, gbc);
 
-        gbc.gridx = 5;
-        gbc.weightx = 0.25;
+        gbc.gridx = 3;
+        gbc.weightx = 0.45;
         DefaultComboBoxModel<Object> categoryModel = new DefaultComboBoxModel<>();
         categoryModel.addElement("All Categories");
         for (ItemCategory cat : ItemCategory.values()) {
@@ -164,15 +195,15 @@ public class DashboardPanel extends JPanel {
         filterCard.add(categoryFilterCombo, gbc);
 
         // Status Filter
-        gbc.gridx = 6;
+        gbc.gridx = 4;
         gbc.weightx = 0.0;
         JLabel statusLabel = new JLabel("Status:");
         statusLabel.setFont(UIUtils.FONT_BODY_BOLD);
         statusLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
         filterCard.add(statusLabel, gbc);
 
-        gbc.gridx = 7;
-        gbc.weightx = 0.15;
+        gbc.gridx = 5;
+        gbc.weightx = 0.30;
         DefaultComboBoxModel<Object> statusModel = new DefaultComboBoxModel<>();
         statusModel.addElement("All Statuses");
         for (ItemStatus stat : ItemStatus.values()) {
@@ -183,13 +214,6 @@ public class DashboardPanel extends JPanel {
         statusFilterCombo.setBackground(Color.WHITE);
         statusFilterCombo.addActionListener(e -> triggerSearch());
         filterCard.add(statusFilterCombo, gbc);
-
-        // Reset Filters Button
-        gbc.gridx = 8;
-        gbc.weightx = 0.0;
-        JButton resetBtn = UIUtils.createSecondaryButton("Reset Filters");
-        resetBtn.addActionListener(e -> resetFilters());
-        filterCard.add(resetBtn, gbc);
 
         return filterCard;
     }

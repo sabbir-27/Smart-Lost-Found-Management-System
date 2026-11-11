@@ -30,7 +30,12 @@ public class ItemDetailDialog extends JDialog {
         this.controller = controller;
 
         initComponents();
-        setSize(700, 620);
+        GraphicsConfiguration gc = getGraphicsConfiguration();
+        Rectangle screen = gc != null ? gc.getBounds() : new Rectangle(0, 0, 1280, 800);
+        int dialogW = Math.min(720, (int) (screen.width * 0.94));
+        int dialogH = Math.min(640, (int) (screen.height * 0.90));
+        setSize(dialogW, dialogH);
+        setMinimumSize(new Dimension(Math.min(580, screen.width - 40), Math.min(440, screen.height - 40)));
         setLocationRelativeTo(owner);
     }
 

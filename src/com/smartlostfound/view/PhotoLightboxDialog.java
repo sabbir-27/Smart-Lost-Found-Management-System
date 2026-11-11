@@ -70,9 +70,13 @@ public class PhotoLightboxDialog extends JDialog {
         // 3. Bottom Information & Action Bar
         add(createBottomBar(), BorderLayout.SOUTH);
 
-        // Window configuration
-        setSize(960, 680);
-        setMinimumSize(new Dimension(740, 520));
+        // Window configuration: Responsive to screen dimensions
+        GraphicsConfiguration gc = getGraphicsConfiguration();
+        Rectangle screen = gc != null ? gc.getBounds() : new Rectangle(0, 0, 1280, 800);
+        int winW = Math.min(960, (int) (screen.width * 0.94));
+        int winH = Math.min(680, (int) (screen.height * 0.92));
+        setSize(winW, winH);
+        setMinimumSize(new Dimension(Math.min(640, screen.width - 40), Math.min(460, screen.height - 40)));
         setLocationRelativeTo(getOwner());
 
         // Update image fit once window is laid out

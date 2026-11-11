@@ -46,10 +46,26 @@ public class MainFrame extends JFrame {
     // Top Bar Action Container
     private JPanel topBarActionsContainer;
 
+    // Sidebar responsive toggle components
+    private JPanel sidebarPanel;
+    private JPanel brandTextPanel;
+    private JLabel adminSectionLabel;
+    private JPanel footerCard;
+    private JButton toggleSidebarBtn;
+    private boolean isSidebarCollapsed = false;
+    private boolean wasAutoCollapsed = false;
+
     // User Profile Chip components
     private AvatarCircleLabel userAvatarLabel;
     private JLabel userNameLabel;
     private JLabel userRoleBadgeLabel;
+    private JButton authBtn;
+
+    // Root Full-Page Switcher (Auth Page vs Main Workspace)
+    private CardLayout rootCardLayout;
+    private JPanel rootCardPanel;
+    private AuthPagePanel authPagePanel;
+    private JPanel mainWorkspaceWrapper;
 
     private final Map<String, SidebarNavButton> navButtons = new HashMap<>();
     private String currentNavKey = "DASHBOARD";
@@ -63,6 +79,10 @@ public class MainFrame extends JFrame {
 
         if (controller.getCurrentUser() != null) {
             updateUserSession(controller.getCurrentUser());
+            showMainWorkspace();
+        } else {
+            updateUserSession(null);
+            showAuthPage();
         }
     }
 
@@ -70,17 +90,25 @@ public class MainFrame extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(UIUtils.COLOR_BACKGROUND);
 
-        // 1. Left Sidebar Navigation (Carbon Black Gradient)
-        add(createSidebarPanel(), BorderLayout.WEST);
+        rootCardLayout = new CardLayout();
+        rootCardPanel = new JPanel(rootCardLayout);
+        rootCardPanel.setBackground(UIUtils.COLOR_BACKGROUND);
 
-        // 2. Right Workspace Container
+        // 1. Full-Page Authentication Portal View
+        authPagePanel = new AuthPagePanel(controller, this);
+        rootCardPanel.add(authPagePanel, "AUTH_VIEW");
+
+        // 2. Main Workspace View (Sidebar + Top Bar + Content Panels + Status Bar)
+        mainWorkspaceWrapper = new JPanel(new BorderLayout());
+        mainWorkspaceWrapper.setBackground(UIUtils.COLOR_BACKGROUND);
+
+        mainWorkspaceWrapper.add(createSidebarPanel(), BorderLayout.WEST);
+
         JPanel workspace = new JPanel(new BorderLayout());
         workspace.setBackground(UIUtils.COLOR_BACKGROUND);
 
-        // Top Editorial Breadcrumb & Action Bar with User Profile Chip
         workspace.add(createTopBar(), BorderLayout.NORTH);
 
-        // Center Views (CardLayout)
         contentCardLayout = new CardLayout();
         mainContentCardPanel = new JPanel(contentCardLayout);
         mainContentCardPanel.setBackground(UIUtils.COLOR_BACKGROUND);
@@ -100,18 +128,19 @@ public class MainFrame extends JFrame {
         mainContentCardPanel.add(adminConsolePanel, "ADMIN_CONSOLE");
 
         workspace.add(mainContentCardPanel, BorderLayout.CENTER);
-
-        // Bottom Telemetry Status Bar
         workspace.add(createStatusBar(), BorderLayout.SOUTH);
 
-        add(workspace, BorderLayout.CENTER);
+        mainWorkspaceWrapper.add(workspace, BorderLayout.CENTER);
+        rootCardPanel.add(mainWorkspaceWrapper, "APP_VIEW");
+
+        add(rootCardPanel, BorderLayout.CENTER);
 
         // Default navigation
         setActiveNav("DASHBOARD");
     }
 
     private JPanel createSidebarPanel() {
-        JPanel sidebar = new JPanel(new BorderLayout()) {
+        sidebarPanel = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -124,12 +153,12 @@ public class MainFrame extends JFrame {
                 super.paintComponent(g);
             }
         };
-        sidebar.setOpaque(false);
-        sidebar.setPreferredSize(new Dimension(264, 0));
-        sidebar.setBorder(new EmptyBorder(22, 16, 22, 16));
+        sidebarPanel.setOpaque(false);
+        sidebarPanel.setPreferredSize(new Dimension(260, 0));
+        sidebarPanel.setBorder(new EmptyBorder(22, 16, 22, 16));
 
-        // Brand Header (DesignRush style)
-        JPanel brandPanel = new JPanel(new BorderLayout(12, 6));
+        // Brand Header (DesignRush style) with responsive collapse button
+        JPanel brandPanel = new JPanel(new BorderLayout(8, 6));
         brandPanel.setOpaque(false);
 
         // Red Accent Icon in glossy capsule
@@ -155,7 +184,7 @@ public class MainFrame extends JFrame {
         logoIcon.setForeground(UIUtils.COLOR_PRIMARY);
         logoCapsule.add(logoIcon);
 
-        JPanel brandTextPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        brandTextPanel = new JPanel(new GridLayout(2, 1, 0, 2));
         brandTextPanel.setOpaque(false);
 
         JLabel brandTitle = new JLabel("LOST & FOUND");
@@ -169,10 +198,34 @@ public class MainFrame extends JFrame {
         brandTextPanel.add(brandTitle);
         brandTextPanel.add(brandSubtitle);
 
+        // Sidebar Collapse Toggle Button
+        toggleSidebarBtn = new JButton("◀") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(255, 255, 255, 18));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        toggleSidebarBtn.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 12));
+        toggleSidebarBtn.setForeground(UIUtils.COLOR_SIDEBAR_TEXT);
+        toggleSidebarBtn.setFocusPainted(false);
+        toggleSidebarBtn.setBorderPainted(false);
+        toggleSidebarBtn.setContentAreaFilled(false);
+        toggleSidebarBtn.setOpaque(false);
+        toggleSidebarBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        toggleSidebarBtn.setPreferredSize(new Dimension(28, 28));
+        toggleSidebarBtn.setToolTipText("Toggle Sidebar (Compact / Expanded)");
+        toggleSidebarBtn.addActionListener(e -> setSidebarCollapsed(!isSidebarCollapsed));
+
         brandPanel.add(logoCapsule, BorderLayout.WEST);
         brandPanel.add(brandTextPanel, BorderLayout.CENTER);
+        brandPanel.add(toggleSidebarBtn, BorderLayout.EAST);
 
-        sidebar.add(brandPanel, BorderLayout.NORTH);
+        sidebarPanel.add(brandPanel, BorderLayout.NORTH);
 
         // Navigation Items
         JPanel navContainer = new JPanel();
@@ -180,12 +233,12 @@ public class MainFrame extends JFrame {
         navContainer.setOpaque(false);
         navContainer.setBorder(new EmptyBorder(26, 0, 0, 0));
 
-        SidebarNavButton dashBtn = new SidebarNavButton("●  Dashboard & Records", () -> switchToDashboard());
-        SidebarNavButton feedBtn = new SidebarNavButton("📰  Community Feed", () -> switchToFeed());
-        SidebarNavButton lostBtn = new SidebarNavButton("▲  Report Lost Property", () -> switchToReportLost());
-        SidebarNavButton foundBtn = new SidebarNavButton("▼  Report Found Property", () -> switchToReportFound());
-        SidebarNavButton myItemsBtn = new SidebarNavButton("📂  My Reported Items", () -> switchToMyItems());
-        SidebarNavButton adminBtn = new SidebarNavButton("🛡️  Admin Console", () -> switchToAdminConsole());
+        SidebarNavButton dashBtn = new SidebarNavButton("●", "Dashboard & Records", () -> switchToDashboard());
+        SidebarNavButton feedBtn = new SidebarNavButton("📰", "Community Feed", () -> switchToFeed());
+        SidebarNavButton lostBtn = new SidebarNavButton("▲", "Report Lost Property", () -> switchToReportLost());
+        SidebarNavButton foundBtn = new SidebarNavButton("▼", "Report Found Property", () -> switchToReportFound());
+        SidebarNavButton myItemsBtn = new SidebarNavButton("📂", "My Reported Items", () -> switchToMyItems());
+        SidebarNavButton adminBtn = new SidebarNavButton("🛡️", "Admin Console", () -> switchToAdminConsole());
 
         navButtons.put("DASHBOARD", dashBtn);
         navButtons.put("FEED", feedBtn);
@@ -206,17 +259,17 @@ public class MainFrame extends JFrame {
         navContainer.add(Box.createVerticalStrut(14));
 
         // Distinct Admin Section Divider
-        JLabel adminSectionLabel = new JLabel("MANAGEMENT & GOVERNANCE");
+        adminSectionLabel = new JLabel("MANAGEMENT & GOVERNANCE");
         adminSectionLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 9));
         adminSectionLabel.setForeground(UIUtils.COLOR_SIDEBAR_MUTED);
         adminSectionLabel.setBorder(new EmptyBorder(0, 16, 4, 0));
         navContainer.add(adminSectionLabel);
         navContainer.add(adminBtn);
 
-        sidebar.add(navContainer, BorderLayout.CENTER);
+        sidebarPanel.add(navContainer, BorderLayout.CENTER);
 
         // Bottom System Status Card
-        JPanel footerCard = new JPanel() {
+        footerCard = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -244,9 +297,9 @@ public class MainFrame extends JFrame {
         footerCard.add(onlineStatus);
         footerCard.add(versionLabel);
 
-        sidebar.add(footerCard, BorderLayout.SOUTH);
+        sidebarPanel.add(footerCard, BorderLayout.SOUTH);
 
-        return sidebar;
+        return sidebarPanel;
     }
 
     private JPanel createTopBar() {
@@ -329,11 +382,11 @@ public class MainFrame extends JFrame {
         details.add(userNameLabel);
         details.add(userRoleBadgeLabel);
 
-        JButton authBtn = UIUtils.createModernButton("Switch", new Color(244, 244, 246),
-                new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 6);
+        authBtn = UIUtils.createModernButton(controller.getCurrentUser() == null ? "Sign In" : "Switch",
+                new Color(244, 244, 246), new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 6);
         authBtn.setFont(UIUtils.FONT_SMALL_BOLD);
         authBtn.setBorder(new EmptyBorder(5, 10, 5, 10));
-        authBtn.addActionListener(e -> controller.openLoginDialog(this));
+        authBtn.addActionListener(e -> showAuthPage());
 
         chip.add(userAvatarLabel);
         chip.add(details);
@@ -374,9 +427,70 @@ public class MainFrame extends JFrame {
             }
         });
 
-        setSize(1260, 860);
-        setMinimumSize(new Dimension(1060, 720));
+        // Dynamic responsive sizing honoring OS desktop work area and device dimensions
+        Rectangle screenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        int initialW = Math.min(1280, (int) (screenBounds.width * 0.94));
+        int initialH = Math.min(840, (int) (screenBounds.height * 0.92));
+
+        setSize(initialW, initialH);
+        setMinimumSize(new Dimension(800, 540));
         setLocationRelativeTo(null);
+
+        // Auto-collapse sidebar on smaller displays or tiling
+        if (initialW < 960) {
+            setSidebarCollapsed(true);
+            wasAutoCollapsed = true;
+        }
+
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                int w = getWidth();
+                if (w < 920 && !isSidebarCollapsed) {
+                    setSidebarCollapsed(true);
+                    wasAutoCollapsed = true;
+                } else if (w >= 1080 && isSidebarCollapsed && wasAutoCollapsed) {
+                    setSidebarCollapsed(false);
+                    wasAutoCollapsed = false;
+                }
+            }
+        });
+    }
+
+    public void setSidebarCollapsed(boolean collapsed) {
+        this.isSidebarCollapsed = collapsed;
+        if (sidebarPanel == null) return;
+
+        if (collapsed) {
+            sidebarPanel.setPreferredSize(new Dimension(68, 0));
+            sidebarPanel.setBorder(new EmptyBorder(18, 10, 18, 10));
+            if (brandTextPanel != null) brandTextPanel.setVisible(false);
+            if (adminSectionLabel != null) adminSectionLabel.setVisible(false);
+            if (footerCard != null) footerCard.setVisible(false);
+            if (toggleSidebarBtn != null) {
+                toggleSidebarBtn.setText("▶");
+                toggleSidebarBtn.setToolTipText("Expand Sidebar Navigation");
+            }
+            for (SidebarNavButton btn : navButtons.values()) {
+                btn.setCollapsed(true);
+            }
+        } else {
+            sidebarPanel.setPreferredSize(new Dimension(260, 0));
+            sidebarPanel.setBorder(new EmptyBorder(22, 16, 22, 16));
+            if (brandTextPanel != null) brandTextPanel.setVisible(true);
+            if (adminSectionLabel != null) adminSectionLabel.setVisible(true);
+            if (footerCard != null) footerCard.setVisible(true);
+            if (toggleSidebarBtn != null) {
+                toggleSidebarBtn.setText("◀");
+                toggleSidebarBtn.setToolTipText("Collapse Sidebar Navigation");
+            }
+            for (SidebarNavButton btn : navButtons.values()) {
+                btn.setCollapsed(false);
+            }
+        }
+
+        sidebarPanel.revalidate();
+        sidebarPanel.repaint();
     }
 
     private void setActiveNav(String key) {
@@ -512,6 +626,17 @@ public class MainFrame extends JFrame {
             userRoleBadgeLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
             userAvatarLabel.setText("GU");
             userAvatarLabel.setBackgroundColor(new Color(113, 113, 122));
+            if (authBtn != null) {
+                authBtn.setText("Sign In");
+            }
+            if (reportLostPanel != null) {
+                reportLostPanel.autoFillReporter(null);
+            }
+            if (reportFoundPanel != null) {
+                reportFoundPanel.autoFillReporter(null);
+            }
+            setStatusMessage("Browsing as Guest. Sign in anytime to report or manage items.");
+            repaint();
             return;
         }
 
@@ -527,6 +652,10 @@ public class MainFrame extends JFrame {
         }
 
         userAvatarLabel.setText(user.getInitials());
+
+        if (authBtn != null) {
+            authBtn.setText("Switch");
+        }
 
         // Pre-fill reporting forms with this user's profile
         if (reportLostPanel != null) {
@@ -579,15 +708,28 @@ public class MainFrame extends JFrame {
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (choice == JOptionPane.YES_OPTION) {
-                controller.openLoginDialog(this);
-                if (controller.isAdmin()) {
-                    setActiveNav("ADMIN_CONSOLE");
-                }
+                showAuthPage();
             }
             return;
         }
 
         setActiveNav("ADMIN_CONSOLE");
+    }
+
+    public void showAuthPage() {
+        if (authPagePanel != null) {
+            authPagePanel.updateReturnToAppVisibility(controller.getCurrentUser() != null);
+            authPagePanel.resetFields();
+        }
+        rootCardLayout.show(rootCardPanel, "AUTH_VIEW");
+        setTitle("Sign In & Authentication - Smart Lost & Found");
+    }
+
+    public void showMainWorkspace() {
+        rootCardLayout.show(rootCardPanel, "APP_VIEW");
+        setTitle("Smart Lost & Found Management System - DesignRush Edition");
+        setActiveNav(currentNavKey);
+        controller.refreshView();
     }
 
     public DashboardPanel getDashboardPanel() {
@@ -659,16 +801,22 @@ public class MainFrame extends JFrame {
     private static class SidebarNavButton extends JPanel {
         private boolean selected = false;
         private boolean hovered = false;
+        private boolean collapsed = false;
+        private final String iconOnly;
+        private final String fullTitle;
         private final JLabel label;
 
-        public SidebarNavButton(String title, Runnable onClick) {
+        public SidebarNavButton(String iconOnly, String fullTitle, Runnable onClick) {
+            this.iconOnly = iconOnly;
+            this.fullTitle = fullTitle;
             setLayout(new BorderLayout());
             setOpaque(false);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
             setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
-            setPreferredSize(new Dimension(232, 44));
+            setPreferredSize(new Dimension(228, 44));
+            setToolTipText(fullTitle);
 
-            label = new JLabel(title);
+            label = new JLabel(iconOnly + "  " + fullTitle);
             label.setFont(UIUtils.FONT_BODY_BOLD);
             label.setForeground(UIUtils.COLOR_SIDEBAR_TEXT);
             label.setBorder(new EmptyBorder(0, 16, 0, 16));
@@ -692,6 +840,23 @@ public class MainFrame extends JFrame {
                     onClick.run();
                 }
             });
+        }
+
+        public void setCollapsed(boolean col) {
+            this.collapsed = col;
+            if (collapsed) {
+                label.setText(iconOnly);
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setBorder(new EmptyBorder(0, 0, 0, 0));
+                setPreferredSize(new Dimension(48, 44));
+            } else {
+                label.setText(iconOnly + "  " + fullTitle);
+                label.setHorizontalAlignment(SwingConstants.LEFT);
+                label.setBorder(new EmptyBorder(0, 16, 0, 16));
+                setPreferredSize(new Dimension(228, 44));
+            }
+            revalidate();
+            repaint();
         }
 
         public void setSelected(boolean sel) {

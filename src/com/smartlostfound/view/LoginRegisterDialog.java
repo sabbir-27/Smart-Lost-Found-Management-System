@@ -24,6 +24,8 @@ public class LoginRegisterDialog extends JDialog {
 
     private final LostFoundController controller;
     private UserAccount authenticatedAccount = null;
+    private boolean initialLaunch = false;
+    private boolean enteredApp = false;
 
     private CardLayout authCardLayout;
     private JPanel authCardsContainer;
@@ -51,9 +53,23 @@ public class LoginRegisterDialog extends JDialog {
         this.controller = controller;
 
         initComponents();
-        setSize(780, 640);
-        setResizable(false);
+        GraphicsConfiguration gc = getGraphicsConfiguration();
+        Rectangle screen = gc != null ? gc.getBounds() : new Rectangle(0, 0, 1280, 800);
+        int dialogW = Math.min(780, (int) (screen.width * 0.95));
+        int dialogH = Math.min(640, (int) (screen.height * 0.92));
+        setSize(dialogW, dialogH);
+        setMinimumSize(new Dimension(Math.min(680, screen.width - 40), Math.min(480, screen.height - 40)));
+        setResizable(true);
         setLocationRelativeTo(parent);
+
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                if (initialLaunch && !enteredApp) {
+                    System.exit(0);
+                }
+            }
+        });
     }
 
     private void initComponents() {
@@ -172,7 +188,7 @@ public class LoginRegisterDialog extends JDialog {
         topSwitcher.add(registerTabBtn);
         container.add(topSwitcher, BorderLayout.NORTH);
 
-        // Center Cards
+        // Center Cards inside ScrollPane for compact/small laptop displays
         authCardLayout = new CardLayout();
         authCardsContainer = new JPanel(authCardLayout);
         authCardsContainer.setBackground(Color.WHITE);
@@ -180,7 +196,12 @@ public class LoginRegisterDialog extends JDialog {
         authCardsContainer.add(createSignInPanel(), "SIGN_IN");
         authCardsContainer.add(createRegisterPanel(), "REGISTER");
 
-        container.add(authCardsContainer, BorderLayout.CENTER);
+        JScrollPane authScrollPane = new JScrollPane(authCardsContainer);
+        authScrollPane.setBorder(null);
+        authScrollPane.getVerticalScrollBar().setUnitIncrement(14);
+        authScrollPane.getViewport().setBackground(Color.WHITE);
+
+        container.add(authScrollPane, BorderLayout.CENTER);
 
         return container;
     }
@@ -255,6 +276,19 @@ public class LoginRegisterDialog extends JDialog {
         // Enter key shortcut
         loginUsernameField.addActionListener(e -> handleSignIn());
         loginPasswordField.addActionListener(e -> handleSignIn());
+
+        panel.add(Box.createVerticalStrut(10));
+
+        String guestText = (controller.getCurrentUser() != null)
+                ? "🔒 Sign Out & Continue as Guest"
+                : "👀 Continue as Guest (Browse Only)";
+        JButton guestBtn = UIUtils.createSecondaryButton(guestText);
+        guestBtn.setFont(UIUtils.FONT_BODY_BOLD);
+        guestBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        guestBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        guestBtn.setToolTipText("Explore feed and dashboard without logging in");
+        guestBtn.addActionListener(e -> handleContinueAsGuest());
+        panel.add(guestBtn);
 
         return panel;
     }
@@ -459,6 +493,7 @@ public class LoginRegisterDialog extends JDialog {
 
         try {
             UserAccount account = controller.getUserManager().authenticate(username, password);
+            this.enteredApp = true;
             this.authenticatedAccount = account;
             controller.setCurrentUser(account);
 
@@ -531,6 +566,7 @@ public class LoginRegisterDialog extends JDialog {
         try {
             UserAccount account = controller.getUserManager().registerUser(
                     username, pass, name, email, phone, role);
+            this.enteredApp = true;
             this.authenticatedAccount = account;
             controller.setCurrentUser(account);
 
@@ -545,6 +581,21 @@ public class LoginRegisterDialog extends JDialog {
                     ex.getMessage(),
                     "Registration Failed", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void handleContinueAsGuest() {
+        this.enteredApp = true;
+        this.authenticatedAccount = null;
+        controller.setCurrentUser(null);
+        dispose();
+    }
+
+    public void setInitialLaunch(boolean initialLaunch) {
+        this.initialLaunch = initialLaunch;
+    }
+
+    public boolean hasEnteredApp() {
+        return enteredApp;
     }
 
     public UserAccount getAuthenticatedAccount() {

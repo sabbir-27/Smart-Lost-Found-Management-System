@@ -28,7 +28,9 @@ public class UpdateStatusDialog extends JDialog {
         this.controller = controller;
 
         initComponents();
-        setSize(540, 460);
+        GraphicsConfiguration gc = getGraphicsConfiguration();
+        Rectangle screen = gc != null ? gc.getBounds() : new Rectangle(0, 0, 1280, 800);
+        setSize(Math.min(540, screen.width - 40), Math.min(460, screen.height - 40));
         setLocationRelativeTo(owner);
     }
 

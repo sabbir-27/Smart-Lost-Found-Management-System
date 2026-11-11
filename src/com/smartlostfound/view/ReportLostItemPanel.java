@@ -58,9 +58,22 @@ public class ReportLostItemPanel extends JPanel {
         centerWrapper.setBackground(UIUtils.COLOR_BACKGROUND);
         centerWrapper.setBorder(new EmptyBorder(24, 20, 24, 20));
 
-        JPanel formCard = UIUtils.createCardPanel(14);
+        JPanel formCard = new UIUtils.ElevatedCardPanel(14) {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension d = super.getPreferredSize();
+                int targetW = 740;
+                Container p = getParent();
+                if (p != null && p.getWidth() > 0) {
+                    int avail = p.getWidth() - 32;
+                    d.width = Math.max(340, Math.min(targetW, avail));
+                } else {
+                    d.width = targetW;
+                }
+                return d;
+            }
+        };
         formCard.setLayout(new GridBagLayout());
-        formCard.setPreferredSize(new Dimension(740, 640));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(6, 10, 6, 10);
@@ -233,6 +246,12 @@ public class ReportLostItemPanel extends JPanel {
         formCard.add(buttonPanel, gbc);
 
         centerWrapper.add(formCard);
+        centerWrapper.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                formCard.revalidate();
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(centerWrapper);
         scrollPane.setBorder(null);

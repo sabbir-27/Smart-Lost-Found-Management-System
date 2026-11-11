@@ -125,6 +125,22 @@ public class MyItemsPanel extends JPanel {
         kpiPanel.add(UIUtils.createKpiCard("▼", "Found Property", myFoundKpiLabel, UIUtils.COLOR_BLUE, "Turned in / logged by you"));
         kpiPanel.add(UIUtils.createKpiCard("●", "Recovered", myRecoveredKpiLabel, UIUtils.COLOR_SUCCESS, "Successfully returned / claimed"));
 
+        // Responsive wrapping for smaller displays
+        kpiPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                int w = kpiPanel.getWidth();
+                GridLayout layout = (GridLayout) kpiPanel.getLayout();
+                if (w < 820 && layout.getRows() != 2) {
+                    kpiPanel.setLayout(new GridLayout(2, 2, 10, 10));
+                    kpiPanel.revalidate();
+                } else if (w >= 820 && layout.getRows() != 1) {
+                    kpiPanel.setLayout(new GridLayout(1, 4, 14, 0));
+                    kpiPanel.revalidate();
+                }
+            }
+        });
+
         return kpiPanel;
     }
 

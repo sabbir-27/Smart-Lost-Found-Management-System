@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -423,19 +424,10 @@ public class CommunityFeedPanel extends JPanel {
         bodyPanel.add(highlightBox);
         bodyPanel.add(Box.createVerticalStrut(10));
 
-        // Item Picture / Visual Photo Banner (16:9 Proportion - Sized to fit 680x350)
-        ImageIcon thumbnail = ImageHelper.getItemImageThumbnail(item, 680, 350);
-        JLabel imageLabel = new JLabel(thumbnail);
-        imageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        imageLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        imageLabel.setToolTipText("Click to expand photo in high-resolution lightbox viewer");
-        imageLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                new PhotoLightboxDialog(SwingUtilities.getWindowAncestor(CommunityFeedPanel.this), item).setVisible(true);
-            }
-        });
-        bodyPanel.add(imageLabel);
+        // Item Picture / Visual Photo Banner (Responsive 16:9 - auto-fits card width on all devices)
+        ResponsivePhotoCard photoCard = new ResponsivePhotoCard(item);
+        photoCard.setAlignmentX(Component.CENTER_ALIGNMENT);
+        bodyPanel.add(photoCard);
 
         postCard.add(bodyPanel, BorderLayout.CENTER);
 
@@ -743,6 +735,72 @@ public class CommunityFeedPanel extends JPanel {
             g2.drawString(text, tx, ty);
 
             g2.dispose();
+        }
+    }
+
+    /**
+     * Dynamically responsive 16:9 photo container that automatically scales
+     * to fit the exact width of the social post card on any device or display resolution.
+     */
+    public static class ResponsivePhotoCard extends JPanel {
+        private final BufferedImage original;
+        private final Item item;
+        private BufferedImage cachedScaled;
+        private int cachedW = -1;
+        private int cachedH = -1;
+
+        public ResponsivePhotoCard(Item item) {
+            this.item = item;
+            this.original = ImageHelper.getOriginalImage(item);
+            setOpaque(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setToolTipText("Click to view full photo in high-resolution lightbox");
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    new PhotoLightboxDialog(SwingUtilities.getWindowAncestor(ResponsivePhotoCard.this), item).setVisible(true);
+                }
+            });
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            int w = 680;
+            Container p = getParent();
+            if (p != null && p.getWidth() > 0) {
+                w = Math.min(700, Math.max(260, p.getWidth() - 8));
+            }
+            int h = Math.max(160, (int) Math.round(w * 9.0 / 16.0));
+            return new Dimension(w, h);
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            int w = 700;
+            int h = (int) Math.round(w * 9.0 / 16.0);
+            return new Dimension(w, h);
+        }
+
+        @Override
+        public Dimension getMinimumSize() {
+            return new Dimension(240, 135);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            int w = getWidth();
+            int h = getHeight();
+            if (w <= 0 || h <= 0) return;
+
+            if (cachedScaled == null || cachedW != w || cachedH != h) {
+                cachedScaled = ImageHelper.scaleAndCrop(original, w, h, 10);
+                cachedW = w;
+                cachedH = h;
+            }
+
+            g.drawImage(cachedScaled, 0, 0, null);
         }
     }
 }
