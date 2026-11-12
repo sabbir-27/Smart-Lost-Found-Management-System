@@ -4,6 +4,7 @@ import com.smartlostfound.model.UserAccount;
 import com.smartlostfound.model.UserRole;
 import com.smartlostfound.storage.CsvUserStorageService;
 import com.smartlostfound.storage.DataPersistenceException;
+import com.smartlostfound.storage.FirebaseUserStorageService;
 import com.smartlostfound.storage.UserStorageService;
 
 import java.nio.file.Paths;
@@ -23,8 +24,11 @@ public class UserManager {
     private final Map<String, UserAccount> usersByUsername = new ConcurrentHashMap<>();
     private final UserStorageService storageService;
 
+    /**
+     * Default constructor connecting to Firebase Cloud Storage with local CSV fallback.
+     */
     public UserManager() {
-        this(new CsvUserStorageService(Paths.get(DEFAULT_USER_STORAGE_PATH)));
+        this(new FirebaseUserStorageService());
     }
 
     public UserManager(UserStorageService storageService) {

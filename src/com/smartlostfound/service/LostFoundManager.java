@@ -3,6 +3,7 @@ package com.smartlostfound.service;
 import com.smartlostfound.model.*;
 import com.smartlostfound.storage.CsvItemStorageService;
 import com.smartlostfound.storage.DataPersistenceException;
+import com.smartlostfound.storage.FirebaseItemStorageService;
 import com.smartlostfound.storage.ItemStorageService;
 
 import java.nio.file.Paths;
@@ -26,10 +27,10 @@ public class LostFoundManager {
     private final AtomicInteger foundIdSequence = new AtomicInteger(2000);
 
     /**
-     * Default constructor using default CSV storage location ("data/lost_found_items.csv").
+     * Default constructor connecting to Firebase Cloud Storage with local CSV fallback.
      */
     public LostFoundManager() {
-        this(new CsvItemStorageService(Paths.get(DEFAULT_STORAGE_PATH)));
+        this(new FirebaseItemStorageService());
     }
 
     /**
