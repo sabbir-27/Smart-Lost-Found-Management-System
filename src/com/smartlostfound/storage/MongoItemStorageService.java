@@ -10,15 +10,19 @@ import org.bson.Document;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
- * Enterprise MongoDB Storage Service for Lost &amp; Found Items.
- * Stores item records in a MongoDB collection (e.g. lostfound.items)
- * with robust local CSV caching for offline resilience.
+ * MongoDB-backed item storage service with resilient local CSV fallback.
+ * Automatically switches between live MongoDB Atlas/local instances and
+ * offline cached storage with zero data loss.
  */
 public class MongoItemStorageService implements ItemStorageService {
+
+    private static final Path DEFAULT_FALLBACK_PATH = Paths.get("data", "items.csv");
 
     private final MongoClientProvider clientProvider;
     private final MongoConfig config;
@@ -26,7 +30,7 @@ public class MongoItemStorageService implements ItemStorageService {
     private boolean isMongoActive = false;
 
     public MongoItemStorageService() {
-        this(MongoClientProvider.getInstance(), Paths.get("data/items.csv"));
+        this(MongoClientProvider.getInstance(), DEFAULT_FALLBACK_PATH);
     }
 
     public MongoItemStorageService(MongoClientProvider clientProvider, Path localFallbackPath) {
@@ -52,14 +56,13 @@ public class MongoItemStorageService implements ItemStorageService {
 
                 if (!items.isEmpty()) {
                     isMongoActive = true;
-                    // Sync to local cache
                     try {
                         localFallback.saveItems(items);
                     } catch (Exception ignored) {}
                     return items;
                 }
 
-                // If MongoDB collection is empty, seed from local storage if available
+                // If remote database collection is empty, seed from local CSV if present
                 if (localFallback.storageExists()) {
                     List<Item> localSeed = localFallback.loadItems();
                     if (!localSeed.isEmpty()) {
@@ -71,12 +74,10 @@ public class MongoItemStorageService implements ItemStorageService {
                 isMongoActive = true;
                 return items;
             } catch (Exception e) {
-                System.err.println("Notice: MongoDB read failed (" + e.getMessage() + "), falling back to local cache.");
                 isMongoActive = false;
             }
         } else {
             isMongoActive = false;
-            System.err.println("Notice: MongoDB (" + config.getConnectionUri() + ") unavailable, running in local cache mode.");
         }
 
         return localFallback.loadItems();
@@ -84,10 +85,10 @@ public class MongoItemStorageService implements ItemStorageService {
 
     @Override
     public void saveItems(List<Item> items) throws DataPersistenceException {
-        // 1. Always update local cache first (guarantees zero data loss)
+        // Guarantee local persistence first
         localFallback.saveItems(items);
 
-        // 2. Synchronize to MongoDB if available
+        // Sync to MongoDB if connected
         if (clientProvider.isAvailable()) {
             try {
                 MongoCollection<Document> col = clientProvider.getDatabase().getCollection(config.getItemsCollection());
@@ -95,17 +96,26 @@ public class MongoItemStorageService implements ItemStorageService {
                 isMongoActive = true;
             } catch (Exception e) {
                 isMongoActive = false;
-                System.err.println("Notice: Failed to sync items to MongoDB (" + e.getMessage() + "). Saved to local cache.");
             }
         }
     }
 
     private void saveItemsToMongo(MongoCollection<Document> col, List<Item> items) {
+        if (items == null || items.isEmpty()) {
+            col.deleteMany(new Document());
+            return;
+        }
+
         ReplaceOptions upsertOpt = new ReplaceOptions().upsert(true);
+        List<String> currentIds = new ArrayList<>();
         for (Item item : items) {
+            currentIds.add(item.getId());
             Document doc = itemToDocument(item);
             col.replaceOne(Filters.eq("_id", item.getId()), doc, upsertOpt);
         }
+
+        // Clean up any items deleted from the local session
+        col.deleteMany(Filters.nin("_id", currentIds));
     }
 
     public static Document itemToDocument(Item item) {
@@ -148,20 +158,26 @@ public class MongoItemStorageService implements ItemStorageService {
             ItemCategory category = ItemCategory.fromString(catStr);
 
             LocalDate date = LocalDate.now();
-            String dateStr = doc.getString("date");
-            if (dateStr != null && !dateStr.isEmpty()) {
-                try { date = LocalDate.parse(dateStr); } catch (Exception ignored) {}
+            Object rawDate = doc.get("date");
+            if (rawDate instanceof Date) {
+                date = ((Date) rawDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            } else if (rawDate != null) {
+                String str = rawDate.toString().trim();
+                if (!str.isEmpty()) {
+                    try { date = LocalDate.parse(str); } catch (Exception ignored) {}
+                }
             }
 
             String description = doc.getString("description");
             ItemStatus status = ItemStatus.fromString(doc.getString("status"));
             String location = doc.getString("specificLocation");
 
-            User reporter = new User(
-                    doc.getString("reporterName"),
-                    doc.getString("reporterEmail"),
-                    doc.getString("reporterPhone")
-            );
+            String repName = doc.getString("reporterName");
+            String repEmail = doc.getString("reporterEmail");
+            String repPhone = doc.getString("reporterPhone");
+            User reporter = (repName != null || repEmail != null || repPhone != null)
+                    ? new User(repName, repEmail, repPhone)
+                    : new User("Community Reporter", "", "");
 
             String resolution = doc.getString("resolutionNotes");
             String imagePath = doc.getString("imagePath");
@@ -175,8 +191,14 @@ public class MongoItemStorageService implements ItemStorageService {
                 f.setImagePath(imagePath);
                 return f;
             } else {
-                Number rewardNum = doc.get("rewardAmount", Number.class);
-                double reward = rewardNum != null ? rewardNum.doubleValue() : 0.0;
+                Object rawReward = doc.get("rewardAmount");
+                double reward = 0.0;
+                if (rawReward instanceof Number) {
+                    reward = ((Number) rawReward).doubleValue();
+                } else if (rawReward != null) {
+                    try { reward = Double.parseDouble(rawReward.toString().trim()); } catch (Exception ignored) {}
+                }
+
                 LostItem l = new LostItem(id, name, category, date, description, status,
                         reporter, location, reward);
                 l.setResolutionNotes(resolution);
@@ -184,7 +206,6 @@ public class MongoItemStorageService implements ItemStorageService {
                 return l;
             }
         } catch (Exception e) {
-            System.err.println("Warning: Error converting MongoDB document to Item: " + e.getMessage());
             return null;
         }
     }

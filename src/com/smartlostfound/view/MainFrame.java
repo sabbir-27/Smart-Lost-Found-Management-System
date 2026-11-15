@@ -71,7 +71,7 @@ public class MainFrame extends JFrame {
     private String currentNavKey = "DASHBOARD";
 
     public MainFrame(LostFoundController controller) {
-        super("Smart Lost & Found Management System - DesignRush Edition");
+        super("Smart Lost & Found Management System");
         this.controller = controller;
 
         initComponents();
@@ -407,7 +407,7 @@ public class MainFrame extends JFrame {
         statusMessageLabel.setFont(UIUtils.FONT_SMALL);
         statusMessageLabel.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
 
-        JLabel timestampLabel = new JLabel("DesignRush Hub • " +
+        JLabel timestampLabel = new JLabel("Community Hub • " +
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
         timestampLabel.setFont(UIUtils.FONT_SMALL);
         timestampLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
@@ -811,7 +811,7 @@ public class MainFrame extends JFrame {
 
     public void showMainWorkspace() {
         rootCardLayout.show(rootCardPanel, "APP_VIEW");
-        setTitle("Smart Lost & Found Management System - DesignRush Edition");
+        setTitle("Smart Lost & Found Management System");
         setActiveNav(currentNavKey);
         controller.refreshView();
     }

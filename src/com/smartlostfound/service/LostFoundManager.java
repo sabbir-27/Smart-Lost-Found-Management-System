@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * lifecycle status transitions, analytical statistics, and persistence synchronization.
  */
 public class LostFoundManager {
-    private static final String DEFAULT_STORAGE_PATH = "data/lost_found_items.csv";
+    private static final String DEFAULT_STORAGE_PATH = "data/items.csv";
 
     private final List<Item> items = new CopyOnWriteArrayList<>();
     private final ItemStorageService storageService;

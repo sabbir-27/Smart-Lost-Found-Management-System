@@ -7,9 +7,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Represents an authenticated user or administrator account in the system.
- * Extends {@link User} to adhere to OOP principles (Inheritance &amp; Polymorphism),
- * allowing any UserAccount to be passed wherever a User reporter is required.
+ * User account model representing an authenticated user or administrator.
+ * Inherits profile attributes from {@link User} and adds credentials and role management.
  */
 public class UserAccount extends User {
     private static final long serialVersionUID = 1L;

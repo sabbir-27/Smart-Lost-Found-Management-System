@@ -11,15 +11,18 @@ import org.bson.Document;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
- * Enterprise MongoDB Storage Service for User and Administrator Accounts.
- * Stores user records in a MongoDB collection (e.g. lostfound.users)
- * with robust local CSV caching for authentication persistence.
+ * MongoDB-backed user storage service with resilient local CSV fallback.
+ * Manages user accounts, authentication hashes, and roles.
  */
 public class MongoUserStorageService implements UserStorageService {
+
+    private static final Path DEFAULT_FALLBACK_PATH = Paths.get("data", "users.csv");
 
     private final MongoClientProvider clientProvider;
     private final MongoConfig config;
@@ -27,7 +30,7 @@ public class MongoUserStorageService implements UserStorageService {
     private boolean isMongoActive = false;
 
     public MongoUserStorageService() {
-        this(MongoClientProvider.getInstance(), Paths.get("data/users.csv"));
+        this(MongoClientProvider.getInstance(), DEFAULT_FALLBACK_PATH);
     }
 
     public MongoUserStorageService(MongoClientProvider clientProvider, Path localFallbackPath) {
@@ -53,7 +56,6 @@ public class MongoUserStorageService implements UserStorageService {
 
                 if (!users.isEmpty()) {
                     isMongoActive = true;
-                    // Sync to local cache
                     try {
                         localFallback.saveUsers(users);
                     } catch (Exception ignored) {}
@@ -72,7 +74,6 @@ public class MongoUserStorageService implements UserStorageService {
                 isMongoActive = true;
                 return users;
             } catch (Exception e) {
-                System.err.println("Notice: MongoDB user read failed (" + e.getMessage() + "), using local cache.");
                 isMongoActive = false;
             }
         } else {
@@ -84,10 +85,10 @@ public class MongoUserStorageService implements UserStorageService {
 
     @Override
     public void saveUsers(List<UserAccount> users) throws DataPersistenceException {
-        // 1. Always update local cache first
+        // Guarantee local persistence first
         localFallback.saveUsers(users);
 
-        // 2. Synchronize to MongoDB if available
+        // Sync to MongoDB if connected
         if (clientProvider.isAvailable()) {
             try {
                 MongoCollection<Document> col = clientProvider.getDatabase().getCollection(config.getUsersCollection());
@@ -95,17 +96,27 @@ public class MongoUserStorageService implements UserStorageService {
                 isMongoActive = true;
             } catch (Exception e) {
                 isMongoActive = false;
-                System.err.println("Notice: Failed to sync users to MongoDB (" + e.getMessage() + "). Saved to local cache.");
             }
         }
     }
 
     private void saveUsersToMongo(MongoCollection<Document> col, List<UserAccount> users) {
-        ReplaceOptions upsertOpt = new ReplaceOptions().upsert(true);
-        for (UserAccount user : users) {
-            Document doc = userToDocument(user);
-            col.replaceOne(Filters.eq("_id", user.getUsername().toLowerCase()), doc, upsertOpt);
+        if (users == null || users.isEmpty()) {
+            col.deleteMany(new Document());
+            return;
         }
+
+        ReplaceOptions upsertOpt = new ReplaceOptions().upsert(true);
+        List<String> currentIds = new ArrayList<>();
+        for (UserAccount user : users) {
+            String id = user.getUsername().toLowerCase();
+            currentIds.add(id);
+            Document doc = userToDocument(user);
+            col.replaceOne(Filters.eq("_id", id), doc, upsertOpt);
+        }
+
+        // Clean up any accounts deleted from the local session
+        col.deleteMany(Filters.nin("_id", currentIds));
     }
 
     public static Document userToDocument(UserAccount user) {
@@ -137,17 +148,26 @@ public class MongoUserStorageService implements UserStorageService {
             String phone = doc.getString("phone");
 
             LocalDateTime createdAt = LocalDateTime.now();
-            String createdStr = doc.getString("createdAt");
-            if (createdStr != null && !createdStr.isEmpty()) {
-                try { createdAt = LocalDateTime.parse(createdStr); } catch (Exception ignored) {}
+            Object rawCreated = doc.get("createdAt");
+            if (rawCreated instanceof Date) {
+                createdAt = ((Date) rawCreated).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            } else if (rawCreated != null) {
+                String str = rawCreated.toString().trim();
+                if (!str.isEmpty()) {
+                    try { createdAt = LocalDateTime.parse(str); } catch (Exception ignored) {}
+                }
             }
 
-            Boolean activeVal = doc.getBoolean("active");
-            boolean active = activeVal != null ? activeVal : true;
+            Object rawActive = doc.get("active");
+            boolean active = true;
+            if (rawActive instanceof Boolean) {
+                active = (Boolean) rawActive;
+            } else if (rawActive != null) {
+                active = Boolean.parseBoolean(rawActive.toString().trim());
+            }
 
             return new UserAccount(username, passHash, role, name, email, phone, createdAt, active);
         } catch (Exception e) {
-            System.err.println("Warning: Error converting MongoDB document to UserAccount: " + e.getMessage());
             return null;
         }
     }

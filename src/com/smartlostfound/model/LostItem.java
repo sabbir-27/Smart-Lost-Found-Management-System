@@ -3,9 +3,8 @@ package com.smartlostfound.model;
 import java.time.LocalDate;
 
 /**
- * Concrete domain model representing an item that has been lost.
- * Demonstrates Inheritance by extending {@link Item} and adding specialized
- * attributes such as location lost and optional reward amount.
+ * Model representing an item reported as lost.
+ * Includes loss location and optional reward amount.
  */
 public class LostItem extends Item {
     private static final long serialVersionUID = 1L;

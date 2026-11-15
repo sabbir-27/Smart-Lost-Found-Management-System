@@ -16,6 +16,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class MongoClientProvider {
 
+    static {
+        // Silence driver warnings when running without SLF4J
+        java.util.logging.Logger.getLogger("org.mongodb.driver").setLevel(java.util.logging.Level.SEVERE);
+    }
+
     private static volatile MongoClientProvider instance;
 
     private final MongoConfig config;

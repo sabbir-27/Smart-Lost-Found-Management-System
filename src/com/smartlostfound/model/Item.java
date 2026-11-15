@@ -7,9 +7,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 /**
- * Abstract base class representing an item registered in the Smart Lost &amp; Found system.
- * Demonstrates Abstraction and Encapsulation by shielding common item attributes
- * and defining polymorphic contracts for subclass-specific behaviors.
+ * Base domain model for items tracked in the Smart Lost &amp; Found system.
+ * Encapsulates common attributes and defines contracts for lost and found items.
  */
 public abstract class Item implements Serializable {
     private static final long serialVersionUID = 1L;

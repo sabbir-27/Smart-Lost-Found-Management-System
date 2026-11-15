@@ -17,6 +17,10 @@ import java.awt.*;
  */
 public class Main {
 
+    static {
+        java.util.logging.Logger.getLogger("org.mongodb.driver").setLevel(java.util.logging.Level.SEVERE);
+    }
+
     /**
      * Main executable entry point.
      *
@@ -43,7 +47,7 @@ public class Main {
         // Handle headless environments gracefully
         if (GraphicsEnvironment.isHeadless()) {
             System.out.println("==========================================================");
-            System.out.println("Smart Lost & Found Management System - DesignRush Edition");
+            System.out.println("Smart Lost & Found Management System");
             System.out.println("==========================================================");
             System.out.println("Headless environment detected (no display device found).");
             System.out.println("Initializing business models and verifying storage services...");

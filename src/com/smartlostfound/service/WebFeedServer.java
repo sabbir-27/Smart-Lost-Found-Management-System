@@ -459,7 +459,7 @@ public class WebFeedServer {
         // Footer
         sb.append("<div class='card-footer'>");
         sb.append("<span>ID: <code>").append(item.getId()).append("</code></span>");
-        sb.append("<span>DesignRush Public Feed</span>");
+        sb.append("<span>Community Feed</span>");
         sb.append("</div>");
 
         sb.append("</div>"); // .feed-card
