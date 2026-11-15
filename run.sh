@@ -8,6 +8,13 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR"
 
+# Load environment configuration from .env if present
+if [ -f .env ]; then
+    set -a
+    source .env 2>/dev/null || true
+    set +a
+fi
+
 if ! command -v java &>/dev/null; then
     echo "Error: Java runtime not found. Please install OpenJDK 11 or later."
     exit 1

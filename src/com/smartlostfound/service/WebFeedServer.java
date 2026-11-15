@@ -4,6 +4,7 @@ import com.smartlostfound.model.FoundItem;
 import com.smartlostfound.model.Item;
 import com.smartlostfound.model.ItemStatus;
 import com.smartlostfound.model.LostItem;
+import com.smartlostfound.storage.DotEnv;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -39,7 +40,8 @@ public class WebFeedServer {
      * Starts the HTTP server on port 8080 (or fallback if occupied).
      */
     public synchronized boolean start() {
-        int[] portsToTry = {DEFAULT_PORT, 8081, 8082, 8888};
+        int preferredPort = DotEnv.getInt("PORT", DotEnv.getInt("SERVER_PORT", DEFAULT_PORT));
+        int[] portsToTry = {preferredPort, 8080, 8081, 8082, 8888};
         for (int p : portsToTry) {
             try {
                 server = HttpServer.create(new InetSocketAddress("0.0.0.0", p), 0);

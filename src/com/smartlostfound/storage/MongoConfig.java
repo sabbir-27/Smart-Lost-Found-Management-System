@@ -8,8 +8,8 @@ import java.nio.file.Paths;
 
 /**
  * Configuration holder for MongoDB database connectivity.
- * Reads properties from data/mongodb-config.json with environment variable overrides
- * (e.g. MONGODB_URI or MONGODB_DATABASE).
+ * Reads properties with highest priority from the .env configuration file
+ * or system environment variables, with optional fallback to data/mongodb-config.json.
  */
 public class MongoConfig {
 
@@ -30,28 +30,28 @@ public class MongoConfig {
                        String usersCollection, int connectTimeoutMs, int serverSelectionTimeoutMs) {
         this.connectionUri = resolveUri(connectionUri);
         this.databaseName = resolveDatabase(databaseName);
-        this.itemsCollection = (itemsCollection != null && !itemsCollection.isEmpty()) ? itemsCollection : DEFAULT_ITEMS_COLLECTION;
-        this.usersCollection = (usersCollection != null && !usersCollection.isEmpty()) ? usersCollection : DEFAULT_USERS_COLLECTION;
-        this.connectTimeoutMs = connectTimeoutMs > 0 ? connectTimeoutMs : 3000;
-        this.serverSelectionTimeoutMs = serverSelectionTimeoutMs > 0 ? serverSelectionTimeoutMs : 3000;
+        this.itemsCollection = (itemsCollection != null && !itemsCollection.isEmpty())
+                ? itemsCollection : DotEnv.get("MONGODB_ITEMS_COLLECTION", DEFAULT_ITEMS_COLLECTION);
+        this.usersCollection = (usersCollection != null && !usersCollection.isEmpty())
+                ? usersCollection : DotEnv.get("MONGODB_USERS_COLLECTION", DEFAULT_USERS_COLLECTION);
+        this.connectTimeoutMs = connectTimeoutMs > 0
+                ? connectTimeoutMs : DotEnv.getInt("MONGODB_CONNECT_TIMEOUT_MS", 3000);
+        this.serverSelectionTimeoutMs = serverSelectionTimeoutMs > 0
+                ? serverSelectionTimeoutMs : DotEnv.getInt("MONGODB_SERVER_SELECTION_TIMEOUT_MS", 3000);
     }
 
     private static String resolveUri(String candidate) {
-        String envUri = System.getenv("MONGODB_URI");
-        if (envUri != null && !envUri.trim().isEmpty()) {
-            return envUri.trim();
-        }
-        String propUri = System.getProperty("mongodb.uri");
-        if (propUri != null && !propUri.trim().isEmpty()) {
-            return propUri.trim();
+        String uri = DotEnv.get("MONGODB_URI");
+        if (uri != null && !uri.trim().isEmpty()) {
+            return uri.trim();
         }
         return (candidate != null && !candidate.trim().isEmpty()) ? candidate.trim() : DEFAULT_URI;
     }
 
     private static String resolveDatabase(String candidate) {
-        String envDb = System.getenv("MONGODB_DATABASE");
-        if (envDb != null && !envDb.trim().isEmpty()) {
-            return envDb.trim();
+        String db = DotEnv.get("MONGODB_DATABASE");
+        if (db != null && !db.trim().isEmpty()) {
+            return db.trim();
         }
         return (candidate != null && !candidate.trim().isEmpty()) ? candidate.trim() : DEFAULT_DATABASE;
     }
@@ -61,21 +61,35 @@ public class MongoConfig {
     }
 
     public static MongoConfig load(Path configPath) {
+        String uri = DotEnv.get("MONGODB_URI");
+        String db = DotEnv.get("MONGODB_DATABASE");
+        String itemsCol = DotEnv.get("MONGODB_ITEMS_COLLECTION");
+        String usersCol = DotEnv.get("MONGODB_USERS_COLLECTION");
+        int connTimeout = DotEnv.getInt("MONGODB_CONNECT_TIMEOUT_MS", -1);
+        int selTimeout = DotEnv.getInt("MONGODB_SERVER_SELECTION_TIMEOUT_MS", -1);
+
         if (configPath != null && Files.exists(configPath)) {
             try {
                 String content = Files.readString(configPath, StandardCharsets.UTF_8);
-                String uri = extractString(content, "connectionUri");
-                String db = extractString(content, "databaseName");
-                String itemsCol = extractString(content, "itemsCollection");
-                String usersCol = extractString(content, "usersCollection");
-                int connTimeout = extractInt(content, "connectTimeoutMs", 3000);
-                int selTimeout = extractInt(content, "serverSelectionTimeoutMs", 3000);
-                return new MongoConfig(uri, db, itemsCol, usersCol, connTimeout, selTimeout);
+                if (uri == null) uri = extractString(content, "connectionUri");
+                if (db == null) db = extractString(content, "databaseName");
+                if (itemsCol == null) itemsCol = extractString(content, "itemsCollection");
+                if (usersCol == null) usersCol = extractString(content, "usersCollection");
+                if (connTimeout <= 0) connTimeout = extractInt(content, "connectTimeoutMs", 3000);
+                if (selTimeout <= 0) selTimeout = extractInt(content, "serverSelectionTimeoutMs", 3000);
             } catch (IOException e) {
-                System.err.println("Notice: Could not parse mongodb-config.json, using defaults: " + e.getMessage());
+                System.err.println("Notice: Could not parse config file, using environment defaults: " + e.getMessage());
             }
         }
-        return new MongoConfig(DEFAULT_URI, DEFAULT_DATABASE, DEFAULT_ITEMS_COLLECTION, DEFAULT_USERS_COLLECTION, 3000, 3000);
+
+        return new MongoConfig(
+                uri != null ? uri : DEFAULT_URI,
+                db != null ? db : DEFAULT_DATABASE,
+                itemsCol != null ? itemsCol : DEFAULT_ITEMS_COLLECTION,
+                usersCol != null ? usersCol : DEFAULT_USERS_COLLECTION,
+                connTimeout > 0 ? connTimeout : 3000,
+                selTimeout > 0 ? selTimeout : 3000
+        );
     }
 
     private static String extractString(String json, String key) {

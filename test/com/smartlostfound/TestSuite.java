@@ -7,6 +7,7 @@ import com.smartlostfound.service.UserManager;
 import com.smartlostfound.service.WebFeedServer;
 import com.smartlostfound.storage.CsvItemStorageService;
 import com.smartlostfound.storage.CsvUserStorageService;
+import com.smartlostfound.storage.DotEnv;
 import com.smartlostfound.storage.MongoConfig;
 import com.smartlostfound.storage.MongoItemStorageService;
 import com.smartlostfound.storage.MongoUserStorageService;
@@ -640,8 +641,12 @@ public class TestSuite {
     private static void testMongoArchitectureAndBsonMapping() {
         System.out.println("\n--- 15. Testing MongoDB Configuration & Offline Fallback Architecture ---");
         try {
-            // 1. Config loading
-            MongoConfig config = MongoConfig.load(Paths.get("data/mongodb-config.json"));
+            // 1. Config loading & DotEnv integration
+            assertEquals("lostfound", DotEnv.get("MONGODB_DATABASE"), "DotEnv loaded MONGODB_DATABASE from .env");
+            assertEquals("mongodb://localhost:27017", DotEnv.get("MONGODB_URI"), "DotEnv loaded MONGODB_URI from .env");
+            assertEquals(8080, DotEnv.getInt("PORT", 3000), "DotEnv loaded PORT from .env");
+
+            MongoConfig config = MongoConfig.load();
             assertEquals("lostfound", config.getDatabaseName(), "MongoConfig database name is lostfound");
             assertEquals("items", config.getItemsCollection(), "MongoConfig items collection is items");
             assertEquals("users", config.getUsersCollection(), "MongoConfig users collection is users");
