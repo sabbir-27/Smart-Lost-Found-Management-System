@@ -1,8 +1,8 @@
 {
-  "connectionUri": "mongodb://localhost:27017",
+  "connectionUri": "mongodb+srv://sabbir27:t56lItoBybucL4TD@cluster3.zj8rxwz.mongodb.net/?retryWrites=true&w=majority",
   "databaseName": "lostfound",
   "itemsCollection": "items",
   "usersCollection": "users",
-  "connectTimeoutMs": 3000,
-  "serverSelectionTimeoutMs": 3000
+  "connectTimeoutMs": 10000,
+  "serverSelectionTimeoutMs": 10000
 }

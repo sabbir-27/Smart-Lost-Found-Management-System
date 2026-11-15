@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Thread-safe Singleton Provider managing the MongoDB client connection pool.
  * Configures connection timeouts, server selection timeouts, and health ping checks.
+ * Resilient against DNS errors, network unavailability, and invalid connection strings.
  */
 public class MongoClientProvider {
 
@@ -24,22 +25,35 @@ public class MongoClientProvider {
 
     private MongoClientProvider(MongoConfig config) {
         this.config = config != null ? config : MongoConfig.load();
+        MongoClient client = null;
+        MongoDatabase db = null;
 
-        ConnectionString connString = new ConnectionString(this.config.getConnectionUri());
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(connString)
-                .applyToSocketSettings(builder ->
-                        builder.connectTimeout(this.config.getConnectTimeoutMs(), TimeUnit.MILLISECONDS)
-                               .readTimeout(this.config.getConnectTimeoutMs(), TimeUnit.MILLISECONDS))
-                .applyToClusterSettings(builder ->
-                        builder.serverSelectionTimeout(this.config.getServerSelectionTimeoutMs(), TimeUnit.MILLISECONDS))
-                .build();
+        try {
+            ConnectionString connString = new ConnectionString(this.config.getConnectionUri());
+            MongoClientSettings settings = MongoClientSettings.builder()
+                    .applyConnectionString(connString)
+                    .applyToSocketSettings(builder ->
+                            builder.connectTimeout(this.config.getConnectTimeoutMs(), TimeUnit.MILLISECONDS)
+                                   .readTimeout(this.config.getConnectTimeoutMs(), TimeUnit.MILLISECONDS))
+                    .applyToClusterSettings(builder ->
+                            builder.serverSelectionTimeout(this.config.getServerSelectionTimeoutMs(), TimeUnit.MILLISECONDS))
+                    .build();
 
-        this.mongoClient = MongoClients.create(settings);
-        this.database = this.mongoClient.getDatabase(this.config.getDatabaseName());
+            client = MongoClients.create(settings);
+            db = client.getDatabase(this.config.getDatabaseName());
+        } catch (Exception e) {
+            System.err.println("Notice: MongoDB client initialization failed (" + e.getMessage() + "), using local fallback mode.");
+            client = null;
+            db = null;
+        }
+
+        this.mongoClient = client;
+        this.database = db;
 
         // Attach JVM shutdown hook to clean up connection pool
-        Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+        if (this.mongoClient != null) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+        }
     }
 
     public static MongoClientProvider getInstance() {
@@ -70,6 +84,10 @@ public class MongoClientProvider {
      * @return True if MongoDB server responds within timeout
      */
     public synchronized boolean isAvailable() {
+        if (this.database == null || this.mongoClient == null) {
+            this.lastHealthCheck = false;
+            return false;
+        }
         try {
             Document pingResult = database.runCommand(new Document("ping", 1));
             boolean ok = pingResult != null && (pingResult.get("ok") instanceof Number && ((Number) pingResult.get("ok")).intValue() == 1);
@@ -93,15 +111,11 @@ public class MongoClientProvider {
         return config;
     }
 
-    public Boolean getLastHealthCheck() {
-        return lastHealthCheck;
-    }
-
     public synchronized void close() {
-        try {
-            if (mongoClient != null) {
+        if (mongoClient != null) {
+            try {
                 mongoClient.close();
-            }
-        } catch (Exception ignored) {}
+            } catch (Exception ignored) {}
+        }
     }
 }
