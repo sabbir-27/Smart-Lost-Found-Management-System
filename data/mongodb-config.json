@@ -1,0 +1,8 @@
+{
+  "connectionUri": "mongodb://localhost:27017",
+  "databaseName": "lostfound",
+  "itemsCollection": "items",
+  "usersCollection": "users",
+  "connectTimeoutMs": 3000,
+  "serverSelectionTimeoutMs": 3000
+}

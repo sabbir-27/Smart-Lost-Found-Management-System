@@ -3,7 +3,7 @@ package com.smartlostfound.service;
 import com.smartlostfound.model.*;
 import com.smartlostfound.storage.CsvItemStorageService;
 import com.smartlostfound.storage.DataPersistenceException;
-import com.smartlostfound.storage.FirebaseItemStorageService;
+import com.smartlostfound.storage.MongoItemStorageService;
 import com.smartlostfound.storage.ItemStorageService;
 
 import java.nio.file.Paths;
@@ -27,10 +27,10 @@ public class LostFoundManager {
     private final AtomicInteger foundIdSequence = new AtomicInteger(2000);
 
     /**
-     * Default constructor connecting to Firebase Cloud Storage with local CSV fallback.
+     * Default constructor connecting to MongoDB Storage with local CSV fallback.
      */
     public LostFoundManager() {
-        this(new FirebaseItemStorageService());
+        this(new MongoItemStorageService());
     }
 
     /**

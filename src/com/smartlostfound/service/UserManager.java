@@ -4,7 +4,7 @@ import com.smartlostfound.model.UserAccount;
 import com.smartlostfound.model.UserRole;
 import com.smartlostfound.storage.CsvUserStorageService;
 import com.smartlostfound.storage.DataPersistenceException;
-import com.smartlostfound.storage.FirebaseUserStorageService;
+import com.smartlostfound.storage.MongoUserStorageService;
 import com.smartlostfound.storage.UserStorageService;
 
 import java.nio.file.Paths;
@@ -25,10 +25,10 @@ public class UserManager {
     private final UserStorageService storageService;
 
     /**
-     * Default constructor connecting to Firebase Cloud Storage with local CSV fallback.
+     * Default constructor connecting to MongoDB Storage with local CSV fallback.
      */
     public UserManager() {
-        this(new FirebaseUserStorageService());
+        this(new MongoUserStorageService());
     }
 
     public UserManager(UserStorageService storageService) {

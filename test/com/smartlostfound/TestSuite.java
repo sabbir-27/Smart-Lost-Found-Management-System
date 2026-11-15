@@ -7,7 +7,11 @@ import com.smartlostfound.service.UserManager;
 import com.smartlostfound.service.WebFeedServer;
 import com.smartlostfound.storage.CsvItemStorageService;
 import com.smartlostfound.storage.CsvUserStorageService;
+import com.smartlostfound.storage.MongoConfig;
+import com.smartlostfound.storage.MongoItemStorageService;
+import com.smartlostfound.storage.MongoUserStorageService;
 import com.smartlostfound.view.ItemTableModel;
+import org.bson.Document;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,6 +21,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +54,7 @@ public class TestSuite {
         testRoleBasedAccessControl();
         testWebFeedServerSecurityAndAccess();
         testGoogleAuthenticationAndAutoRegistration();
+        testMongoArchitectureAndBsonMapping();
 
         System.out.println("==========================================================");
         System.out.printf("Test Results: %d Passed, %d Failed\n", testsPassed, testsFailed);
@@ -628,6 +634,98 @@ public class TestSuite {
                     Files.deleteIfExists(tempUserCsv);
                 } catch (IOException ignored) {}
             }
+        }
+    }
+
+    private static void testMongoArchitectureAndBsonMapping() {
+        System.out.println("\n--- 15. Testing MongoDB Configuration & Offline Fallback Architecture ---");
+        try {
+            // 1. Config loading
+            MongoConfig config = MongoConfig.load(Paths.get("data/mongodb-config.json"));
+            assertEquals("lostfound", config.getDatabaseName(), "MongoConfig database name is lostfound");
+            assertEquals("items", config.getItemsCollection(), "MongoConfig items collection is items");
+            assertEquals("users", config.getUsersCollection(), "MongoConfig users collection is users");
+            assertTrue(config.getConnectTimeoutMs() > 0, "MongoConfig connect timeout positive");
+
+            // 2. LostItem BSON mapping round-trip
+            User reporter = new User("Alice Brown", "alice@example.com", "555-0199");
+            LostItem lostItem = new LostItem(
+                    "LOST-9999", "Vintage Leather Wallet", ItemCategory.WALLET_PURSE,
+                    LocalDate.of(2026, 11, 15), "Brown leather wallet with ID card",
+                    ItemStatus.LOST, reporter, "Main Campus Library 2nd Floor", 25.0
+            );
+            lostItem.setImagePath("/images/wallet.png");
+            lostItem.setResolutionNotes("Reported via mobile");
+
+            Document lostDoc = MongoItemStorageService.itemToDocument(lostItem);
+            assertEquals("LOST-9999", lostDoc.getString("_id"), "LostItem BSON _id matches");
+            assertEquals("LOST", lostDoc.getString("type"), "LostItem BSON type is LOST");
+            assertEquals(25.0, lostDoc.getDouble("rewardAmount"), "LostItem BSON reward matches");
+            assertEquals("Alice Brown", lostDoc.getString("reporterName"), "LostItem BSON reporterName matches");
+
+            Item deserializedLost = MongoItemStorageService.documentToItem(lostDoc);
+            assertTrue(deserializedLost instanceof LostItem, "Deserialized BSON item is LostItem");
+            assertEquals("Vintage Leather Wallet", deserializedLost.getName(), "Deserialized LostItem name matches");
+            assertEquals(25.0, ((LostItem) deserializedLost).getRewardAmount(), "Deserialized LostItem reward matches");
+
+            // 3. FoundItem BSON mapping round-trip
+            FoundItem foundItem = new FoundItem(
+                    "FOUND-8888", "AirPods Pro Case", ItemCategory.ELECTRONICS,
+                    LocalDate.of(2026, 11, 14), "White charging case found on table",
+                    ItemStatus.FOUND, reporter, "Student Union Cafeteria",
+                    "Security Desk Safe B", "security@campus.edu"
+            );
+            Document foundDoc = MongoItemStorageService.itemToDocument(foundItem);
+            assertEquals("FOUND-8888", foundDoc.getString("_id"), "FoundItem BSON _id matches");
+            assertEquals("FOUND", foundDoc.getString("type"), "FoundItem BSON type is FOUND");
+            assertEquals("Security Desk Safe B", foundDoc.getString("storageLocation"), "FoundItem BSON storageLocation matches");
+
+            Item deserializedFound = MongoItemStorageService.documentToItem(foundDoc);
+            assertTrue(deserializedFound instanceof FoundItem, "Deserialized BSON item is FoundItem");
+            assertEquals("Security Desk Safe B", ((FoundItem) deserializedFound).getStorageLocation(), "Deserialized FoundItem storageLocation matches");
+
+            // 4. UserAccount BSON mapping round-trip
+            UserAccount account = new UserAccount(
+                    "alex_admin", "AdminPasswordHash", UserRole.ADMIN,
+                    "Alex Smith", "alex@enterprise.com", "555-1234",
+                    java.time.LocalDateTime.now(), true
+            );
+            Document userDoc = MongoUserStorageService.userToDocument(account);
+            assertEquals("alex_admin", userDoc.getString("_id"), "UserAccount BSON _id matches");
+            assertEquals("ADMIN", userDoc.getString("role"), "UserAccount BSON role matches");
+
+            UserAccount deserializedUser = MongoUserStorageService.documentToUser(userDoc);
+            assertTrue(deserializedUser != null, "Deserialized UserAccount not null");
+            assertEquals("alex_admin", deserializedUser.getUsername(), "Deserialized UserAccount username matches");
+            assertTrue(deserializedUser.getRole().isAdmin(), "Deserialized UserAccount has admin role");
+            assertEquals("Alex Smith", deserializedUser.getName(), "Deserialized UserAccount name matches");
+
+            // 5. Offline Resilient Fallback for MongoItemStorageService
+            Path tempItemCsv = Files.createTempFile("mongo_fallback_items_", ".csv");
+            MongoItemStorageService itemService = new MongoItemStorageService(
+                    com.smartlostfound.storage.MongoClientProvider.getInstance(),
+                    tempItemCsv
+            );
+            itemService.saveItems(List.of(lostItem, foundItem));
+            List<Item> reloadedItems = itemService.loadItems();
+            assertEquals(2, reloadedItems.size(), "MongoItemStorageService saved and loaded 2 items via resilient fallback");
+            Files.deleteIfExists(tempItemCsv);
+
+            // 6. Offline Resilient Fallback for MongoUserStorageService
+            Path tempUserCsv = Files.createTempFile("mongo_fallback_users_", ".csv");
+            MongoUserStorageService userService = new MongoUserStorageService(
+                    com.smartlostfound.storage.MongoClientProvider.getInstance(),
+                    tempUserCsv
+            );
+            userService.saveUsers(List.of(account));
+            List<UserAccount> reloadedUsers = userService.loadUsers();
+            assertEquals(1, reloadedUsers.size(), "MongoUserStorageService saved and loaded 1 user via resilient fallback");
+            Files.deleteIfExists(tempUserCsv);
+
+        } catch (Exception e) {
+            System.err.println("MongoDB test failed with exception: " + e.getMessage());
+            e.printStackTrace();
+            testsFailed++;
         }
     }
 }
