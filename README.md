@@ -41,72 +41,77 @@ The system features:
 
 ## 2. System Architecture
 
-The application is structured into four decoupled layers to ensure maintainability, testability, and extensibility.
+The application follows a layered Model-View-Controller (MVC) architecture to maintain separation of concerns, modularity, and maintainability.
 
 ### 2.1 Architectural Diagram
 
 ![System Architecture Diagram](docs/architecture.svg)
 
-### 2.2 Layered Structure
-
 ```text
-+-------------------------------------------------------------------------------+
-|                               PRESENTATION LAYER                              |
-|                                                                               |
-|  [Desktop Swing Application]                    [Web Browser Client]          |
-|  - MainFrame          - AuthPagePanel           - Community Feed (HTML/CSS)   |
-|  - DashboardPanel     - AdminConsolePanel       - Live item status & photos   |
-|  - CommunityFeedPanel - MyItemsPanel            - Embedded at :8080/feed      |
-|  - ReportLostPanel    - ReportFoundPanel                                      |
-|  - ItemDetailDialog   - PhotoLightboxDialog                                   |
-+---------------------------------------+---------------------------------------+
-                                        |
-                                        | User Events & HTTP Requests
-                                        v
-+-------------------------------------------------------------------------------+
-|                           CONTROLLER & SERVER LAYER                           |
-|                                                                               |
-|  LostFoundController                         WebFeedServer (port 8080)        |
-|  - Event dispatching & input validation      - High-performance read-only feed|
-|  - Session management & RBAC enforcement     - Image serving (/images/*)      |
-+---------------------------------------+---------------------------------------+
-                                        |
-                                        | Business Invocations
-                                        v
-+-------------------------------------------------------------------------------+
-|                         SERVICE & DOMAIN MODEL LAYER                          |
-|                                                                               |
-|  LostFoundManager                            UserManager                      |
-|  - Item lifecycle & status transitions       - User authentication & sessions |
-|  - Multi-criteria search & filtering         - SHA-256 password security      |
-|  - Analytical statistics & ID sequence       - Role enforcement (ADMIN/USER)  |
-|                                                                               |
-|  Domain Models:                              Enums:                           |
-|  - Item (Abstract) -> LostItem, FoundItem    - ItemCategory                   |
-|  - UserAccount -> User                       - ItemStatus, UserRole           |
-+---------------------------------------+---------------------------------------+
-                                        |
-                                        | Persistence Invocations
-                                        v
-+-------------------------------------------------------------------------------+
-|                         STORAGE & PERSISTENCE LAYER                           |
-|                                                                               |
-|  DotEnv (.env Loader) & MongoConfig                                           |
-|  - Loads environment settings, connection URIs, timeouts, and ports           |
-|                                                                               |
-|  ItemStorageService (Interface)              UserStorageService (Interface)   |
-|      ^                                           ^                            |
-|      +--- MongoItemStorageService                +--- MongoUserStorageService |
-|      +--- CsvItemStorageService                  +--- CsvUserStorageService   |
-|                                                                               |
-|  +-----------------------------------+   +---------------------------------+  |
-|  |     PRIMARY DATABASE (CLOUD)      |   |      OFFLINE RESILIENT CACHE    |  |
-|  |   MongoDB Atlas (lostfound db)    |   |     data/items.csv              |  |
-|  |   - items (BSON collection)       |   |     data/users.csv              |  |
-|  |   - users (BSON collection)       |   |     Automatic offline fallback  |  |
-|  +-----------------------------------+   +---------------------------------+  |
-+-------------------------------------------------------------------------------+
++-------------------------------------------------------------+
+|                            VIEW                             |
+|  - MainFrame (Navigation Tabs, Status Bar)                  |
+|  - DashboardPanel (JTable, KPI Cards, Filters, Actions)     |
+|  - ReportLostItemPanel (Validated Lost Submission Form)     |
+|  - ReportFoundItemPanel (Validated Found Submission Form)   |
+|  - ItemDetailDialog (Full Modal Item Overview)              |
+|  - UpdateStatusDialog (Lifecycle Transition Modal)          |
+|  - ItemStatusCellRenderer (Modern Pill/Badge Renderer)      |
++------------------------------+------------------------------+
+                               | Event Invocations / Updates
+                               v
++-------------------------------------------------------------+
+|                         CONTROLLER                          |
+|  - LostFoundController                                      |
+|    * Handles UI events, input validation, dialog flows      |
+|    * Invokes business logic and persistence                 |
+|    * Coordinates view refreshes and status notifications    |
++------------------------------+------------------------------+
+                               | Business Logic & Queries
+                               v
++-------------------------------------------------------------+
+|                       MODEL & SERVICE                       |
+|  - Item (Abstract Base Class)                               |
+|    * LostItem (Subclass with location & reward)             |
+|    * FoundItem (Subclass with custody storage & notes)      |
+|  - User (Reporter / Custodian / Claimer)                    |
+|  - ItemCategory (Enum classification)                       |
+|  - ItemStatus (Enum lifecycle state & color mappings)       |
+|  - LostFoundManager (Core Service & Business Engine)        |
++------------------------------+------------------------------+
+                               | Atomic Save / Load
+                               v
++-------------------------------------------------------------+
+|                          STORAGE                            |
+|  - ItemStorageService (Persistence Interface)               |
+|  - CsvItemStorageService (RFC-4180 CSV Engine)              |
++-------------------------------------------------------------+
 ```
+
+### 2.2 Core OOP Principles Applied
+
+1. **Abstraction**:
+   - `Item` is defined as an `abstract` base class containing common domain attributes (`id`, `name`, `category`, `date`, `description`, `status`, `reporter`, `createdAt`) and declaring abstract methods:
+     - `getItemType()`
+     - `getSpecificLocation()`
+     - `getSpecificDetailsSummary()`
+     - `getSpecificField1()`
+     - `getSpecificField2()`
+   - `ItemStorageService` abstracts data persistence away from `LostFoundManager`, allowing swap between CSV, JSON, or database engines without changing business logic.
+
+2. **Inheritance**:
+   - `LostItem extends Item`: Specializes the item with `locationLost` and `rewardAmount`.
+   - `FoundItem extends Item`: Specializes the item with `locationFound`, physical `storageLocation` (e.g. security locker), and `finderContactInfo`.
+
+3. **Polymorphism**:
+   - `LostItem` and `FoundItem` implement abstract methods according to their specific context.
+   - `ItemTableModel`, `ItemDetailDialog`, and persistence services operate seamlessly against `Item` references without brittle `instanceof` cascades.
+   - Dynamic dispatch automatically formats table column summaries (e.g. `"Reward: $50.00"` vs `"Stored: Central Security Office, Locker #08"`).
+
+4. **Encapsulation**:
+   - All class members are strictly `private`.
+   - Mutators enforce validation (e.g. `setName` prohibits null/blank, `setRewardAmount` rejects negative values, `User` enforces contact consistency).
+   - Defensive copies are utilized when returning lists from the manager (`Collections.unmodifiableList`).
 
 ---
 

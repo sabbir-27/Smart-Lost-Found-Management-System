@@ -1,190 +1,144 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 1320" width="100%" role="img" aria-label="Smart Lost and Found System Architecture Diagram">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1120" width="100%" role="img" aria-label="Lost and Found System Architecture Diagram">
   <defs>
     <!-- Arrowhead Marker -->
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" fill-opacity="0.7" />
     </marker>
-    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10B981" />
-    </marker>
     
     <!-- Layer styles -->
     <style>
-      .layer-bg { fill: currentColor; fill-opacity: 0.03; stroke: currentColor; stroke-opacity: 0.15; stroke-width: 1.5; rx: 12px; }
-      .layer-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px; font-weight: 800; fill: currentColor; letter-spacing: 0.5px; }
+      .layer-bg { fill: currentColor; fill-opacity: 0.04; stroke: currentColor; stroke-opacity: 0.15; stroke-width: 1.5; rx: 12px; }
+      .layer-title { font-family: sans-serif; font-size: 16px; font-weight: bold; fill: currentColor; }
       
-      .box { fill: var(--bg, #ffffff); stroke: currentColor; stroke-opacity: 0.25; stroke-width: 1.5; rx: 6px; }
+      .box { fill: var(--bg, #ffffff); stroke: currentColor; stroke-opacity: 0.3; stroke-width: 1.5; rx: 6px; }
       @media (prefers-color-scheme: dark) {
-        .box { fill: #18181B; }
+        .box { fill: #1e1e1e; }
       }
-      .box-primary { stroke: #E52E2D; stroke-width: 2px; }
-      .box-green { stroke: #10B981; stroke-width: 2px; }
-      .box-blue { stroke: #2563EB; stroke-width: 2px; }
+      .box-highlight { stroke: var(--accent, #0066cc); stroke-width: 2px; }
+      .box-text { font-family: sans-serif; font-size: 14px; fill: currentColor; }
+      .box-text-small { font-family: sans-serif; font-size: 12px; fill: currentColor; fill-opacity: 0.7; }
+      .box-text-bold { font-family: sans-serif; font-size: 14px; font-weight: bold; fill: currentColor; }
       
-      .box-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; fill: currentColor; }
-      .box-text-small { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; fill: currentColor; fill-opacity: 0.7; }
-      .box-text-bold { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; font-weight: 700; fill: currentColor; }
-      
-      .flow-line { stroke: currentColor; stroke-opacity: 0.45; stroke-width: 1.8; fill: none; }
-      .flow-line-green { stroke: #10B981; stroke-width: 2; fill: none; }
-      .flow-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; font-weight: 600; fill: currentColor; fill-opacity: 0.8; }
-      .badge-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 10px; font-weight: 800; fill: #E52E2D; }
+      .flow-line { stroke: currentColor; stroke-opacity: 0.5; stroke-width: 2; fill: none; }
+      .flow-text { font-family: sans-serif; font-size: 13px; font-weight: bold; fill: currentColor; fill-opacity: 0.8; }
     </style>
   </defs>
 
   <!-- =============================== -->
-  <!-- 1. VIEW & PRESENTATION LAYER    -->
+  <!-- 1. VIEW LAYER                   -->
   <!-- =============================== -->
-  <rect class="layer-bg" x="40" y="30" width="800" height="250" />
-  <text class="layer-title" x="60" y="60">🖥️ PRESENTATION LAYER (Swing Desktop UI &amp; Web Client)</text>
+  <rect class="layer-bg" x="40" y="30" width="720" height="240" />
+  <text class="layer-title" x="60" y="65">🖥️ VIEW LAYER (UI)</text>
   
-  <!-- Swing Desktop Components -->
-  <rect class="box box-primary" x="70" y="80" width="165" height="42" />
-  <text class="box-text-bold" x="152" y="106" text-anchor="middle">MainFrame</text>
+  <!-- UI Components -->
+  <rect class="box" x="80" y="90" width="180" height="40" />
+  <text class="box-text" x="170" y="115" text-anchor="middle">MainFrame</text>
+  
+  <rect class="box" x="280" y="90" width="180" height="40" />
+  <text class="box-text" x="370" y="115" text-anchor="middle">DashboardPanel</text>
+  
+  <rect class="box" x="480" y="90" width="180" height="40" />
+  <text class="box-text" x="570" y="115" text-anchor="middle">CommunityFeedPanel</text>
 
-  <rect class="box" x="250" y="80" width="165" height="42" />
-  <text class="box-text" x="332" y="106" text-anchor="middle">AuthPagePanel</text>
+  <rect class="box" x="80" y="145" width="180" height="40" />
+  <text class="box-text" x="170" y="170" text-anchor="middle">ReportLostItemPanel</text>
+  
+  <rect class="box" x="280" y="145" width="180" height="40" />
+  <text class="box-text" x="370" y="170" text-anchor="middle">ReportFoundItemPanel</text>
+  
+  <rect class="box" x="480" y="145" width="180" height="40" />
+  <text class="box-text" x="570" y="170" text-anchor="middle">ItemDetailDialog</text>
 
-  <rect class="box" x="430" y="80" width="165" height="42" />
-  <text class="box-text" x="512" y="106" text-anchor="middle">DashboardPanel</text>
+  <rect class="box" x="180" y="200" width="180" height="40" />
+  <text class="box-text" x="270" y="225" text-anchor="middle">ItemTableModel</text>
+  
+  <rect class="box" x="380" y="200" width="280" height="40" />
+  <text class="box-text" x="520" y="225" text-anchor="middle">ItemStatusCellRenderer / UpdateDialog</text>
 
-  <rect class="box" x="610" y="80" width="190" height="42" />
-  <text class="box-text" x="705" y="106" text-anchor="middle">AdminConsolePanel</text>
-
-  <rect class="box" x="70" y="135" width="165" height="42" />
-  <text class="box-text" x="152" y="161" text-anchor="middle">CommunityFeedPanel</text>
-
-  <rect class="box" x="250" y="135" width="165" height="42" />
-  <text class="box-text" x="332" y="161" text-anchor="middle">MyItemsPanel</text>
-
-  <rect class="box" x="430" y="135" width="165" height="42" />
-  <text class="box-text" x="512" y="161" text-anchor="middle">ReportLostItemPanel</text>
-
-  <rect class="box" x="610" y="135" width="190" height="42" />
-  <text class="box-text" x="705" y="161" text-anchor="middle">ReportFoundItemPanel</text>
-
-  <!-- Dialogs & Renderers -->
-  <rect class="box" x="70" y="190" width="220" height="40" />
-  <text class="box-text-small" x="180" y="215" text-anchor="middle">ItemDetailDialog • UpdateStatusDialog</text>
-
-  <rect class="box" x="305" y="190" width="220" height="40" />
-  <text class="box-text-small" x="415" y="215" text-anchor="middle">PhotoLightboxDialog • GoogleAuthDialog</text>
-
-  <!-- External Web Browser Client -->
-  <rect class="box box-blue" x="540" y="190" width="260" height="40" />
-  <text class="box-text-bold" x="670" y="215" text-anchor="middle">🌐 Web Browser (GET /feed)</text>
-
-  <!-- Flow down to Controller & Server -->
-  <path class="flow-line" marker-end="url(#arrow)" d="M 330 280 L 330 330" />
-  <path class="flow-line" marker-end="url(#arrow)" d="M 670 280 L 670 330" />
-  <text class="flow-text" x="240" y="308">Desktop UI Actions</text>
-  <text class="flow-text" x="685" y="308">HTTP /feed Requests</text>
+  <!-- Flow down from View to Controller -->
+  <path class="flow-line" marker-end="url(#arrow)" d="M 400 270 L 400 330" />
+  <rect x="410" y="285" width="190" height="25" fill="var(--bg, #ffffff)" opacity="0.8" />
+  <text class="flow-text" x="415" y="303">User Events &amp; UI Updates</text>
 
   <!-- =============================== -->
-  <!-- 2. CONTROLLER & SERVER LAYER    -->
+  <!-- 2. CONTROLLER LAYER             -->
   <!-- =============================== -->
-  <rect class="layer-bg" x="40" y="330" width="800" height="130" />
-  <text class="layer-title" x="60" y="360">⚙️ CONTROLLER &amp; SERVER LAYER</text>
+  <rect class="layer-bg" x="40" y="330" width="720" height="150" />
+  <text class="layer-title" x="60" y="365">⚙️ CONTROLLER LAYER</text>
 
-  <!-- LostFoundController -->
-  <rect class="box box-primary" x="70" y="375" width="420" height="65" />
-  <text class="box-text-bold" x="280" y="400" text-anchor="middle">LostFoundController</text>
-  <text class="box-text-small" x="280" y="422" text-anchor="middle">• Dispatches UI actions • Enforces RBAC permissions • Manages user session</text>
+  <rect class="box box-highlight" x="200" y="380" width="400" height="80" />
+  <text class="box-text-bold" x="400" y="405" text-anchor="middle">LostFoundController</text>
+  <text class="box-text-small" x="400" y="425" text-anchor="middle">• Handles user interactions • Validates input data</text>
+  <text class="box-text-small" x="400" y="443" text-anchor="middle">• Coordinates workflows • Invokes services</text>
 
-  <!-- WebFeedServer -->
-  <rect class="box box-blue" x="520" y="375" width="280" height="65" />
-  <text class="box-text-bold" x="660" y="400" text-anchor="middle">WebFeedServer (port 8080)</text>
-  <text class="box-text-small" x="660" y="422" text-anchor="middle">• Read-only public feed • Fast HTTP server</text>
-
-  <!-- Flow down to Service Layer -->
-  <path class="flow-line" marker-end="url(#arrow)" d="M 440 460 L 440 510" />
-  <text class="flow-text" x="455" y="490">Business Invocations</text>
+  <!-- Flow down from Controller to Model/Service -->
+  <path class="flow-line" marker-end="url(#arrow)" d="M 400 480 L 400 540" />
+  <rect x="410" y="495" width="140" height="25" fill="var(--bg, #ffffff)" opacity="0.8" />
+  <text class="flow-text" x="415" y="513">Business Operations</text>
 
   <!-- =============================== -->
-  <!-- 3. SERVICE & DOMAIN MODEL LAYER -->
+  <!-- 3. MODEL & SERVICE LAYER        -->
   <!-- =============================== -->
-  <rect class="layer-bg" x="40" y="510" width="800" height="290" />
-  <text class="layer-title" x="60" y="540">📦 SERVICE &amp; DOMAIN MODEL LAYER</text>
+  <rect class="layer-bg" x="40" y="540" width="720" height="260" />
+  <text class="layer-title" x="60" y="575">📦 MODEL &amp; 🛠️ SERVICE LAYER</text>
 
-  <!-- Services -->
-  <rect class="box box-primary" x="70" y="560" width="350" height="90" />
-  <text class="box-text-bold" x="245" y="588" text-anchor="middle">LostFoundManager</text>
-  <text class="box-text-small" x="245" y="608" text-anchor="middle">• Item inventory &amp; automatic ID sequencing</text>
-  <text class="box-text-small" x="245" y="626" text-anchor="middle">• Multi-criteria search, filters &amp; metrics</text>
+  <!-- Model Domain (Left side) -->
+  <rect class="box" x="80" y="590" width="310" height="180" stroke-dasharray="5,5" />
+  <text class="box-text-bold" x="235" y="615" text-anchor="middle">Domain Models</text>
+  
+  <rect class="box" x="145" y="630" width="180" height="35" />
+  <text class="box-text" x="235" y="652" text-anchor="middle">&lt;&lt;Abstract&gt;&gt; Item</text>
 
-  <rect class="box box-primary" x="445" y="560" width="355" height="90" />
-  <text class="box-text-bold" x="622" y="588" text-anchor="middle">UserManager</text>
-  <text class="box-text-small" x="622" y="608" text-anchor="middle">• Authentication, SHA-256 hashing &amp; registration</text>
-  <text class="box-text-small" x="622" y="626" text-anchor="middle">• Role-Based Access Control (ADMIN / USER)</text>
+  <path class="flow-line" d="M 235 665 L 235 680" />
+  <path class="flow-line" d="M 170 680 L 300 680" />
+  <path class="flow-line" marker-end="url(#arrow)" d="M 170 680 L 170 695" />
+  <path class="flow-line" marker-end="url(#arrow)" d="M 300 680 L 300 695" />
+  
+  <rect class="box" x="100" y="695" width="130" height="30" />
+  <text class="box-text" x="165" y="715" text-anchor="middle">LostItem</text>
+  
+  <rect class="box" x="240" y="695" width="130" height="30" />
+  <text class="box-text" x="305" y="715" text-anchor="middle">FoundItem</text>
 
-  <!-- Domain Models Box -->
-  <rect class="box" x="70" y="670" width="730" height="110" stroke-dasharray="4,4" />
-  <text class="box-text-bold" x="435" y="695" text-anchor="middle">Domain Models</text>
+  <text class="box-text-small" x="235" y="750" text-anchor="middle">Also: User, ItemCategory, ItemStatus</text>
 
-  <!-- Model Badges -->
-  <rect class="box" x="90" y="715" width="130" height="38" />
-  <text class="box-text" x="155" y="739" text-anchor="middle">Item (Abstract)</text>
+  <!-- Service Implementation (Right side) -->
+  <rect class="box box-highlight" x="420" y="610" width="310" height="130" />
+  <text class="box-text-bold" x="575" y="640" text-anchor="middle">LostFoundManager</text>
+  <text class="box-text-small" x="575" y="665" text-anchor="middle">• Business Rule Enforcement</text>
+  <text class="box-text-small" x="575" y="685" text-anchor="middle">• Match Search &amp; Filtering</text>
+  <text class="box-text-small" x="575" y="705" text-anchor="middle">• Statistics, Reporting, ID Generation</text>
 
-  <rect class="box" x="235" y="715" width="115" height="38" />
-  <text class="box-text" x="292" y="739" text-anchor="middle">LostItem</text>
-
-  <rect class="box" x="365" y="715" width="115" height="38" />
-  <text class="box-text" x="422" y="739" text-anchor="middle">FoundItem</text>
-
-  <rect class="box" x="495" y="715" width="135" height="38" />
-  <text class="box-text" x="562" y="739" text-anchor="middle">UserAccount / User</text>
-
-  <rect class="box" x="645" y="715" width="140" height="38" />
-  <text class="box-text-small" x="715" y="739" text-anchor="middle">Category • Status • Role</text>
-
-  <!-- Flow down to Storage Layer -->
-  <path class="flow-line" marker-end="url(#arrow)" d="M 440 800 L 440 850" />
-  <text class="flow-text" x="455" y="830">Storage Interfaces</text>
+  <!-- Flow down from Service to Storage -->
+  <path class="flow-line" marker-end="url(#arrow)" d="M 400 800 L 400 850" />
+  <rect x="410" y="810" width="130" height="25" fill="var(--bg, #ffffff)" opacity="0.8" />
+  <text class="flow-text" x="415" y="828">Data Persistence</text>
 
   <!-- =============================== -->
-  <!-- 4. STORAGE & PERSISTENCE LAYER  -->
+  <!-- 4. STORAGE & DATA LAYER         -->
   <!-- =============================== -->
-  <rect class="layer-bg" x="40" y="850" width="800" height="440" />
-  <text class="layer-title" x="60" y="880">💾 STORAGE &amp; PERSISTENCE LAYER</text>
+  <rect class="layer-bg" x="40" y="850" width="720" height="230" />
+  <text class="layer-title" x="60" y="885">💾 STORAGE LAYER</text>
 
-  <!-- Interfaces -->
-  <rect class="box" x="120" y="900" width="280" height="42" stroke-dasharray="4,4" />
-  <text class="box-text-bold" x="260" y="926" text-anchor="middle">&lt;&lt;Interface&gt;&gt; ItemStorageService</text>
+  <rect class="box" x="250" y="900" width="300" height="40" stroke-dasharray="4,4" />
+  <text class="box-text-bold" x="400" y="925" text-anchor="middle">&lt;&lt;Interface&gt;&gt; ItemStorageService</text>
 
-  <rect class="box" x="480" y="900" width="280" height="42" stroke-dasharray="4,4" />
-  <text class="box-text-bold" x="620" y="926" text-anchor="middle">&lt;&lt;Interface&gt;&gt; UserStorageService</text>
+  <path class="flow-line" marker-end="url(#arrow)" d="M 400 940 L 400 970" />
+  
+  <rect class="box" x="250" y="970" width="300" height="40" />
+  <text class="box-text" x="400" y="995" text-anchor="middle">CsvItemStorageService</text>
 
-  <!-- Environment Config Provider -->
-  <rect class="box" x="300" y="960" width="280" height="42" />
-  <text class="box-text-bold" x="440" y="986" text-anchor="middle">DotEnv (.env Loader) &amp; MongoConfig</text>
+  <rect class="box" x="600" y="925" width="100" height="60" stroke-dasharray="2,2" />
+  <text class="box-text-small" x="650" y="952" text-anchor="middle">Throws</text>
+  <text class="box-text-small" x="650" y="968" text-anchor="middle">DataPersistException</text>
+  <path class="flow-line" d="M 550 940 L 600 940" />
+  <path class="flow-line" d="M 550 975 L 600 975" />
 
-  <!-- Mongo Storage Services -->
-  <rect class="box box-green" x="120" y="1025" width="280" height="60" />
-  <text class="box-text-bold" x="260" y="1050" text-anchor="middle">MongoItemStorageService</text>
-  <text class="box-text-small" x="260" y="1070" text-anchor="middle">BSON Mapping • Upsert • Deletion Sync</text>
+  <!-- Data File Cylinder (CSV) -->
+  <path class="box-highlight" d="M 330 1050 C 330 1045, 470 1045, 470 1050 L 470 1090 C 470 1095, 330 1095, 330 1090 Z" fill="var(--bg, #ffffff)" />
+  <ellipse cx="400" cy="1050" rx="70" ry="7" fill="var(--bg, #ffffff)" stroke="var(--accent, #0066cc)" stroke-width="2" />
+  <text class="box-text-bold" x="400" y="1075" text-anchor="middle">data/lost_found_items.csv</text>
 
-  <rect class="box box-green" x="480" y="1025" width="280" height="60" />
-  <text class="box-text-bold" x="620" y="1050" text-anchor="middle">MongoUserStorageService</text>
-  <text class="box-text-small" x="620" y="1070" text-anchor="middle">BSON Mapping • Credentials • Role Sync</text>
-
-  <!-- Connection Provider -->
-  <rect class="box box-green" x="300" y="1105" width="280" height="42" />
-  <text class="box-text-bold" x="440" y="1131" text-anchor="middle">MongoClientProvider (Connection Pool)</text>
-
-  <!-- Primary Database: MongoDB Atlas -->
-  <rect class="box box-green" x="100" y="1170" width="320" height="90" rx="10" />
-  <text class="box-text-bold" x="260" y="1198" text-anchor="middle" fill="#10B981">🍃 MongoDB Atlas (Cloud) / Local</text>
-  <text class="box-text-small" x="260" y="1220" text-anchor="middle">Database: lostfound</text>
-  <text class="box-text-small" x="260" y="1240" text-anchor="middle">Collections: items (BSON) • users (BSON)</text>
-
-  <!-- Fallback Storage: Local CSV -->
-  <rect class="box" x="460" y="1170" width="320" height="90" rx="10" />
-  <text class="box-text-bold" x="620" y="1198" text-anchor="middle">📁 Local CSV Resilient Cache</text>
-  <text class="box-text-small" x="620" y="1220" text-anchor="middle">data/items.csv • data/users.csv</text>
-  <text class="box-text-small" x="620" y="1240" text-anchor="middle">Zero-downtime offline fallback</text>
-
-  <!-- Arrows to Databases -->
-  <path class="flow-line-green" marker-end="url(#arrow-green)" d="M 370 1147 L 310 1170" />
-  <path class="flow-line" marker-end="url(#arrow)" d="M 510 1147 L 570 1170" />
+  <path class="flow-line" marker-end="url(#arrow)" d="M 400 1010 L 400 1040" />
 
 </svg>
