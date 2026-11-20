@@ -23,8 +23,6 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class AuthPagePanel extends JPanel {
 
-    private static final String ADMIN_SECRET_KEY = "ADMIN2026";
-
     private final LostFoundController controller;
     private final MainFrame mainFrame;
 
@@ -47,8 +45,6 @@ public class AuthPagePanel extends JPanel {
     private JPasswordField regPasswordField;
     private JPasswordField regConfirmPasswordField;
     private JComboBox<String> regRoleCombo;
-    private JPanel adminCodeContainer;
-    private JPasswordField regAdminCodeField;
 
     // Responsive Left Showcase Reference
     private JPanel leftShowcasePanel;
@@ -558,38 +554,7 @@ public class AuthPagePanel extends JPanel {
         regRoleCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         regRoleCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(regRoleCombo);
-        panel.add(Box.createVerticalStrut(10));
-
-        // Admin Security Key (only shown when Administrator is selected)
-        adminCodeContainer = new JPanel();
-        adminCodeContainer.setLayout(new BoxLayout(adminCodeContainer, BoxLayout.Y_AXIS));
-        adminCodeContainer.setOpaque(false);
-        adminCodeContainer.setVisible(false);
-        adminCodeContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        adminCodeContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-
-        JLabel keyLabel = new JLabel("Administrator Verification Key *");
-        keyLabel.setFont(UIUtils.FONT_SMALL_BOLD);
-        keyLabel.setForeground(UIUtils.COLOR_PRIMARY);
-
-        regAdminCodeField = new JPasswordField(15);
-        regAdminCodeField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_PRIMARY, 1, true), new EmptyBorder(6, 10, 6, 10)));
-        regAdminCodeField.setToolTipText("Enter system administrator verification key");
-        regAdminCodeField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-
-        adminCodeContainer.add(keyLabel);
-        adminCodeContainer.add(Box.createVerticalStrut(4));
-        adminCodeContainer.add(regAdminCodeField);
-        panel.add(adminCodeContainer);
-
-        regRoleCombo.addActionListener(e -> {
-            boolean isAdmin = regRoleCombo.getSelectedIndex() == 1;
-            adminCodeContainer.setVisible(isAdmin);
-            panel.revalidate();
-            panel.repaint();
-        });
-
-        panel.add(Box.createVerticalStrut(16));
+        panel.add(Box.createVerticalStrut(20));
 
         // Submit Button
         JButton registerSubmit = UIUtils.createPrimaryButton("Create Account & Sign In");
@@ -648,7 +613,6 @@ public class AuthPagePanel extends JPanel {
         if (regEmailField != null) regEmailField.setText("");
         if (regPasswordField != null) regPasswordField.setText("");
         if (regConfirmPasswordField != null) regConfirmPasswordField.setText("");
-        if (regAdminCodeField != null) regAdminCodeField.setText("");
         isPasswordVisible = false;
         if (loginPasswordField != null) loginPasswordField.setEchoChar('•');
         if (passToggleBtn != null) passToggleBtn.setForeground(UIUtils.COLOR_TEXT_MUTED);
@@ -719,19 +683,7 @@ public class AuthPagePanel extends JPanel {
             return;
         }
 
-        UserRole role = UserRole.USER;
-        if (wantsAdmin) {
-            String adminCode = new String(regAdminCodeField.getPassword()).trim();
-            if (!ADMIN_SECRET_KEY.equalsIgnoreCase(adminCode)) {
-                JOptionPane.showMessageDialog(this,
-                        "Invalid Admin Security Code!\n" +
-                        "For system evaluation, use: " + ADMIN_SECRET_KEY,
-                        "Security Verification Failed", JOptionPane.ERROR_MESSAGE);
-                regAdminCodeField.requestFocus();
-                return;
-            }
-            role = UserRole.ADMIN;
-        }
+        UserRole role = wantsAdmin ? UserRole.ADMIN : UserRole.USER;
 
         try {
             UserAccount account = controller.getUserManager().registerUser(

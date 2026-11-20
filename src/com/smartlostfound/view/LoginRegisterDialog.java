@@ -20,8 +20,6 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class LoginRegisterDialog extends JDialog {
 
-    private static final String ADMIN_SECRET_KEY = "ADMIN2026";
-
     private final LostFoundController controller;
     private UserAccount authenticatedAccount = null;
     private boolean initialLaunch = false;
@@ -45,8 +43,6 @@ public class LoginRegisterDialog extends JDialog {
     private JPasswordField regPasswordField;
     private JPasswordField regConfirmPasswordField;
     private JComboBox<String> regRoleCombo;
-    private JPanel adminCodeContainer;
-    private JPasswordField regAdminCodeField;
 
     public LoginRegisterDialog(Window parent, LostFoundController controller) {
         super(parent, "Account Authentication - Smart Lost & Found", ModalityType.APPLICATION_MODAL);
@@ -340,29 +336,13 @@ public class LoginRegisterDialog extends JDialog {
         formGrid.add(createLabeledField("Confirm Password *", regConfirmPasswordField));
 
         // Row 4: Account Type
-        regRoleCombo = new JComboBox<>(new String[]{"Standard User (Community Member)", "System Administrator (Admin Privileges)"});
+        regRoleCombo = new JComboBox<>(new String[]{"Standard User", "Administrator"});
         regRoleCombo.setFont(UIUtils.FONT_BODY);
 
         formGrid.add(createLabeledField("Account Role *", regRoleCombo));
 
-        // Row 5: Admin Secret Code
-        regAdminCodeField = new JPasswordField(15);
-        regAdminCodeField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_BORDER, 1, true), new EmptyBorder(6, 10, 6, 10)));
-        regAdminCodeField.setToolTipText("Enter administrator authorization code");
-        adminCodeContainer = createLabeledField("Administrator Security Code *", regAdminCodeField);
-        adminCodeContainer.setVisible(false);
-
-        formGrid.add(adminCodeContainer);
-
-        regRoleCombo.addActionListener(e -> {
-            boolean isAdmin = regRoleCombo.getSelectedIndex() == 1;
-            adminCodeContainer.setVisible(isAdmin);
-            panel.revalidate();
-            panel.repaint();
-        });
-
         panel.add(formGrid);
-        panel.add(Box.createVerticalStrut(14));
+        panel.add(Box.createVerticalStrut(18));
 
         // Register Button
         JButton registerSubmit = UIUtils.createPrimaryButton("Register Account & Sign In");
@@ -494,19 +474,7 @@ public class LoginRegisterDialog extends JDialog {
             return;
         }
 
-        UserRole role = UserRole.USER;
-        if (wantsAdmin) {
-            String adminCode = new String(regAdminCodeField.getPassword()).trim();
-            if (!ADMIN_SECRET_KEY.equalsIgnoreCase(adminCode)) {
-                JOptionPane.showMessageDialog(this,
-                        "Invalid Admin Security Code!\n" +
-                        "For system evaluation, use: " + ADMIN_SECRET_KEY,
-                        "Security Verification Failed", JOptionPane.ERROR_MESSAGE);
-                regAdminCodeField.requestFocus();
-                return;
-            }
-            role = UserRole.ADMIN;
-        }
+        UserRole role = wantsAdmin ? UserRole.ADMIN : UserRole.USER;
 
         try {
             UserAccount account = controller.getUserManager().registerUser(
