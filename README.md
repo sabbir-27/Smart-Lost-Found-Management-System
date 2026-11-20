@@ -10,7 +10,7 @@ The application provides a centralized platform where users can report lost belo
 
 The system follows the **Model-View-Controller (MVC)** architectural pattern and applies the four fundamental Object-Oriented Programming (OOP) principles: Encapsulation, Inheritance, Polymorphism, and Abstraction.
 
-It also features a Facebook-inspired community feed, image attachments, advanced search and filtering, structured data persistence, and automated testing.
+It also features an interactive community feed, image attachments, advanced search and filtering, structured data persistence, and automated testing.
 
 ---
 
@@ -258,7 +258,7 @@ smart-lost-found/
 
 ### 5.1 Community Feed
 
-A Facebook-inspired community feed allows users to browse lost and found item submissions in a familiar social-media-style interface.
+This community feed allows users to browse lost and found item submissions in a familiar social-media-style interface.
 
 Key capabilities:
 

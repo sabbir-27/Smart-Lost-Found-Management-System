@@ -381,19 +381,6 @@ public class AuthPagePanel extends JPanel {
         panel.add(sub);
         panel.add(Box.createVerticalStrut(20));
 
-        // Google Sign-In Action
-        JButton googleSignInBtn = UIUtils.createGoogleButton("Continue with Google");
-        googleSignInBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        googleSignInBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        googleSignInBtn.addActionListener(e -> handleGoogleLogin());
-        panel.add(googleSignInBtn);
-
-        panel.add(Box.createVerticalStrut(14));
-        JPanel orDiv = UIUtils.createOrDivider("OR SIGN IN WITH USERNAME");
-        orDiv.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(orDiv);
-        panel.add(Box.createVerticalStrut(14));
-
         // Username Field
         panel.add(createFieldLabel("Username or Email"));
         panel.add(Box.createVerticalStrut(6));
@@ -560,19 +547,6 @@ public class AuthPagePanel extends JPanel {
         panel.add(Box.createVerticalStrut(4));
         panel.add(sub);
         panel.add(Box.createVerticalStrut(18));
-
-        // Google Sign-Up Action
-        JButton googleSignUpBtn = UIUtils.createGoogleButton("Sign up with Google");
-        googleSignUpBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        googleSignUpBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        googleSignUpBtn.addActionListener(e -> handleGoogleLogin());
-        panel.add(googleSignUpBtn);
-
-        panel.add(Box.createVerticalStrut(14));
-        JPanel orDiv = UIUtils.createOrDivider("OR SIGN UP WITH EMAIL");
-        orDiv.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(orDiv);
-        panel.add(Box.createVerticalStrut(14));
 
         // Form Fields (Clean & Sequential)
         panel.add(createFieldLabel("Full Name *"));

@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -222,7 +223,7 @@ public class WebFeedServer {
         // Feed container
         sb.append(".feed-container { max-width: 740px; margin: 24px auto; padding: 0 16px 60px 16px; display: flex; flex-direction: column; gap: 20px; }");
         
-        // Feed card (Facebook style)
+        // Feed card
         sb.append(".feed-card { background: #FFFFFF; border: 1px solid #E4E4E7; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: transform 0.15s ease; }");
         sb.append(".card-header { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; }");
         sb.append(".user-meta { display: flex; align-items: center; gap: 12px; }");
@@ -253,11 +254,6 @@ public class WebFeedServer {
         // Modal and Interactive Elements
         sb.append(".modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 999; animation: fadeIn 0.2s ease; }");
         sb.append(".modal-box { background: #FFFFFF; border-radius: 16px; width: 92%; max-width: 420px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); position: relative; }");
-        sb.append(".google-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid #DADCE0; background: #FFFFFF; padding: 11px 16px; border-radius: 8px; font-weight: 700; font-size: 14px; color: #3C4043; cursor: pointer; transition: background 0.15s; }");
-        sb.append(".google-btn:hover { background: #F8F9FA; border-color: #C6C9CE; }");
-        sb.append(".or-sep { text-align: center; position: relative; margin: 18px 0 16px 0; }");
-        sb.append(".or-sep::before { content: ''; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: #E4E4E7; }");
-        sb.append(".or-sep span { position: relative; background: #FFF; padding: 0 10px; font-size: 10px; font-weight: 700; color: #A1A1AA; letter-spacing: 0.5px; }");
         sb.append(".styled-input { width: 100%; padding: 10px 14px; border: 1px solid #E4E4E7; border-radius: 8px; font-size: 13px; outline: none; transition: border-color 0.15s; }");
         sb.append(".styled-input:focus { border-color: #E52E2D; }");
         sb.append(".submit-btn { width: 100%; background: #E52E2D; color: #FFF; border: none; padding: 11px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }");
@@ -283,15 +279,15 @@ public class WebFeedServer {
         // Feed Container
         sb.append("<div class='feed-container'>");
 
-        // Facebook-style Composer Card (Top of feed)
+        // Composer Card (Top of feed)
         sb.append("<div class='feed-card' style='padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px;'>");
         sb.append("<div style='display: flex; align-items: center; gap: 12px; flex: 1;'>");
         sb.append("<div class='avatar' id='composerAvatar' style='background: #52525B;'>GV</div>");
-        sb.append("<span style='color: #71717A; font-size: 13px;' id='composerText'>Lost an item or discovered property? Broadcast it to the community...</span>");
+        sb.append("<span style='color: #71717A; font-size: 13px;' id='composerText'>Report lost or found property to the community registry</span>");
         sb.append("</div>");
         sb.append("<div style='display: flex; gap: 8px;'>");
-        sb.append("<button onclick=\"openSignUpModal('Lost')\" style='background:#E52E2D; color:#FFF; border:none; padding:8px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:5px;'>▲ Report Lost</button>");
-        sb.append("<button onclick=\"openSignUpModal('Found')\" style='background:#18181B; color:#FFF; border:none; padding:8px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:5px;'>▼ Report Found</button>");
+        sb.append("<button onclick=\"openSignUpModal('Lost')\" style='background:#E52E2D; color:#FFF; border:none; padding:8px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:5px;'>Report Lost</button>");
+        sb.append("<button onclick=\"openSignUpModal('Found')\" style='background:#18181B; color:#FFF; border:none; padding:8px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:5px;'>Report Found</button>");
         sb.append("</div></div>");
 
         if (items.isEmpty()) {
@@ -300,7 +296,22 @@ public class WebFeedServer {
             sb.append("<p style='font-size: 13px; margin-top: 6px;'>Check back later for real-time community reports.</p>");
             sb.append("</div>");
         } else {
-            for (Item item : items) {
+            List<Item> sortedItems = new ArrayList<>(items);
+            sortedItems.sort((a, b) -> {
+                if (a.getCreatedAt() != null && b.getCreatedAt() != null) {
+                    int c = b.getCreatedAt().compareTo(a.getCreatedAt());
+                    if (c != 0) return c;
+                }
+                if (a.getDate() != null && b.getDate() != null) {
+                    int c = b.getDate().compareTo(a.getDate());
+                    if (c != 0) return c;
+                }
+                if (a.getId() != null && b.getId() != null) {
+                    return b.getId().compareTo(a.getId());
+                }
+                return 0;
+            });
+            for (Item item : sortedItems) {
                 renderItemCard(sb, item);
             }
         }
@@ -314,19 +325,6 @@ public class WebFeedServer {
         sb.append("</div>");
         sb.append("<h2 id='modalTitle' style='font-size:19px; font-weight:800; color:#0F0F11;'>Sign Up Required to Report Item</h2>");
         sb.append("<p id='modalSub' style='color:#71717A; font-size:13px; margin:6px 0 20px 0;'>Guest users must sign up before reporting items to track recovery progress and verify claims.</p>");
-
-        // Google Sign-In button with 4-color Google G SVG
-        sb.append("<button class='google-btn' onclick='continueWithGoogle()'>");
-        sb.append("<svg width='18' height='18' viewBox='0 0 18 18'>");
-        sb.append("<path fill='#4285F4' d='M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z'/>");
-        sb.append("<path fill='#34A853' d='M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z'/>");
-        sb.append("<path fill='#FBBC05' d='M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z'/>");
-        sb.append("<path fill='#EA4335' d='M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z'/>");
-        sb.append("</svg>");
-        sb.append("<span>Sign up with Google</span>");
-        sb.append("</button>");
-
-        sb.append("<div class='or-sep'><span>OR SIGN UP WITH EMAIL</span></div>");
 
         sb.append("<div id='authForm' style='display:flex; flex-direction:column; gap:10px;'>");
         sb.append("<input type='text' id='formName' placeholder='Full Name' class='styled-input'>");
@@ -364,11 +362,6 @@ public class WebFeedServer {
         sb.append("  if(!signUp) { document.getElementById('modalTitle').innerText = 'Sign In to Your Account'; }");
         sb.append("}");
         sb.append("function toggleAuthMode() { setMode(!isSignUpMode); }");
-        sb.append("function continueWithGoogle() {");
-        sb.append("  closeAuthModal();");
-        sb.append("  setUser('Alex Rivera', 'AR', 'alex.rivera.dev@gmail.com');");
-        sb.append("  showToast('Signed in with Google as Alex Rivera! (Browser mode is Community Feed only)');");
-        sb.append("}");
         sb.append("function handleEmailSubmit() {");
         sb.append("  var email = document.getElementById('formEmail').value.trim();");
         sb.append("  var name = isSignUpMode ? document.getElementById('formName').value.trim() : (email.split('@')[0]);");

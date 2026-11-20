@@ -507,8 +507,8 @@ public class MainFrame extends JFrame {
                 controller.refreshView();
                 break;
             case "FEED":
-                breadcrumbTitleLabel.setText("Community Social Feed");
-                breadcrumbSubtitleLabel.setText("Facebook-style community stream of lost items, reported sightings, and reward notices");
+                breadcrumbTitleLabel.setText("Community Property Feed");
+                breadcrumbSubtitleLabel.setText("Live registry of lost property, verified sightings, and recovery notices");
                 contentCardLayout.show(mainContentCardPanel, "FEED");
                 controller.refreshView();
                 break;
@@ -551,21 +551,21 @@ public class MainFrame extends JFrame {
             case "FEED":
                 // In Community Feed: do not duplicate "Report Lost" / "Report Found" buttons
                 // from the header since the feed already has its own dedicated social composer.
-                JButton refreshFeedBtn = UIUtils.createModernButton("🔄 Refresh Feed", new Color(244, 244, 246),
+                JButton refreshFeedBtn = UIUtils.createModernButton("Refresh Feed", new Color(244, 244, 246),
                         new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
                 refreshFeedBtn.addActionListener(e -> controller.refreshView());
                 topBarActionsContainer.add(refreshFeedBtn);
                 break;
 
             case "DASHBOARD":
-                JButton feedToggleBtn = UIUtils.createModernButton("📰 Community Feed", new Color(244, 244, 246),
+                JButton feedToggleBtn = UIUtils.createModernButton("Community Feed", new Color(244, 244, 246),
                         new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
                 feedToggleBtn.addActionListener(e -> switchToFeed());
 
-                JButton dashLostBtn = UIUtils.createPrimaryButton("+ Report Lost");
+                JButton dashLostBtn = UIUtils.createPrimaryButton("+ Report Lost Item");
                 dashLostBtn.addActionListener(e -> switchToReportLost());
 
-                JButton dashFoundBtn = UIUtils.createDarkButton("+ Report Found");
+                JButton dashFoundBtn = UIUtils.createDarkButton("+ Report Found Item");
                 dashFoundBtn.addActionListener(e -> switchToReportFound());
 
                 topBarActionsContainer.add(feedToggleBtn);
@@ -574,11 +574,11 @@ public class MainFrame extends JFrame {
                 break;
 
             case "REPORT_LOST":
-                JButton feedFromLost = UIUtils.createModernButton("📰 Community Feed", new Color(244, 244, 246),
+                JButton feedFromLost = UIUtils.createModernButton("Community Feed", new Color(244, 244, 246),
                         new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
                 feedFromLost.addActionListener(e -> switchToFeed());
 
-                JButton backDashFromLost = UIUtils.createDarkButton("● Inventory Records");
+                JButton backDashFromLost = UIUtils.createDarkButton("Inventory Records");
                 backDashFromLost.addActionListener(e -> switchToDashboard());
 
                 topBarActionsContainer.add(feedFromLost);
@@ -586,11 +586,11 @@ public class MainFrame extends JFrame {
                 break;
 
             case "REPORT_FOUND":
-                JButton feedFromFound = UIUtils.createModernButton("📰 Community Feed", new Color(244, 244, 246),
+                JButton feedFromFound = UIUtils.createModernButton("Community Feed", new Color(244, 244, 246),
                         new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
                 feedFromFound.addActionListener(e -> switchToFeed());
 
-                JButton backDashFromFound = UIUtils.createDarkButton("● Inventory Records");
+                JButton backDashFromFound = UIUtils.createDarkButton("Inventory Records");
                 backDashFromFound.addActionListener(e -> switchToDashboard());
 
                 topBarActionsContainer.add(feedFromFound);

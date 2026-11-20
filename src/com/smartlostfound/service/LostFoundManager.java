@@ -441,6 +441,14 @@ public class LostFoundManager {
                 "Kept under lock and key awaiting owner verification"
         ));
 
+        // Assign realistic chronological creation timestamps matching reported dates
+        items.get(0).setCreatedAt(LocalDate.now().minusDays(2).atTime(14, 30));
+        items.get(1).setCreatedAt(LocalDate.now().minusDays(1).atTime(16, 45));
+        items.get(2).setCreatedAt(LocalDate.now().minusDays(3).atTime(11, 20));
+        items.get(3).setCreatedAt(LocalDate.now().minusDays(4).atTime(9, 10));
+        items.get(4).setCreatedAt(LocalDate.now().minusDays(5).atTime(15, 0));
+        items.get(5).setCreatedAt(LocalDate.now().atTime(10, 15));
+
         synchronizeIdSequences();
     }
 

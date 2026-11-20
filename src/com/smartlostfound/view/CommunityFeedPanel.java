@@ -17,11 +17,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 
-/**
- * Facebook-style Community Social Feed view for the Smart Lost &amp; Found System.
- * Features centered social post cards, photorealistic preview banners,
- * interactive sighting tips &amp; comment threads, and reaction counters.
- */
 public class CommunityFeedPanel extends JPanel {
 
     private final LostFoundController controller;
@@ -34,6 +29,7 @@ public class CommunityFeedPanel extends JPanel {
     private final Map<String, List<FeedComment>> postComments = new HashMap<>();
 
     private JPanel feedPostsContainer;
+    private JScrollPane feedScrollPane;
     private JTextField feedSearchField;
     private String currentFeedFilter = "ALL"; // ALL, LOST, FOUND, REWARD, TIPS
 
@@ -50,21 +46,21 @@ public class CommunityFeedPanel extends JPanel {
         // LOST-1001 MacBook Pro
         List<FeedComment> macComments = new ArrayList<>();
         macComments.add(new FeedComment("Officer Davis", "OD",
-                "Campus security sweep completed at 4 PM. Checked locker #4 at main desk.", "2h ago"));
+                "Campus security sweep completed at 16:00. Intake log verified at central reception.", "2h ago"));
         macComments.add(new FeedComment("David Miller", "DM",
-                "Study rooms on 2nd floor library were wiped down around 4:30 PM. Might want to ask the custodian.", "45m ago"));
+                "2nd floor study rooms inspected during custodial rotation. Inquire at central desk.", "45m ago"));
         postComments.put("LOST-1001", macComments);
 
         // FND-2001 Osprey Backpack
         List<FeedComment> bagComments = new ArrayList<>();
         bagComments.add(new FeedComment("Sarah Jenkins", "SJ",
-                "Saw a student near gym bleachers looking around anxiously this morning!", "1h ago"));
+                "Item matching this description was logged near athletic facility entrance earlier today.", "1h ago"));
         postComments.put("FND-2001", bagComments);
 
         // LOST-1002 Leather Wallet
         List<FeedComment> walletComments = new ArrayList<>();
         walletComments.add(new FeedComment("Alex Reed", "AR",
-                "The barista at Starbucks mentioned someone turned in a cardholder earlier.", "3h ago"));
+                "Facility supervisor confirmed an item was transferred to administration for custody.", "3h ago"));
         postComments.put("LOST-1002", walletComments);
     }
 
@@ -97,17 +93,17 @@ public class CommunityFeedPanel extends JPanel {
         feedPostsContainer.setBackground(UIUtils.COLOR_BACKGROUND);
         feedPostsContainer.setBorder(new EmptyBorder(6, 20, 30, 20));
 
-        JScrollPane scrollPane = new JScrollPane(feedPostsContainer);
-        scrollPane.setBorder(null);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(20);
-        scrollPane.getViewport().setBackground(UIUtils.COLOR_BACKGROUND);
+        feedScrollPane = new JScrollPane(feedPostsContainer);
+        feedScrollPane.setBorder(null);
+        feedScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        feedScrollPane.getVerticalScrollBar().setUnitIncrement(20);
+        feedScrollPane.getViewport().setBackground(UIUtils.COLOR_BACKGROUND);
 
-        add(scrollPane, BorderLayout.CENTER);
+        add(feedScrollPane, BorderLayout.CENTER);
     }
 
     /**
-     * Facebook-style Post Composer Card.
+     * Post Composer Card.
      */
     private JPanel createPostComposerCard() {
         JPanel card = UIUtils.createCardPanel(12);
@@ -123,7 +119,7 @@ public class CommunityFeedPanel extends JPanel {
         String initials = current != null ? current.getInitials() : "ME";
         AvatarIcon avatar = new AvatarIcon(initials, current != null && current.isAdmin() ? UIUtils.COLOR_PRIMARY : new Color(39, 39, 42));
 
-        JLabel prompt = new JLabel("Lost an item or discovered property? Broadcast it to the community...");
+        JLabel prompt = new JLabel("Report lost or found property to the community registry");
         prompt.setFont(UIUtils.FONT_BODY);
         prompt.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
 
@@ -135,7 +131,7 @@ public class CommunityFeedPanel extends JPanel {
         JPanel rightButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rightButtons.setOpaque(false);
 
-        JButton postLostBtn = UIUtils.createPrimaryButton("▲ Report Lost");
+        JButton postLostBtn = UIUtils.createPrimaryButton("Report Lost Item");
         postLostBtn.addActionListener(e -> {
             Window w = SwingUtilities.getWindowAncestor(this);
             if (w instanceof MainFrame) {
@@ -143,7 +139,7 @@ public class CommunityFeedPanel extends JPanel {
             }
         });
 
-        JButton postFoundBtn = UIUtils.createDarkButton("▼ Report Found");
+        JButton postFoundBtn = UIUtils.createDarkButton("Report Found Item");
         postFoundBtn.addActionListener(e -> {
             Window w = SwingUtilities.getWindowAncestor(this);
             if (w instanceof MainFrame) {
@@ -159,7 +155,7 @@ public class CommunityFeedPanel extends JPanel {
     }
 
     /**
-     * Filter bar with Facebook-style pill filters and search.
+     * Filter bar with pill filters and search.
      */
     private JPanel createFeedFilterBar() {
         JPanel bar = new JPanel(new BorderLayout(10, 0));
@@ -170,10 +166,10 @@ public class CommunityFeedPanel extends JPanel {
         JPanel pillGroup = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         pillGroup.setOpaque(false);
 
-        pillGroup.add(createFilterChip("All Posts", "ALL"));
-        pillGroup.add(createFilterChip("Lost Only", "LOST"));
-        pillGroup.add(createFilterChip("Found Only", "FOUND"));
-        pillGroup.add(createFilterChip("🏆 With Reward", "REWARD"));
+        pillGroup.add(createFilterChip("All Records", "ALL"));
+        pillGroup.add(createFilterChip("Lost Items", "LOST"));
+        pillGroup.add(createFilterChip("Found Items", "FOUND"));
+        pillGroup.add(createFilterChip("With Reward", "REWARD"));
 
         bar.add(pillGroup, BorderLayout.WEST);
 
@@ -185,7 +181,7 @@ public class CommunityFeedPanel extends JPanel {
         searchIcon.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 12));
 
         feedSearchField = UIUtils.createStyledTextField(16);
-        feedSearchField.setToolTipText("Filter feed by keyword or item title...");
+        feedSearchField.setToolTipText("Search records by keyword, item name, or location...");
         feedSearchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { refreshFeed(); }
             @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { refreshFeed(); }
@@ -250,10 +246,47 @@ public class CommunityFeedPanel extends JPanel {
     public void displayFeedItems(List<Item> items) {
         feedPostsContainer.removeAll();
 
+        if (items == null || items.isEmpty()) {
+            feedPostsContainer.add(createEmptyFeedPlaceholder());
+            feedPostsContainer.revalidate();
+            feedPostsContainer.repaint();
+            return;
+        }
+
+        // Sort items so the most recently posted items appear first at the top of the feed
+        List<Item> sortedItems = new ArrayList<>(items);
+        sortedItems.sort((a, b) -> {
+            // 1. Primary: compare createdAt timestamp (newest first)
+            if (a.getCreatedAt() != null && b.getCreatedAt() != null) {
+                int c = b.getCreatedAt().compareTo(a.getCreatedAt());
+                if (c != 0) return c;
+            } else if (a.getCreatedAt() != null) {
+                return -1;
+            } else if (b.getCreatedAt() != null) {
+                return 1;
+            }
+
+            // 2. Secondary: compare event/occurrence date (newest first)
+            if (a.getDate() != null && b.getDate() != null) {
+                int c = b.getDate().compareTo(a.getDate());
+                if (c != 0) return c;
+            } else if (a.getDate() != null) {
+                return -1;
+            } else if (b.getDate() != null) {
+                return 1;
+            }
+
+            // 3. Fallback: compare ID descending (higher sequential IDs are newer)
+            if (a.getId() != null && b.getId() != null) {
+                return b.getId().compareTo(a.getId());
+            }
+            return 0;
+        });
+
         String keyword = feedSearchField != null ? feedSearchField.getText().trim().toLowerCase() : "";
 
         int renderedCount = 0;
-        for (Item item : items) {
+        for (Item item : sortedItems) {
             if ("LOST".equals(currentFeedFilter) && !(item instanceof LostItem)) continue;
             if ("FOUND".equals(currentFeedFilter) && !(item instanceof FoundItem)) continue;
             if ("REWARD".equals(currentFeedFilter)) {
@@ -273,6 +306,19 @@ public class CommunityFeedPanel extends JPanel {
 
         feedPostsContainer.revalidate();
         feedPostsContainer.repaint();
+
+        scrollToTop();
+    }
+
+    /**
+     * Resets the feed scroll position to the top so newly posted items are immediately visible.
+     */
+    public void scrollToTop() {
+        SwingUtilities.invokeLater(() -> {
+            if (feedScrollPane != null && feedScrollPane.getVerticalScrollBar() != null) {
+                feedScrollPane.getVerticalScrollBar().setValue(0);
+            }
+        });
     }
 
     private JPanel createEmptyFeedPlaceholder() {
@@ -284,7 +330,7 @@ public class CommunityFeedPanel extends JPanel {
         JLabel icon = new JLabel("🔍");
         icon.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 36));
 
-        JLabel msg = new JLabel("No matching property reports found in the community feed.");
+        JLabel msg = new JLabel("No matching property records found.");
         msg.setFont(UIUtils.FONT_TITLE);
         msg.setForeground(UIUtils.COLOR_TEXT_MUTED);
 
@@ -298,7 +344,7 @@ public class CommunityFeedPanel extends JPanel {
     }
 
     /**
-     * Creates an individual Facebook-style Post Card for an item.
+     * Creates an individual Post Card for an item.
      */
     private JPanel createPostCard(Item item) {
         JPanel postCard = UIUtils.createCardPanel(14);
@@ -329,7 +375,7 @@ public class CommunityFeedPanel extends JPanel {
         nameLabel.setFont(UIUtils.FONT_BODY_BOLD);
         nameLabel.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
 
-        JLabel subMeta = new JLabel(String.format("Reported on %s • 📍 %s", item.getFormattedDate(), item.getSpecificLocation()));
+        JLabel subMeta = new JLabel(String.format("Reported: %s • Location: %s", item.getFormattedDate(), item.getSpecificLocation()));
         subMeta.setFont(UIUtils.FONT_SMALL);
         subMeta.setForeground(UIUtils.COLOR_TEXT_MUTED);
 
@@ -369,7 +415,7 @@ public class CommunityFeedPanel extends JPanel {
         bodyPanel.setOpaque(false);
 
         // Item Title (Clickable link to full details)
-        JLabel titleLabel = new JLabel((isLost ? "⚠️ LOST: " : "📦 FOUND: ") + item.getName());
+        JLabel titleLabel = new JLabel((isLost ? "[LOST] " : "[FOUND] ") + item.getName());
         titleLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 16));
         titleLabel.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
         titleLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -400,7 +446,7 @@ public class CommunityFeedPanel extends JPanel {
         highlightBox.setBackground(new Color(249, 250, 251));
         highlightBox.setBorder(new LineBorder(UIUtils.COLOR_BORDER, 1, true));
 
-        JLabel catChip = new JLabel("🏷️ " + item.getCategory().getDisplayName());
+        JLabel catChip = new JLabel("Category: " + item.getCategory().getDisplayName());
         catChip.setFont(UIUtils.FONT_SMALL_BOLD);
         catChip.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
         highlightBox.add(catChip);
@@ -408,14 +454,14 @@ public class CommunityFeedPanel extends JPanel {
         if (isLost) {
             LostItem lost = (LostItem) item;
             if (lost.getRewardAmount() > 0.0) {
-                JLabel rewardChip = new JLabel(String.format("🏆 CASH REWARD: $%.2f", lost.getRewardAmount()));
+                JLabel rewardChip = new JLabel(String.format("Reward Offered: $%.2f", lost.getRewardAmount()));
                 rewardChip.setFont(UIUtils.FONT_SMALL_BOLD);
                 rewardChip.setForeground(new Color(220, 38, 38));
                 highlightBox.add(rewardChip);
             }
         } else {
             FoundItem found = (FoundItem) item;
-            JLabel storageChip = new JLabel("🔒 Custody: " + found.getStorageLocation());
+            JLabel storageChip = new JLabel("Secured Storage: " + found.getStorageLocation());
             storageChip.setFont(UIUtils.FONT_SMALL_BOLD);
             storageChip.setForeground(new Color(2, 132, 199));
             highlightBox.add(storageChip);
@@ -449,16 +495,16 @@ public class CommunityFeedPanel extends JPanel {
         int currentReactions = helpfulReactions.getOrDefault(item.getId(), defaultCount);
         boolean reacted = userHasReacted.getOrDefault(item.getId(), false);
 
-        JLabel reactionCountLabel = new JLabel(String.format("👍 %d keeping an eye out", currentReactions));
+        JLabel reactionCountLabel = new JLabel(String.format("%d Community Observers", currentReactions));
         reactionCountLabel.setFont(UIUtils.FONT_SMALL);
         reactionCountLabel.setForeground(UIUtils.COLOR_TEXT_MUTED);
         actionBar.add(reactionCountLabel, BorderLayout.WEST);
 
-        // Action Buttons (Facebook style)
+        // Action Buttons
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
 
-        JButton helpfulBtn = UIUtils.createModernButton(reacted ? "✓ Looking" : "👍 Look Out",
+        JButton helpfulBtn = UIUtils.createModernButton(reacted ? "✓ Tracking" : "Track Updates",
                 reacted ? UIUtils.COLOR_PRIMARY_LIGHT : new Color(244, 244, 246),
                 new Color(228, 228, 232),
                 reacted ? UIUtils.COLOR_PRIMARY : UIUtils.COLOR_TEXT_PRIMARY, 6);
@@ -471,27 +517,27 @@ public class CommunityFeedPanel extends JPanel {
                 cnt++;
                 userHasReacted.put(item.getId(), true);
                 helpfulReactions.put(item.getId(), cnt);
-                helpfulBtn.setText("✓ Looking");
+                helpfulBtn.setText("✓ Tracking");
                 helpfulBtn.setBackground(UIUtils.COLOR_PRIMARY_LIGHT);
                 helpfulBtn.setForeground(UIUtils.COLOR_PRIMARY);
             } else {
                 cnt--;
                 userHasReacted.put(item.getId(), false);
                 helpfulReactions.put(item.getId(), cnt);
-                helpfulBtn.setText("👍 Look Out");
+                helpfulBtn.setText("Track Updates");
                 helpfulBtn.setBackground(new Color(244, 244, 246));
                 helpfulBtn.setForeground(UIUtils.COLOR_TEXT_PRIMARY);
             }
-            reactionCountLabel.setText(String.format("👍 %d keeping an eye out", cnt));
+            reactionCountLabel.setText(String.format("%d Community Observers", cnt));
         });
 
-        JButton contactBtn = UIUtils.createModernButton(isLost ? "💬 Contact Owner" : "💬 Contact Finder",
+        JButton contactBtn = UIUtils.createModernButton(isLost ? "Contact Reporter" : "Contact Custodian",
                 UIUtils.COLOR_PRIMARY_LIGHT, UIUtils.COLOR_PRIMARY_BORDER, UIUtils.COLOR_PRIMARY, 6);
         contactBtn.setFont(UIUtils.FONT_SMALL_BOLD);
         contactBtn.setBorder(new EmptyBorder(6, 12, 6, 12));
         contactBtn.addActionListener(e -> openContactDialog(item, authorName, user));
 
-        JButton detailsBtn = UIUtils.createModernButton("Full Post ➔", Color.WHITE,
+        JButton detailsBtn = UIUtils.createModernButton("View Record", Color.WHITE,
                 UIUtils.COLOR_PRIMARY_LIGHT, UIUtils.COLOR_PRIMARY, 6);
         detailsBtn.setFont(UIUtils.FONT_SMALL_BOLD);
         detailsBtn.setBorder(new EmptyBorder(6, 12, 6, 12));
@@ -505,7 +551,7 @@ public class CommunityFeedPanel extends JPanel {
         footerSection.add(actionBar);
         footerSection.add(Box.createVerticalStrut(10));
 
-        // 4. Interactive Sighting Comments Thread (Facebook Style)
+        // 4. Interactive Sighting Comments Thread
         footerSection.add(createCommentsThreadPanel(item));
 
         postCard.add(footerSection, BorderLayout.SOUTH);
@@ -513,7 +559,7 @@ public class CommunityFeedPanel extends JPanel {
     }
 
     /**
-     * Creates an interactive, expandable Facebook-style comments section.
+     * Creates an interactive, expandable comments section.
      */
     private JPanel createCommentsThreadPanel(Item item) {
         JPanel threadPanel = new JPanel();
@@ -549,13 +595,13 @@ public class CommunityFeedPanel extends JPanel {
 
         JTextField commentField = new JTextField();
         commentField.setFont(UIUtils.FONT_BODY);
-        commentField.putClientProperty("JTextField.placeholderText", "Write a sighting tip or comment... (Press Enter)");
+        commentField.putClientProperty("JTextField.placeholderText", "Add verified sighting or location note... (Press Enter)");
         commentField.setBorder(new CompoundBorder(
                 new LineBorder(UIUtils.COLOR_BORDER, 1, true),
                 new EmptyBorder(6, 10, 6, 10)
         ));
 
-        JButton postCommentBtn = UIUtils.createPrimaryButton("Post");
+        JButton postCommentBtn = UIUtils.createPrimaryButton("Submit");
         postCommentBtn.setFont(UIUtils.FONT_SMALL_BOLD);
         postCommentBtn.setBorder(new EmptyBorder(6, 12, 6, 12));
 

@@ -132,11 +132,11 @@ public class LoginRegisterDialog extends JDialog {
         centerPerks.setOpaque(false);
         centerPerks.setBorder(new EmptyBorder(32, 0, 0, 0));
 
-        centerPerks.add(createPerkItem("🛡️ Role-Based Access Control", "Distinct privileges for Users and Administrators."));
+        centerPerks.add(createPerkItem("Role-Based Access Control", "Distinct privileges for Users and Administrators."));
         centerPerks.add(Box.createVerticalStrut(16));
-        centerPerks.add(createPerkItem("📰 Social Activity Feed", "Live community stream for sightings & rewards."));
+        centerPerks.add(createPerkItem("Community Activity Feed", "Live registry updates for property sightings and recoveries."));
         centerPerks.add(Box.createVerticalStrut(16));
-        centerPerks.add(createPerkItem("🔒 Secure Credentials", "Encrypted SHA-256 storage and session guards."));
+        centerPerks.add(createPerkItem("Secure Credentials", "Encrypted SHA-256 storage and session guards."));
 
         brandPanel.add(centerPerks, BorderLayout.CENTER);
 
@@ -226,19 +226,6 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(Box.createVerticalStrut(4));
         panel.add(sub);
         panel.add(Box.createVerticalStrut(16));
-
-        // Google Sign-In Action
-        JButton googleBtn = UIUtils.createGoogleButton("Continue with Google");
-        googleBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        googleBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        googleBtn.addActionListener(e -> handleGoogleLogin());
-        panel.add(googleBtn);
-
-        panel.add(Box.createVerticalStrut(12));
-        JPanel orDiv = UIUtils.createOrDivider("OR SIGN IN WITH USERNAME");
-        orDiv.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(orDiv);
-        panel.add(Box.createVerticalStrut(12));
 
         // Username
         panel.add(createFormLabel("Username:"));
@@ -378,19 +365,6 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(Box.createVerticalStrut(2));
         panel.add(sub);
         panel.add(Box.createVerticalStrut(12));
-
-        // Google Sign-Up Action
-        JButton googleRegBtn = UIUtils.createGoogleButton("Sign up with Google");
-        googleRegBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        googleRegBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        googleRegBtn.addActionListener(e -> handleGoogleLogin());
-        panel.add(googleRegBtn);
-
-        panel.add(Box.createVerticalStrut(10));
-        JPanel orRegDiv = UIUtils.createOrDivider("OR SIGN UP WITH EMAIL");
-        orRegDiv.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(orRegDiv);
-        panel.add(Box.createVerticalStrut(10));
 
         // Form Fields in 2 columns
         JPanel formGrid = new JPanel(new GridLayout(5, 2, 10, 8));

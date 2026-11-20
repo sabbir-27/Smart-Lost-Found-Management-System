@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,6 +57,7 @@ public class TestSuite {
         testWebFeedServerSecurityAndAccess();
         testGoogleAuthenticationAndAutoRegistration();
         testMongoArchitectureAndBsonMapping();
+        testFeedNewestFirstChronologicalOrdering();
 
         System.out.println("==========================================================");
         System.out.printf("Test Results: %d Passed, %d Failed\n", testsPassed, testsFailed);
@@ -729,6 +731,69 @@ public class TestSuite {
 
         } catch (Exception e) {
             System.err.println("MongoDB test failed with exception: " + e.getMessage());
+            e.printStackTrace();
+            testsFailed++;
+        }
+    }
+
+    private static void testFeedNewestFirstChronologicalOrdering() {
+        System.out.println("\n--- 16. Testing Community Feed Chronological Ordering (Newest Items First) ---");
+        try {
+            LostItem oldItem = new LostItem(
+                    "LOST-9001", "Old Notebook", ItemCategory.OTHER,
+                    LocalDate.now().minusDays(5), "Desc", ItemStatus.LOST,
+                    new User("User1", "u1@test.com", "111"), "Hall A", 0.0
+            );
+            oldItem.setCreatedAt(LocalDateTime.now().minusDays(5));
+
+            FoundItem midItem = new FoundItem(
+                    "FND-9002", "Mid Jacket", ItemCategory.CLOTHING,
+                    LocalDate.now().minusDays(1), "Desc", ItemStatus.FOUND,
+                    new User("User2", "u2@test.com", "222"), "Gym", "Locker 1", "Staff"
+            );
+            midItem.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+            LostItem latestItem = new LostItem(
+                    "LOST-9003", "Brand New Phone", ItemCategory.ELECTRONICS,
+                    LocalDate.now(), "Desc", ItemStatus.LOST,
+                    new User("User3", "u3@test.com", "333"), "Cafeteria", 50.0
+            );
+            latestItem.setCreatedAt(LocalDateTime.now());
+
+            List<Item> unsorted = List.of(oldItem, midItem, latestItem);
+            List<Item> sorted = new java.util.ArrayList<>(unsorted);
+            sorted.sort((a, b) -> {
+                if (a.getCreatedAt() != null && b.getCreatedAt() != null) {
+                    int c = b.getCreatedAt().compareTo(a.getCreatedAt());
+                    if (c != 0) return c;
+                }
+                if (a.getDate() != null && b.getDate() != null) {
+                    int c = b.getDate().compareTo(a.getDate());
+                    if (c != 0) return c;
+                }
+                if (a.getId() != null && b.getId() != null) {
+                    return b.getId().compareTo(a.getId());
+                }
+                return 0;
+            });
+
+            assertEquals("LOST-9003", sorted.get(0).getId(), "Most recently posted item appears first at top of feed");
+            assertEquals("FND-9002", sorted.get(1).getId(), "Intermediate item appears second in feed");
+            assertEquals("LOST-9001", sorted.get(2).getId(), "Older item appears last in feed");
+
+            // Verify manager places newly reported item at top of list
+            Path tempCsv = Files.createTempFile("test_feed_order_", ".csv");
+            LostFoundManager manager = new LostFoundManager(new CsvItemStorageService(tempCsv));
+            LostItem newlyPosted = manager.reportLostItem(
+                    "Super New Item", ItemCategory.ELECTRONICS, LocalDate.now(),
+                    "Freshly dropped", new User("Tester", "t@test.com", "123"), "Room 101", 20.0
+            );
+            assertEquals(newlyPosted.getId(), manager.getAllItems().get(0).getId(),
+                    "Manager.reportLostItem places newly posted item at index 0 (top of feed)");
+            Files.deleteIfExists(tempCsv);
+
+        } catch (Exception e) {
+            System.err.println("Feed chronological test failed: " + e.getMessage());
             e.printStackTrace();
             testsFailed++;
         }

@@ -96,25 +96,7 @@ public class GuestReportAuthDialog extends JDialog {
 
         root.add(Box.createVerticalStrut(26));
 
-        // 3. Prominent Google Login Action
-        JButton googleBtn = UIUtils.createGoogleButton("Sign up with Google");
-        googleBtn.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 14));
-        googleBtn.setMaximumSize(new Dimension(380, 46));
-        googleBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        googleBtn.addActionListener(e -> handleGoogleAuth());
-        root.add(googleBtn);
-
-        root.add(Box.createVerticalStrut(16));
-
-        // 4. Subtle "OR SIGN UP WITH EMAIL" Divider
-        JPanel divider = UIUtils.createOrDivider("OR SIGN UP WITH EMAIL");
-        divider.setAlignmentX(Component.CENTER_ALIGNMENT);
-        divider.setMaximumSize(new Dimension(380, 24));
-        root.add(divider);
-
-        root.add(Box.createVerticalStrut(16));
-
-        // 5. Standard Email Sign Up Action
+        // Standard Email Sign Up Action
         JButton signUpBtn = UIUtils.createPrimaryButton("Create Account with Email");
         signUpBtn.setFont(UIUtils.FONT_HEADER);
         signUpBtn.setMaximumSize(new Dimension(380, 44));
