@@ -261,12 +261,8 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(loginShowPassCheck);
         panel.add(Box.createVerticalStrut(16));
 
-        // One-Click Demo Credentials
-        panel.add(createDemoQuickFillSection());
-        panel.add(Box.createVerticalStrut(18));
-
         // Sign In Button
-        JButton signInSubmit = UIUtils.createPrimaryButton("Sign In to Recovery Hub");
+        JButton signInSubmit = UIUtils.createPrimaryButton("Sign In");
         signInSubmit.setFont(UIUtils.FONT_HEADER);
         signInSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         signInSubmit.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -280,8 +276,8 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(Box.createVerticalStrut(10));
 
         String guestText = (controller.getCurrentUser() != null)
-                ? "🔒 Sign Out & Continue as Guest"
-                : "👀 Continue as Guest (Browse Only)";
+                ? "Sign Out & Continue as Guest"
+                : "Continue as Guest (Browse Only)";
         JButton guestBtn = UIUtils.createSecondaryButton(guestText);
         guestBtn.setFont(UIUtils.FONT_BODY_BOLD);
         guestBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
@@ -291,58 +287,6 @@ public class LoginRegisterDialog extends JDialog {
         panel.add(guestBtn);
 
         return panel;
-    }
-
-    private JPanel createDemoQuickFillSection() {
-        JPanel demoBox = new JPanel();
-        demoBox.setLayout(new BoxLayout(demoBox, BoxLayout.Y_AXIS));
-        demoBox.setOpaque(false);
-        demoBox.setBorder(new CompoundBorder(
-                new LineBorder(new Color(228, 228, 231), 1, true),
-                new EmptyBorder(10, 12, 10, 12)
-        ));
-        demoBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-        demoBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel label = new JLabel("⚡ Quick Demo Access (1-Click Fill):");
-        label.setFont(UIUtils.FONT_SMALL_BOLD);
-        label.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
-        demoBox.add(label);
-        demoBox.add(Box.createVerticalStrut(6));
-
-        JPanel pills = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        pills.setOpaque(false);
-
-        JButton adminPill = UIUtils.createModernButton("👑 Admin (admin)",
-                UIUtils.COLOR_PRIMARY_LIGHT, UIUtils.COLOR_PRIMARY_BORDER, UIUtils.COLOR_PRIMARY, 6);
-        adminPill.setFont(UIUtils.FONT_SMALL_BOLD);
-        adminPill.addActionListener(e -> {
-            loginUsernameField.setText("admin");
-            loginPasswordField.setText("admin123");
-        });
-
-        JButton userPill = UIUtils.createModernButton("👤 User (john)",
-                new Color(239, 246, 255), new Color(191, 219, 254), new Color(29, 78, 216), 6);
-        userPill.setFont(UIUtils.FONT_SMALL_BOLD);
-        userPill.addActionListener(e -> {
-            loginUsernameField.setText("john");
-            loginPasswordField.setText("user123");
-        });
-
-        JButton userPill2 = UIUtils.createModernButton("👤 User (sarah)",
-                new Color(243, 244, 246), new Color(229, 231, 235), new Color(55, 65, 81), 6);
-        userPill2.setFont(UIUtils.FONT_SMALL_BOLD);
-        userPill2.addActionListener(e -> {
-            loginUsernameField.setText("sarah");
-            loginPasswordField.setText("user123");
-        });
-
-        pills.add(adminPill);
-        pills.add(userPill);
-        pills.add(userPill2);
-        demoBox.add(pills);
-
-        return demoBox;
     }
 
     private JPanel createRegisterPanel() {
@@ -404,7 +348,8 @@ public class LoginRegisterDialog extends JDialog {
         // Row 5: Admin Secret Code
         regAdminCodeField = new JPasswordField(15);
         regAdminCodeField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_BORDER, 1, true), new EmptyBorder(6, 10, 6, 10)));
-        adminCodeContainer = createLabeledField("Admin Security Code (Use: ADMIN2026)", regAdminCodeField);
+        regAdminCodeField.setToolTipText("Enter administrator authorization code");
+        adminCodeContainer = createLabeledField("Administrator Security Code *", regAdminCodeField);
         adminCodeContainer.setVisible(false);
 
         formGrid.add(adminCodeContainer);

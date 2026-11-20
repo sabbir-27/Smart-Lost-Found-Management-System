@@ -785,7 +785,7 @@ public class MainFrame extends JFrame {
                     "Executive Administrator privileges are required to access the Admin Console.\n" +
                     "Currently signed in as: @" + current.getUsername() +
                     " (" + current.getRole().getDisplayName() + ").\n\n" +
-                    "Would you like to switch to an Administrator account (e.g. admin / admin123)?",
+                    "Would you like to switch to an Administrator account?",
                     "Administrative Permission Required",
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 

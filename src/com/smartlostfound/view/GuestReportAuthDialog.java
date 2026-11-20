@@ -96,8 +96,8 @@ public class GuestReportAuthDialog extends JDialog {
 
         root.add(Box.createVerticalStrut(26));
 
-        // Standard Email Sign Up Action
-        JButton signUpBtn = UIUtils.createPrimaryButton("Create Account with Email");
+        // Standard Sign Up Action
+        JButton signUpBtn = UIUtils.createPrimaryButton("Create Account");
         signUpBtn.setFont(UIUtils.FONT_HEADER);
         signUpBtn.setMaximumSize(new Dimension(380, 44));
         signUpBtn.setAlignmentX(Component.CENTER_ALIGNMENT);

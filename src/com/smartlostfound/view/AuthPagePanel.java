@@ -18,8 +18,8 @@ import java.awt.geom.RoundRectangle2D;
  * Streamlined Full-Page Executive Authentication Portal.
  * Designed to elite SaaS standards (Stripe, Linear, Apple ID, Vercel):
  * - Left 42%: Minimalist Obsidian branding with strong typography and crisp value props.
- * - Right 58%: Pure, distraction-free authentication column with seamless segmented switcher,
- *   integrated password toggle, and understated demo chips.
+ * - Right 58%: Pure, distraction-free authentication column with seamless segmented switcher
+ *   and integrated password toggle.
  */
 public class AuthPagePanel extends JPanel {
 
@@ -182,18 +182,18 @@ public class AuthPagePanel extends JPanel {
         centerContent.add(Box.createVerticalStrut(32));
 
         // 3 Clean, Minimalist Feature Highlights (no marketing fluff)
-        centerContent.add(createMinimalBullet("⚡", "Real-Time Visual Feed", "16:9 high-res photos and interactive lightbox zoom."));
-        centerContent.add(Box.createVerticalStrut(16));
-        centerContent.add(createMinimalBullet("🛡️", "Verified Custody & Security", "Role-based oversight and authenticated claims."));
-        centerContent.add(Box.createVerticalStrut(16));
-        centerContent.add(createMinimalBullet("💾", "Zero Data Loss Storage", "Atomic persistent synchronization committed to disk."));
+        centerContent.add(createMinimalBullet("■", UIUtils.COLOR_PRIMARY, "Real-Time Visual Registry", "High-definition imagery and verified status updates."));
+        centerContent.add(Box.createVerticalStrut(18));
+        centerContent.add(createMinimalBullet("▲", UIUtils.COLOR_BLUE, "Verified Custody & Access", "Role-based authorization with authenticated audit history."));
+        centerContent.add(Box.createVerticalStrut(18));
+        centerContent.add(createMinimalBullet("●", UIUtils.COLOR_SUCCESS, "Persistent Data Security", "Atomic synchronization guaranteeing zero data loss."));
 
         centerContent.add(Box.createVerticalGlue());
 
         panel.add(centerContent, BorderLayout.CENTER);
 
         // Bottom Footer
-        JLabel bottomTrust = new JLabel("🔒 256-Bit Encrypted • Local Storage • Privacy First");
+        JLabel bottomTrust = new JLabel("256-Bit Cryptographic Security • Local Storage • Privacy by Design");
         bottomTrust.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 11));
         bottomTrust.setForeground(UIUtils.COLOR_SIDEBAR_MUTED);
         panel.add(bottomTrust, BorderLayout.SOUTH);
@@ -201,17 +201,18 @@ public class AuthPagePanel extends JPanel {
         return panel;
     }
 
-    private JPanel createMinimalBullet(String icon, String title, String desc) {
-        JPanel row = new JPanel(new BorderLayout(12, 0));
+    private JPanel createMinimalBullet(String symbol, Color accentColor, String title, String desc) {
+        JPanel row = new JPanel(new BorderLayout(14, 0));
         row.setOpaque(false);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
 
-        JLabel iconLabel = new JLabel(icon);
-        iconLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 16));
+        JLabel iconLabel = new JLabel(symbol);
+        iconLabel.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 12));
+        iconLabel.setForeground(accentColor);
         row.add(iconLabel, BorderLayout.WEST);
 
-        JPanel text = new JPanel(new GridLayout(2, 1, 0, 1));
+        JPanel text = new JPanel(new GridLayout(2, 1, 0, 2));
         text.setOpaque(false);
 
         JLabel tLabel = new JLabel(title);
@@ -421,11 +422,6 @@ public class AuthPagePanel extends JPanel {
         guestBtn.addActionListener(e -> handleContinueAsGuest());
         panel.add(guestBtn);
 
-        panel.add(Box.createVerticalStrut(24));
-
-        // Understated, Clean Demo Autofill Bar (Subtle & Professional)
-        panel.add(createCleanDemoBar());
-
         return panel;
     }
 
@@ -467,9 +463,9 @@ public class AuthPagePanel extends JPanel {
             }
         });
 
-        // Integrated eye toggle button
-        passToggleBtn = new JButton("👁");
-        passToggleBtn.setFont(new Font(UIUtils.FONT_FAMILY, Font.PLAIN, 14));
+        // Integrated password visibility toggle
+        passToggleBtn = new JButton("SHOW");
+        passToggleBtn.setFont(new Font(UIUtils.FONT_FAMILY, Font.BOLD, 10));
         passToggleBtn.setForeground(UIUtils.COLOR_TEXT_MUTED);
         passToggleBtn.setContentAreaFilled(false);
         passToggleBtn.setBorderPainted(false);
@@ -480,6 +476,7 @@ public class AuthPagePanel extends JPanel {
         passToggleBtn.addActionListener(e -> {
             isPasswordVisible = !isPasswordVisible;
             loginPasswordField.setEchoChar(isPasswordVisible ? (char) 0 : '•');
+            passToggleBtn.setText(isPasswordVisible ? "HIDE" : "SHOW");
             passToggleBtn.setForeground(isPasswordVisible ? UIUtils.COLOR_PRIMARY : UIUtils.COLOR_TEXT_MUTED);
         });
 
@@ -487,41 +484,6 @@ public class AuthPagePanel extends JPanel {
         passPanel.add(passToggleBtn, BorderLayout.EAST);
 
         return passPanel;
-    }
-
-    private JPanel createCleanDemoBar() {
-        JPanel bar = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-        bar.setOpaque(false);
-        bar.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-
-        JLabel demoHint = new JLabel("Demo fill:");
-        demoHint.setFont(UIUtils.FONT_SMALL);
-        demoHint.setForeground(UIUtils.COLOR_TEXT_MUTED);
-        bar.add(demoHint);
-
-        bar.add(createFastChip("Admin", "admin", "admin123"));
-        bar.add(createFastChip("John", "john", "user123"));
-        bar.add(createFastChip("Sarah", "sarah", "user123"));
-
-        return bar;
-    }
-
-    private JButton createFastChip(String label, String u, String p) {
-        JButton btn = new JButton(label);
-        btn.setFont(UIUtils.FONT_SMALL_BOLD);
-        btn.setForeground(UIUtils.COLOR_TEXT_SECONDARY);
-        btn.setBackground(new Color(244, 244, 246));
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(new EmptyBorder(3, 8, 3, 8));
-        btn.addActionListener(e -> {
-            loginUsernameField.setText(u);
-            loginPasswordField.setText(p);
-            loginUsernameField.requestFocus();
-        });
-        return btn;
     }
 
     // =========================================================================
@@ -577,8 +539,9 @@ public class AuthPagePanel extends JPanel {
         panel.add(Box.createVerticalStrut(4));
         regPasswordField = new JPasswordField(20);
         regPasswordField.setFont(UIUtils.FONT_BODY);
+        regPasswordField.setCaretColor(UIUtils.COLOR_PRIMARY);
         regPasswordField.setBorder(new CompoundBorder(
-                new LineBorder(UIUtils.COLOR_BORDER, 1, true),
+                new UIUtils.RoundedLineBorder(UIUtils.COLOR_BORDER, 1, 8),
                 new EmptyBorder(8, 12, 8, 12)
         ));
         regPasswordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
@@ -586,9 +549,9 @@ public class AuthPagePanel extends JPanel {
         panel.add(regPasswordField);
         panel.add(Box.createVerticalStrut(10));
 
-        panel.add(createFieldLabel("Account Role"));
+        panel.add(createFieldLabel("Account Role *"));
         panel.add(Box.createVerticalStrut(4));
-        String[] roles = {"Standard Community User", "Executive Administrator"};
+        String[] roles = {"Standard User", "Administrator"};
         regRoleCombo = new JComboBox<>(roles);
         regRoleCombo.setFont(UIUtils.FONT_BODY);
         regRoleCombo.setBackground(Color.WHITE);
@@ -605,12 +568,13 @@ public class AuthPagePanel extends JPanel {
         adminCodeContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
         adminCodeContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
-        JLabel keyLabel = new JLabel("Admin Key (ADMIN2026):");
+        JLabel keyLabel = new JLabel("Administrator Verification Key *");
         keyLabel.setFont(UIUtils.FONT_SMALL_BOLD);
         keyLabel.setForeground(UIUtils.COLOR_PRIMARY);
 
         regAdminCodeField = new JPasswordField(15);
         regAdminCodeField.setBorder(new CompoundBorder(new LineBorder(UIUtils.COLOR_PRIMARY, 1, true), new EmptyBorder(6, 10, 6, 10)));
+        regAdminCodeField.setToolTipText("Enter system administrator verification key");
         regAdminCodeField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
 
         adminCodeContainer.add(keyLabel);
