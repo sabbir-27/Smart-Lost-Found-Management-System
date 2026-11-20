@@ -558,6 +558,13 @@ public class MainFrame extends JFrame {
                 break;
 
             case "DASHBOARD":
+                JButton refreshRecordsBtn = UIUtils.createModernButton("Refresh Records", new Color(244, 244, 246),
+                        new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
+                refreshRecordsBtn.addActionListener(e -> {
+                    controller.refreshView();
+                    setStatusMessage("Inventory records refreshed.");
+                });
+
                 JButton feedToggleBtn = UIUtils.createModernButton("Community Feed", new Color(244, 244, 246),
                         new Color(228, 228, 232), UIUtils.COLOR_TEXT_PRIMARY, 8);
                 feedToggleBtn.addActionListener(e -> switchToFeed());
@@ -568,6 +575,7 @@ public class MainFrame extends JFrame {
                 JButton dashFoundBtn = UIUtils.createDarkButton("+ Report Found Item");
                 dashFoundBtn.addActionListener(e -> switchToReportFound());
 
+                topBarActionsContainer.add(refreshRecordsBtn);
                 topBarActionsContainer.add(feedToggleBtn);
                 topBarActionsContainer.add(dashLostBtn);
                 topBarActionsContainer.add(dashFoundBtn);

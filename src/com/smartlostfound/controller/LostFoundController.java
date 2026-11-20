@@ -96,32 +96,39 @@ public class LostFoundController {
      * Administrators have universal access; standard users can modify items they reported.
      */
     public boolean canModifyItem(Item item) {
-        if (item == null) {
-            return false;
-        }
-        if (currentUser == null) {
+        if (item == null || currentUser == null) {
             return false;
         }
         if (currentUser.isAdmin()) {
             return true;
         }
-        if (item.getReporter() == null) {
+        return isItemReportedByUser(item, currentUser);
+    }
+
+    /**
+     * Verifies if a given item was reported by the specified user account based on
+     * matching contact email, phone, name, or username.
+     */
+    public boolean isItemReportedByUser(Item item, UserAccount user) {
+        if (item == null || user == null || item.getReporter() == null) {
             return false;
         }
 
-        String myName = currentUser.getName().toLowerCase();
-        String myEmail = currentUser.getEmail().toLowerCase();
-        String myPhone = currentUser.getPhone().toLowerCase();
-        String myUser = currentUser.getUsername().toLowerCase();
+        String myName = user.getName() != null ? user.getName().toLowerCase().trim() : "";
+        String myEmail = user.getEmail() != null ? user.getEmail().toLowerCase().trim() : "";
+        String myPhone = user.getPhone() != null ? user.getPhone().toLowerCase().trim() : "";
+        String myUser = user.getUsername() != null ? user.getUsername().toLowerCase().trim() : "";
 
-        String repName = item.getReporter().getName().toLowerCase();
-        String repEmail = item.getReporter().getEmail().toLowerCase();
-        String repPhone = item.getReporter().getPhone().toLowerCase();
+        String repName = item.getReporter().getName() != null ? item.getReporter().getName().toLowerCase().trim() : "";
+        String repEmail = item.getReporter().getEmail() != null ? item.getReporter().getEmail().toLowerCase().trim() : "";
+        String repPhone = item.getReporter().getPhone() != null ? item.getReporter().getPhone().toLowerCase().trim() : "";
 
-        return (!myName.isEmpty() && repName.contains(myName)) ||
-                (!myEmail.isEmpty() && repEmail.equalsIgnoreCase(myEmail)) ||
-                (!myPhone.isEmpty() && repPhone.equalsIgnoreCase(myPhone)) ||
-                repName.contains(myUser);
+        boolean matchEmail = !myEmail.isEmpty() && !repEmail.isEmpty() && repEmail.equalsIgnoreCase(myEmail);
+        boolean matchPhone = !myPhone.isEmpty() && !repPhone.isEmpty() && repPhone.equalsIgnoreCase(myPhone);
+        boolean matchName = !myName.isEmpty() && !repName.isEmpty() && (repName.contains(myName) || myName.contains(repName));
+        boolean matchUsername = !myUser.isEmpty() && ((!repName.isEmpty() && repName.contains(myUser)) || (!repEmail.isEmpty() && repEmail.contains(myUser)));
+
+        return matchEmail || matchPhone || matchName || matchUsername;
     }
 
     /**
@@ -259,25 +266,48 @@ public class LostFoundController {
     /**
      * Handles item deletion after user confirmation and role-based permission verification.
      */
-    public void handleDeleteItem(String itemId, Window parent) {
+    public boolean handleDeleteItem(String itemId, Window parent) {
+        if (itemId == null || itemId.trim().isEmpty()) {
+            return false;
+        }
         Optional<Item> itemOpt = manager.getItemById(itemId);
         if (!itemOpt.isPresent()) {
             JOptionPane.showMessageDialog(parent,
                     "Record not found: " + itemId,
                     "Not Found", JOptionPane.WARNING_MESSAGE);
-            return;
+            return false;
         }
 
         Item item = itemOpt.get();
+        if (currentUser == null) {
+            int signInChoice = JOptionPane.showOptionDialog(parent,
+                    "Authentication Required:\n\n" +
+                    "You are currently browsing as a Guest.\n" +
+                    "Please sign in to delete or manage property records.",
+                    "Sign In Required",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null,
+                    new String[]{"Sign In / Register", "Cancel"},
+                    "Sign In / Register");
+            if (signInChoice == 0) {
+                openLoginDialog(parent);
+            }
+            return false;
+        }
+
         if (!canModifyItem(item)) {
+            String reporterDisplay = (item.getReporter() != null && !item.getReporter().getName().isEmpty())
+                    ? item.getReporter().getName()
+                    : "another user";
             JOptionPane.showMessageDialog(parent,
                     "Permission Denied:\n" +
-                    "Standard users (@" + (currentUser != null ? currentUser.getUsername() : "user") +
+                    "Standard users (@" + currentUser.getUsername() +
                     ") can only delete property reports submitted by themselves.\n" +
-                    "This item was reported by: " + (item.getReporter() != null ? item.getReporter().getName() : "another user") + ".\n\n" +
+                    "This item was reported by: " + reporterDisplay + ".\n\n" +
                     "Please contact a System Administrator (@admin) to manage this record.",
                     "Administrative Permission Required", JOptionPane.WARNING_MESSAGE);
-            return;
+            return false;
         }
 
         int choice = JOptionPane.showConfirmDialog(parent,
@@ -291,20 +321,29 @@ public class LostFoundController {
             try {
                 boolean deleted = manager.deleteItem(itemId);
                 if (deleted) {
-                    JOptionPane.showMessageDialog(parent,
-                            "Record " + itemId + " has been successfully removed.",
-                            "Record Deleted", JOptionPane.INFORMATION_MESSAGE);
+                    // Refresh views and KPI statistics immediately before showing dialog
                     refreshView();
                     if (mainFrame != null) {
                         mainFrame.setStatusMessage("Deleted record: " + itemId);
                     }
+                    JOptionPane.showMessageDialog(parent,
+                            "Record " + itemId + " has been successfully removed.",
+                            "Record Deleted", JOptionPane.INFORMATION_MESSAGE);
+                    return true;
+                } else {
+                    JOptionPane.showMessageDialog(parent,
+                            "Could not delete record " + itemId + ". The item was not found.",
+                            "Deletion Failed", JOptionPane.ERROR_MESSAGE);
+                    return false;
                 }
             } catch (DataPersistenceException e) {
                 JOptionPane.showMessageDialog(parent,
                         "Failed to update storage file after deletion:\n" + e.getMessage(),
                         "Storage Error", JOptionPane.ERROR_MESSAGE);
+                return false;
             }
         }
+        return false;
     }
 
     /**
@@ -322,6 +361,11 @@ public class LostFoundController {
      * Re-executes current filters and updates the Dashboard view, Feed, User Panel, and Admin Console.
      */
     public void refreshView() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(this::refreshView);
+            return;
+        }
+
         if (mainFrame == null) {
             return;
         }
@@ -346,6 +390,9 @@ public class LostFoundController {
         if (mainFrame.getAdminConsolePanel() != null) {
             mainFrame.getAdminConsolePanel().refreshData();
         }
+
+        mainFrame.revalidate();
+        mainFrame.repaint();
     }
 
     /**

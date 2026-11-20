@@ -1,7 +1,7 @@
 USERNAME,PASSWORD_HASH,ROLE,NAME,EMAIL,PHONE,CREATED_AT,ACTIVE
 alex.rivera.dev,6e64ee584ffd9ad6145a244a99a8d34b0aea2aa0aa53785bd9705e5ed3d43626,USER,Alex Rivera,alex.rivera.dev@gmail.com,,2026-11-11T17:10:48.221443139,true
 sarah.jenkins.commun,fa5868eb2cd4cc4fb03711ff23e0573f86ae73b5276844da947b49ad172e22ae,USER,Sarah Jenkins,sarah.jenkins.community@gmail.com,,2026-11-11T17:36:18.942041005,true
-sakib,f51ee467276ed1a1042d20c8f9941e1ce3f8d4eb4de9997b8b80c82e26de6075,USER,sakib,sakib@gmail.com,,2026-11-20T12:12:22.410252776,true
 admin,240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9,ADMIN,System Administrator,admin@lostfound.org,+1-800-ADMIN-01,2026-11-11T15:30:11.074347927,true
 sarah,e606e38b0d8c19b24cf0ee3808183162ea7cd63ff7912dbb22b5e803286b4446,USER,Sarah Jenkins,sarah.j@example.com,+1-555-0142,2026-11-11T15:30:11.074832917,true
 john,e606e38b0d8c19b24cf0ee3808183162ea7cd63ff7912dbb22b5e803286b4446,USER,John Doe,john.doe@example.com,+1-555-0199,2026-11-11T15:30:11.074628689,true
+rafi,9e09b028d148e82ed45c00ddf2afa53dd0b936d8c91e3dc02fb174880de74f92,USER,rafi,rafi@gmail.com,,2026-11-20T13:07:24.295380637,true

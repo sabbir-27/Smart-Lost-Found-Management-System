@@ -502,6 +502,22 @@ public class TestSuite {
             assertTrue(controller.canModifyItem(johnItem), "John can modify his own item");
             assertTrue(!controller.canModifyItem(sarahItem), "John CANNOT modify Sarah's item");
 
+            // Substring / variation matching test
+            User reporterShort = new User("John", "other@example.com", "");
+            LostItem shortItem = itemManager.reportLostItem(
+                    "Blue Pen", ItemCategory.OTHER, LocalDate.now(),
+                    "Ballpoint", reporterShort, "Desk", 0.0);
+            assertTrue(controller.canModifyItem(shortItem), "John can modify item reported as 'John'");
+
+            // Null user check
+            controller.setCurrentUser(null);
+            assertTrue(!controller.canModifyItem(johnItem), "Guest cannot modify items");
+
+            // Robust deletion tests with whitespace, null, and non-existent IDs
+            assertTrue(itemManager.deleteItem("  " + johnItem.getId() + "  "), "deleteItem succeeds with whitespace trimmed ID");
+            assertTrue(!itemManager.deleteItem("NON_EXISTENT_ID"), "deleteItem returns false for nonexistent ID");
+            assertTrue(!itemManager.deleteItem(null), "deleteItem returns false for null ID");
+
             Files.deleteIfExists(tempItemCsv);
             Files.deleteIfExists(tempUserCsv);
         } catch (Exception e) {

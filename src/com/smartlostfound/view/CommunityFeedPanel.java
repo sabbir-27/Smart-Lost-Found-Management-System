@@ -546,6 +546,17 @@ public class CommunityFeedPanel extends JPanel {
         actions.add(helpfulBtn);
         actions.add(contactBtn);
         actions.add(detailsBtn);
+
+        if (controller.canModifyItem(item)) {
+            JButton deleteBtn = UIUtils.createModernButton("Delete", new Color(254, 242, 242),
+                    new Color(254, 202, 202), UIUtils.COLOR_PRIMARY, 6);
+            deleteBtn.setFont(UIUtils.FONT_SMALL_BOLD);
+            deleteBtn.setBorder(new EmptyBorder(6, 12, 6, 12));
+            deleteBtn.setToolTipText("Permanently delete this property record");
+            deleteBtn.addActionListener(e -> controller.handleDeleteItem(item.getId(), SwingUtilities.getWindowAncestor(this)));
+            actions.add(deleteBtn);
+        }
+
         actionBar.add(actions, BorderLayout.EAST);
 
         footerSection.add(actionBar);

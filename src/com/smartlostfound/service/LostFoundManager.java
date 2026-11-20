@@ -194,7 +194,11 @@ public class LostFoundManager {
      * @throws DataPersistenceException if persistence fails
      */
     public synchronized boolean deleteItem(String itemId) throws DataPersistenceException {
-        boolean removed = items.removeIf(item -> item.getId().equalsIgnoreCase(itemId));
+        if (itemId == null || itemId.trim().isEmpty()) {
+            return false;
+        }
+        String cleanId = itemId.trim();
+        boolean removed = items.removeIf(item -> item.getId() != null && item.getId().trim().equalsIgnoreCase(cleanId));
         if (removed) {
             persistCurrentState();
         }
@@ -209,8 +213,9 @@ public class LostFoundManager {
      */
     public Optional<Item> getItemById(String itemId) {
         if (itemId == null) return Optional.empty();
+        String cleanId = itemId.trim();
         return items.stream()
-                .filter(item -> item.getId().equalsIgnoreCase(itemId.trim()))
+                .filter(item -> item.getId() != null && item.getId().trim().equalsIgnoreCase(cleanId))
                 .findFirst();
     }
 

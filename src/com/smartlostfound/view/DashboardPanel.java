@@ -393,12 +393,22 @@ public class DashboardPanel extends JPanel {
         deleteBtn.setEnabled(false);
         deleteBtn.addActionListener(e -> onDeleteItem());
 
+        JButton refreshBtn = UIUtils.createSecondaryButton("Refresh Records");
+        refreshBtn.addActionListener(e -> {
+            controller.refreshView();
+            Window w = SwingUtilities.getWindowAncestor(this);
+            if (w instanceof MainFrame) {
+                ((MainFrame) w).setStatusMessage("Inventory records refreshed.");
+            }
+        });
+
         JButton reloadBtn = UIUtils.createDarkButton("Sync Storage");
         reloadBtn.addActionListener(e -> controller.handleReloadData());
 
         buttonGroup.add(viewDetailsBtn);
         buttonGroup.add(updateStatusBtn);
         buttonGroup.add(deleteBtn);
+        buttonGroup.add(refreshBtn);
         buttonGroup.add(reloadBtn);
 
         footer.add(buttonGroup, BorderLayout.EAST);
@@ -406,7 +416,7 @@ public class DashboardPanel extends JPanel {
     }
 
     private void updateButtonStates() {
-        boolean hasSelection = itemTable.getSelectedRow() != -1;
+        boolean hasSelection = getSelectedItem() != null;
         viewDetailsBtn.setEnabled(hasSelection);
         updateStatusBtn.setEnabled(hasSelection);
         deleteBtn.setEnabled(hasSelection);
@@ -414,8 +424,11 @@ public class DashboardPanel extends JPanel {
 
     public Item getSelectedItem() {
         int selectedRow = itemTable.getSelectedRow();
-        if (selectedRow != -1) {
-            return tableModel.getItemAt(selectedRow);
+        if (selectedRow != -1 && selectedRow < itemTable.getRowCount()) {
+            int modelRow = itemTable.convertRowIndexToModel(selectedRow);
+            if (modelRow >= 0 && modelRow < tableModel.getRowCount()) {
+                return tableModel.getItemAt(modelRow);
+            }
         }
         return null;
     }
@@ -463,6 +476,7 @@ public class DashboardPanel extends JPanel {
     }
 
     public void displayItems(List<Item> items, int totalTotalCount) {
+        itemTable.clearSelection();
         tableModel.setItems(items);
         countStatusLabel.setText(String.format("Showing %d of %d active records", items.size(), totalTotalCount));
         updateButtonStates();

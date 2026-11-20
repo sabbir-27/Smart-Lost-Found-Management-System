@@ -227,30 +227,15 @@ public class MyItemsPanel extends JPanel {
     }
 
     public void refreshData() {
+        itemTable.clearSelection();
         UserAccount current = controller.getCurrentUser();
         List<Item> all = controller.getManager().getAllItems();
         List<Item> myItems = new ArrayList<>();
 
         if (current != null) {
-            String myName = current.getName().toLowerCase();
-            String myEmail = current.getEmail().toLowerCase();
-            String myPhone = current.getPhone().toLowerCase();
-            String myUser = current.getUsername().toLowerCase();
-
             for (Item item : all) {
-                if (item.getReporter() != null) {
-                    String repName = item.getReporter().getName().toLowerCase();
-                    String repEmail = item.getReporter().getEmail().toLowerCase();
-                    String repPhone = item.getReporter().getPhone().toLowerCase();
-
-                    boolean matches = (!myName.isEmpty() && repName.contains(myName)) ||
-                            (!myEmail.isEmpty() && repEmail.equalsIgnoreCase(myEmail)) ||
-                            (!myPhone.isEmpty() && repPhone.equalsIgnoreCase(myPhone)) ||
-                            repName.contains(myUser);
-
-                    if (matches) {
-                        myItems.add(item);
-                    }
+                if (controller.isItemReportedByUser(item, current)) {
+                    myItems.add(item);
                 }
             }
         }
@@ -276,8 +261,11 @@ public class MyItemsPanel extends JPanel {
 
     public Item getSelectedItem() {
         int row = itemTable.getSelectedRow();
-        if (row != -1 && row < tableModel.getRowCount()) {
-            return tableModel.getItemAt(row);
+        if (row != -1 && row < itemTable.getRowCount()) {
+            int modelRow = itemTable.convertRowIndexToModel(row);
+            if (modelRow >= 0 && modelRow < tableModel.getRowCount()) {
+                return tableModel.getItemAt(modelRow);
+            }
         }
         return null;
     }

@@ -199,6 +199,17 @@ public class ItemDetailDialog extends JDialog {
                 new EmptyBorder(8, 20, 8, 20)
         ));
 
+        if (controller.canModifyItem(item)) {
+            JButton deleteBtn = UIUtils.createDangerButton("Delete Record");
+            deleteBtn.addActionListener(e -> {
+                boolean deleted = controller.handleDeleteItem(item.getId(), this);
+                if (deleted) {
+                    dispose();
+                }
+            });
+            footerPanel.add(deleteBtn);
+        }
+
         JButton updateStatusBtn = UIUtils.createPrimaryButton("Update Status");
         updateStatusBtn.addActionListener(e -> {
             Window parentWindow = this.getOwner();
