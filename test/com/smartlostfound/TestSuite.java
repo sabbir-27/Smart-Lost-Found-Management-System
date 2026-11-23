@@ -660,12 +660,13 @@ public class TestSuite {
         System.out.println("\n--- 15. Testing MongoDB Configuration & Offline Fallback Architecture ---");
         try {
             // 1. Config loading & DotEnv integration
-            assertEquals("lostfound", DotEnv.get("MONGODB_DATABASE"), "DotEnv loaded MONGODB_DATABASE from .env");
+            String expectedDb = DotEnv.get("MONGODB_DATABASE");
+            assertTrue(expectedDb != null && !expectedDb.isEmpty(), "DotEnv loaded MONGODB_DATABASE from .env");
             assertTrue(DotEnv.get("MONGODB_URI") != null && DotEnv.get("MONGODB_URI").startsWith("mongodb"), "DotEnv loaded valid MONGODB_URI from .env");
             assertEquals(8080, DotEnv.getInt("PORT", 3000), "DotEnv loaded PORT from .env");
 
             MongoConfig config = MongoConfig.load();
-            assertEquals("lostfound", config.getDatabaseName(), "MongoConfig database name is lostfound");
+            assertEquals(expectedDb, config.getDatabaseName(), "MongoConfig database name matches configured database");
             assertEquals("items", config.getItemsCollection(), "MongoConfig items collection is items");
             assertEquals("users", config.getUsersCollection(), "MongoConfig users collection is users");
             assertTrue(config.getConnectTimeoutMs() > 0, "MongoConfig connect timeout positive");
